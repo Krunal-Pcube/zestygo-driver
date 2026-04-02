@@ -13,12 +13,13 @@ export const colors = {
   background2: '#f5f5f5',
 
   red: '#E23744',
-  blue: '#0000F7',
+  blue: '#3369FF',
   green: '#469843',
   lightGreen: '#6DB554',
   greenLight: '#E6F6EE',
   orange: '#FFCB40',
 
+  
   errorColor: '#FF6B6B',
   comboheaderBlack: '#4D4D4D',
 };

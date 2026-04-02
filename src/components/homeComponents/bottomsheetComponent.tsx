@@ -156,9 +156,6 @@ export default function BottomSheetComponent({
   handleSheetChange,
   isOnline,
   setIsOnline,
-  setRideRequests,
-  setActiveRide,
-  setShowRideRequests,
   sheetIndex,
   setSheetIndex,
   animateChevron,
@@ -178,15 +175,7 @@ export default function BottomSheetComponent({
   });
 
   const toggleOnlineStatus = () => {
-    setIsOnline(prev => {
-      const newStatus = !prev;
-      if (!newStatus) {
-        setRideRequests([]);
-        setActiveRide(null);
-        setShowRideRequests(false);
-      }
-      return newStatus;
-    });
+    setIsOnline(prev => !prev);
     bottomSheetRef.current?.snapToIndex(0);
   };
 

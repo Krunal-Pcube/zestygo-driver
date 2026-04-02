@@ -7,12 +7,13 @@
  */
 
 import React, { useRef, useEffect } from 'react';
-import { StyleSheet, View, Animated, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Animated, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from 'react-native-maps';
 import ReAnimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
-import { MapPin, LocateFixed, PersonStanding } from 'lucide-react-native';
+import { MapPin, LocateFixed, PersonStanding, UtensilsCrossed, Home, Store, Info } from 'lucide-react-native';
 import Svg, { Polygon, Circle, G } from 'react-native-svg';
+import { RIDE_STEPS, STEP_CONFIG } from '../../hooks/useRideState';
 import { colors } from '../../utils/colors';
 
 /* ════════════════════════════════════════════════════════════════
@@ -119,21 +120,34 @@ function DriverMarker({ coordinate, heading, cameraHeading }) {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   Pickup Marker  (shown when a ride is active)
-   ─ Green pin with a white dot center — clean & minimal
+   Restaurant Marker (Green with store icon)
    ════════════════════════════════════════════════════════════════ */
-function PickupMarker({ coordinate }) {
+function RestaurantMarker({ coordinate, name }) {
   return (
-    <Marker coordinate={coordinate} anchor={{ x: 0.5, y: 1 }}>
-      <View style={markerStyles.pickupWrapper}>
-        {/* Circle pin */}
-        <View style={markerStyles.pickupCircle}>
-          <View style={markerStyles.pickupDot} />
+    <Marker coordinate={coordinate} anchor={{ x: 0.5, y: 1 }} title={name}>
+      <View style={markerStyles.restaurantWrapper}>
+        <View style={markerStyles.restaurantCircle}>
+          <Store size={moderateScale(16)} color={colors.white} />
         </View>
-        {/* Stem */}
-        <View style={markerStyles.pickupStem} />
-        {/* Tip dot */}
-        <View style={markerStyles.pickupTip} />
+        <View style={markerStyles.restaurantStem} />
+        <View style={markerStyles.restaurantTip} />
+      </View>
+    </Marker>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Customer Marker (Orange with home icon)
+   ════════════════════════════════════════════════════════════════ */
+function CustomerMarker({ coordinate, name }) {
+  return (
+    <Marker coordinate={coordinate} anchor={{ x: 0.5, y: 1 }} title={name}>
+      <View style={markerStyles.customerWrapper}>
+        <View style={markerStyles.customerCircle}>
+          <Home size={moderateScale(16)} color={colors.white} />
+        </View>
+        <View style={markerStyles.customerStem} />
+        <View style={markerStyles.customerTip} />
       </View>
     </Marker>
   );
@@ -189,6 +203,68 @@ const markerStyles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  /* ── Restaurant Marker ── */
+  restaurantWrapper: {
+    alignItems: 'center',
+  },
+  restaurantCircle: {
+    width: scale(40),
+    height: scale(40),
+    borderRadius: scale(20),
+    backgroundColor: colors.green,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 8,
+    borderWidth: 3,
+    borderColor: colors.white,
+  },
+  restaurantStem: {
+    width: scale(3),
+    height: scale(10),
+    backgroundColor: colors.green,
+  },
+  restaurantTip: {
+    width: scale(8),
+    height: scale(8),
+    borderRadius: scale(4),
+    backgroundColor: colors.green,
+  },
+
+  /* ── Customer Marker ── */
+  customerWrapper: {
+    alignItems: 'center',
+  },
+  customerCircle: {
+    width: scale(40),
+    height: scale(40),
+    borderRadius: scale(20),
+    backgroundColor: colors.orange,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 8,
+    borderWidth: 3,
+    borderColor: colors.white,
+  },
+  customerStem: {
+    width: scale(3),
+    height: scale(10),
+    backgroundColor: colors.orange,
+  },
+  customerTip: {
+    width: scale(8),
+    height: scale(8),
+    borderRadius: scale(4),
+    backgroundColor: colors.orange,
+  },
+
   /* ── Pickup marker ── */
   pickupWrapper: {
     alignItems: 'center',
@@ -220,75 +296,172 @@ const markerStyles = StyleSheet.create({
   pickupTip: {
     width: scale(6),
     height: scale(6),
-    borderRadius: scale(3),
+    borderRadius: Math.floor(scale(3)),
     backgroundColor: colors.green,
   },
 });
-
-/* ════════════════════════════════════════════════════════════════
-   Map Component
-   ════════════════════════════════════════════════════════════════ */
 export default function MapComponent({
   location,
   heading,
   cameraHeading,
   setCameraHeading,
   activeRide,
+  deliveryStep,
   isOnline,
   floatBtnOffset,
   animatedPosition,
   mapRef,
   handleLocate,
+  onMapClick,
 }) {
   const floatBtnStyle = useAnimatedStyle(() => ({
     top: animatedPosition.value - floatBtnOffset,
   }));
 
+  // Get step config for map behavior
+  const stepConfig = deliveryStep ? STEP_CONFIG[deliveryStep] : null;
+  
+  // Determine what to show based on step
+  const showRestaurant = stepConfig?.showRestaurantMarker ?? false;
+  const showCustomer = stepConfig?.showCustomerMarker ?? false;
+  const showRoute = stepConfig?.showRoute ?? 'none';
+  const mapFocus = stepConfig?.mapFocus ?? 'driver';
+
+  // Get coordinates
+  const restaurantCoord = activeRide?.pickup?.coordinate;
+  const customerCoord = activeRide?.dropoff?.coordinate;
+
+  // Camera focus effect - animate to different points based on step
+  useEffect(() => {
+    if (!mapRef.current || !activeRide) return;
+
+    let targetCoord = location;
+    let zoomLevel = 16;
+
+    switch (mapFocus) {
+      case 'restaurant':
+        targetCoord = restaurantCoord || location;
+        zoomLevel = 17;
+        break;
+      case 'customer':
+        targetCoord = customerCoord || location;
+        zoomLevel = 17;
+        break;
+      case 'driver':
+      default:
+        targetCoord = location;
+        zoomLevel = 16;
+    }
+
+    // Animate camera to target
+    mapRef.current.animateCamera(
+      {
+        center: targetCoord,
+        heading: 0,
+        pitch: 0,
+        zoom: zoomLevel,
+      },
+      { duration: 800 }
+    );
+  }, [mapFocus, activeRide, location, restaurantCoord, customerCoord]);
+
+  // Determine route coordinates based on step
+  const getRouteCoordinates = () => {
+    if (!activeRide) return [];
+    
+    switch (showRoute) {
+      case 'driver_to_restaurant':
+        return [location, restaurantCoord].filter(Boolean);
+      case 'driver_to_customer':
+        return [location, customerCoord].filter(Boolean);
+      case 'restaurant_to_customer':
+        return [restaurantCoord, customerCoord].filter(Boolean);
+      default:
+        return [];
+    }
+  };
+
+  const routeCoordinates = getRouteCoordinates();
+  const hasActiveRide = deliveryStep && deliveryStep !== RIDE_STEPS.IDLE;
+
+  // Don't render map until we have a valid location
+  if (!location || !location.latitude || !location.longitude) {
+    return (
+      <View style={styles.loadingContainer}>
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="large" color={colors.secondary} />
+          <Text style={styles.loadingText}>Getting your location...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <>
-      <MapView
-        ref={mapRef}
-        provider={PROVIDER_GOOGLE}
-        style={styles.map}
-        showsUserLocation={false}
-        followsUserLocation={false}
-        showsMyLocationButton={false}
-        showsCompass={false}
-        rotateEnabled={true}
-        onRegionChangeComplete={(region) => {
-          if (region.heading !== undefined) {
-            setCameraHeading(region.heading);
-          }
-        }}
-        initialRegion={{
-          latitude: location.latitude,
-          longitude: location.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.005,
-        }}
+      <TouchableOpacity 
+        style={styles.mapContainer} 
+        onPress={onMapClick}
+        activeOpacity={1}
       >
-        <DriverMarker
-          coordinate={location}
-          heading={heading}
-          cameraHeading={cameraHeading}
-        />
-        {activeRide && (
-          <PickupMarker coordinate={activeRide.pickup.coordinate} />
-        )}
-
-        {/* Route line between driver and pickup */}
-        {activeRide && (
-          <Polyline
-            coordinates={[location, activeRide.pickup.coordinate]}
-            strokeColor="#1A1A1A"
-            strokeWidth={4}
-            lineDashPattern={[0]}
+        <MapView
+          ref={mapRef}
+          provider={PROVIDER_GOOGLE}
+          style={styles.map}
+          showsUserLocation={false}
+          followsUserLocation={false}
+          showsMyLocationButton={false}
+          showsCompass={false}
+          rotateEnabled={true}
+          onRegionChangeComplete={(region) => {
+            if (region.heading !== undefined) {
+              setCameraHeading(region.heading);
+            }
+          }}
+          initialRegion={{
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.005,
+          }}
+        >
+          {/* Driver Marker */}
+          <DriverMarker
+            coordinate={location}
+            heading={heading}
+            cameraHeading={cameraHeading}
           />
-        )}
-      </MapView>
 
+          {/* Restaurant Marker - shown during pickup phase */}
+          {showRestaurant && restaurantCoord && (
+            <RestaurantMarker 
+              coordinate={restaurantCoord} 
+              name={activeRide?.pickup?.name || 'Restaurant'} 
+            />
+          )}
+
+          {/* Customer Marker - shown during delivery phase */}
+          {showCustomer && customerCoord && (
+            <CustomerMarker 
+              coordinate={customerCoord} 
+              name={activeRide?.dropoff?.address || 'Customer'} 
+            />
+          )}
+
+          {/* Route Line */}
+          {routeCoordinates.length > 1 && (
+            <Polyline
+              coordinates={routeCoordinates}
+              strokeColor={showRoute === 'driver_to_restaurant' ? colors.green : colors.orange}
+              strokeWidth={4}
+              lineDashPattern={showRoute === 'restaurant_to_customer' ? [5, 5] : [0]}
+            />
+          )}
+        </MapView>
+      </TouchableOpacity>
+
+   
       {/* ── Floating Action Buttons ── */}
-      {!activeRide && (
+      {!hasActiveRide && (
         <ReAnimated.View style={[styles.floatRow, floatBtnStyle]} pointerEvents="box-none">
           <View style={styles.floatLeft}>
             {isOnline && (
@@ -312,6 +485,9 @@ export default function MapComponent({
    Styles
    ════════════════════════════════════════════════════════════════ */
 const styles = StyleSheet.create({
+  mapContainer: {
+    ...StyleSheet.absoluteFillObject,
+  },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
@@ -346,5 +522,47 @@ const styles = StyleSheet.create({
     elevation: 6,
     borderWidth: 1,
     borderColor: colors.veryLightGrey,
+  },
+  tapHintContainer: {
+    position: 'absolute',
+    top: verticalScale(100),
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 8,
+  },
+  tapHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(6),
+    borderRadius: scale(16),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+    gap: scale(6),
+  },
+  tapHintText: {
+    fontSize: moderateScale(12),
+    fontWeight: '500',
+    color: colors.secondary,
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingBox: {
+    alignItems: 'center',
+    gap: verticalScale(16),
+  },
+  loadingText: {
+    fontSize: moderateScale(16),
+    fontWeight: '600',
+    color: colors.secondary,
   },
 });

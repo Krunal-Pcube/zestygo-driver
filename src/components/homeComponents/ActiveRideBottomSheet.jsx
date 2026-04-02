@@ -13,8 +13,9 @@ import {
 } from 'react-native';
 import BottomSheet, { BottomSheetView, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
-import { MapPin, Navigation, ChevronDown, ChevronRight, Phone } from 'lucide-react-native';
+import { MapPin, Navigation, ChevronDown, ChevronRight, Phone, MessageSquare, X, Clock, ChevronUp, Home } from 'lucide-react-native';
 import { colors } from '../../utils/colors';
+import { RIDE_STEPS, STEP_CONFIG } from '../../hooks/useRideState';
 
 /* ════════════════════════════════════════════════════════════════
    Navigation FAB
@@ -24,9 +25,297 @@ function NavigationFAB({ onPress }) {
     <TouchableOpacity style={styles.navFab} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.navFabInner}>
         <Navigation size={moderateScale(18)} color={colors.blue} />
-      </View>
       <Text style={styles.navFabText}>Navigation</Text>
+
+      </View>
     </TouchableOpacity>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Pickup Confirmation View - Shows after Complete Pickup clicked
+   ════════════════════════════════════════════════════════════════ */
+function PickupConfirmationView({ onContinue, onGoBack }) {
+  return (
+    <View style={styles.confirmationContainer}>
+      {/* Title */}
+      <Text style={styles.confirmationTitle}>Ready for the next stop?</Text>
+
+      {/* Info Items */}
+      <View style={styles.infoList}>
+        <View style={styles.infoItem}>
+          <View style={styles.infoIconBg}>
+            <Text style={styles.handIcon}>✋</Text>
+            <View style={styles.checkBadge}>
+              <Text style={styles.checkText}>✓</Text>
+            </View>
+          </View>
+          <Text style={styles.infoText}>Confirm that the order has been Collected</Text>
+        </View>
+
+        <View style={styles.infoItem}>
+          <View style={styles.infoIconBg}>
+            <Text style={styles.personIcon}>👤</Text>
+          </View>
+          <Text style={styles.infoText}>We'll let the customer know you have their order</Text>
+        </View>
+      </View>
+
+      {/* Continue Button */}
+      <TouchableOpacity 
+        style={styles.continueButton} 
+        onPress={onContinue}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.continueButtonText}>Continue to next stop</Text>
+      </TouchableOpacity>
+
+      {/* Go Back Button */}
+      <TouchableOpacity 
+        style={styles.goBackButton} 
+        onPress={onGoBack}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.goBackButtonText}>Go Back</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Dropoff Details View - Shows after Continue to next stop clicked
+   ════════════════════════════════════════════════════════════════ */
+function DropoffDetailsView({ ride, onCall, onChat, onConfirmOrder, onCompleteDelivery }) {
+  const customerName = ride?.passengerName || 'Kelsey Lavin';
+  const address = ride?.dropoff?.address || '825 Caledonia Rd, North York, ON M6B 3X8, Canada';
+  const dropoffType = 'Leave the door';
+  const note = "Please don't ring the bell and when you reach at location then you call me.";
+  const orderId = '308YY';
+  const restaurantName = ride?.pickup?.name || "Dave's Hot Chicken";
+  const items = '2 items';
+  const expectedTime = '10:32 AM';
+
+  return (
+    <View style={styles.dropoffContainer}>
+      {/* Customer Name with Action Buttons */}
+      <View style={styles.customerHeaderRow}>
+        <View style={styles.customerNameSection}>
+          <Text style={styles.dropoffCustomerName}>{customerName}</Text>
+          <Text style={styles.dropoffAddress}>{address}</Text>
+          <View style={styles.homeTag}>
+            <Home size={moderateScale(12)} color={colors.grey} />
+            <Text style={styles.homeTagText}>Home</Text>
+          </View>
+        </View> 
+        <View style={styles.actionButtonsRow}>
+          <TouchableOpacity style={styles.actionIconBtn} onPress={onChat} activeOpacity={0.7}>
+            <View style={[styles.actionIconBgSmall, { backgroundColor: '#C8FF00' }]}>
+              <MessageSquare size={moderateScale(16)} color={colors.secondary} />
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionIconBtn} onPress={onCall} activeOpacity={0.7}>
+            <View style={styles.actionIconBgSmall}>
+              <Phone size={moderateScale(16)} color={colors.white} />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Drop off type */}
+      <View style={styles.dropoffSection}>
+        <Text style={styles.dropoffLabel}>Drop off type</Text>
+        <Text style={styles.dropoffValue}>{dropoffType}</Text>
+      </View>
+
+      {/* Note from customer */}
+      <View style={styles.dropoffSection}>
+        <Text style={styles.dropoffLabel}>Note from customer</Text>
+        <Text style={styles.dropoffNoteText}>{note}</Text>
+      </View>
+
+      {/* Drop off order header */}
+      <Text style={styles.dropoffOrderTitle}>Drop off 1 order</Text>
+
+      {/* Order Card */}
+      <TouchableOpacity style={styles.orderCard} activeOpacity={0.8}>
+        <View style={styles.orderCardContent}>
+          <Text style={styles.orderId}>{orderId}</Text>
+          <Text style={styles.orderRestaurant}>{restaurantName} - {items}</Text>
+          <Text style={styles.orderExpectedTime}>Expected time {expectedTime}</Text>
+          <Text style={styles.orderVerifyText}>Verify - Take photos</Text>
+        </View>
+        <ChevronRight size={moderateScale(24)} color={colors.grey} />
+      </TouchableOpacity>
+
+      {/* Confirm Order Button */}
+      <TouchableOpacity 
+        style={styles.confirmOrderBtn} 
+        onPress={onConfirmOrder}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.confirmOrderBtnText}>Confirm Order</Text>
+      </TouchableOpacity>
+
+      {/* Complete Delivery Button */}
+      <TouchableOpacity 
+        style={styles.completeDeliveryBtn} 
+        onPress={onCompleteDelivery}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.completeDeliveryBtnText}>Complete Delivery</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Rating View - Shows after Complete Delivery clicked
+   ════════════════════════════════════════════════════════════════ */
+function RatingView({ customerName, onSubmit }) {
+  const [rating, setRating] = useState(4);
+
+  return (
+    <View style={styles.ratingContainer}>
+      <Text style={styles.ratingTitle}>How was your trip?</Text>
+      <Text style={styles.ratingCustomerName}>{customerName}</Text>
+      
+      {/* Star Rating */}
+      <View style={styles.starsRow}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <TouchableOpacity 
+            key={star} 
+            onPress={() => setRating(star)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.star}>
+              {star <= rating ? '★' : '☆'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.ratingDivider} />
+
+      {/* Submit Button */}
+      <TouchableOpacity 
+        style={styles.submitBtn} 
+        onPress={onSubmit}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.submitBtnText}>Submit</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Earnings View - Shows after Rating submitted
+   ════════════════════════════════════════════════════════════════ */
+function EarningsView({ tripId, amount, customerName, onDone }) {
+  return (
+    <View style={styles.earningsContainer}>
+      <Text style={styles.tripIdText}>Trip {tripId}</Text>
+      
+      {/* Success Badge */}
+      <View style={styles.successBadge}>
+        <Text style={styles.checkMark}>✓</Text>
+      </View>
+
+      {/* Amount */}
+      <Text style={styles.earningsAmount}>${amount}</Text>
+      
+      {/* Collect cash text */}
+      <Text style={styles.collectText}>Collect cash from {customerName}</Text>
+
+      {/* View More Details Link */}
+      <TouchableOpacity activeOpacity={0.7}>
+        <Text style={styles.viewDetailsText}>VIEW MORE DETAILS</Text>
+      </TouchableOpacity>
+
+      <View style={styles.earningsDivider} />
+
+      {/* Done Button */}
+      <TouchableOpacity 
+        style={styles.doneBtn} 
+        onPress={onDone}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.doneBtnText}>Done</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Arrived At Pickup View - Shows restaurant details like screenshot
+   ════════════════════════════════════════════════════════════════ */
+function ArrivedAtPickupView({ ride, onCall, onShowConfirmation }) {
+  const restaurant = ride?.pickup;
+  const customerName = ride?.passengerName || 'Kelsey Lavin';
+  const orderCount = 1;
+  const items = '2 items';
+  const expectedTime = '10:32 AM';
+  const address = restaurant?.address || '1582 Queen St W, Toronto, ON M6R 1A6, Canada';
+  const note = 'Park near restaurant. Go in the front entrance, say with FDS Driver. Verify order #230203';
+
+  return (
+    <View style={styles.arrivedContainer}>
+      {/* Restaurant Section */}
+      <View style={styles.restaurantSection}>
+        <View style={styles.restaurantHeader}>
+          <View style={styles.restaurantInfo}>
+            <Text style={styles.restaurantName}>{restaurant?.name || "Dave's Hot Chicken"}</Text>
+            <Text style={styles.restaurantAddress}>{address}</Text>
+          </View>
+          <TouchableOpacity style={styles.phoneBtn} onPress={onCall} activeOpacity={0.7}>
+            <View style={styles.phoneIconBg}>
+              <Phone size={moderateScale(18)} color={colors.white} />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Note from Business */}
+      <View style={styles.noteSection}>
+        <Text style={styles.noteTitle}>Note from Business</Text>
+        <Text style={styles.noteText}>{note}</Text>
+      </View>
+
+      {/* Pick up order header */}
+      <Text style={styles.pickupTitle}>Pick up {orderCount} order</Text>
+
+      {/* Customer Card */}
+      <View style={styles.customerCard}>
+        <View style={styles.customerHeader}>
+          <View style={styles.customerInfo}>
+            <Text style={styles.customerName}>{customerName}</Text>
+            <Text style={styles.orderDetails}>308YY • {items}</Text>
+            <Text style={styles.expectedTime}>Expected time {expectedTime}</Text>
+          </View>
+          <ChevronRight size={moderateScale(24)} color={colors.grey} />
+        </View>
+
+        {/* Verify Order Button */}
+        <TouchableOpacity style={styles.verifyBtn} activeOpacity={0.8}>
+          <Text style={styles.verifyBtnText}>Verify Order</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Help & Support */}
+      <TouchableOpacity style={styles.helpRow} activeOpacity={0.7}>
+        <Text style={styles.helpText}>Help & Support</Text>
+        <ChevronRight size={moderateScale(24)} color={colors.grey} />
+      </TouchableOpacity>
+
+      {/* Complete Pickup Button */}
+      <TouchableOpacity 
+        style={styles.completeButton} 
+        onPress={onShowConfirmation}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.completeButtonText}>Complete Pickup</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -36,16 +325,26 @@ function NavigationFAB({ onPress }) {
 export default function ActiveRideBottomSheet({
   ride,
   driverLocation,
-  onCompletePickup,
+  rideStep,
+  onArrived,
   onNavigate,
+  onCall,
+  onChat,
   onCancel,
+  onStartDropoff,
+  onCompleteRide,
   isVisible,
 }) {
   const bottomSheetRef = useRef(null);
   const chevronRot = useRef(new RNAnimated.Value(0)).current;
   const [sheetIndex, setSheetIndex] = useState(0);
+  const [showPickupConfirmation, setShowPickupConfirmation] = useState(false);
+  const [showRating, setShowRating] = useState(false);
+  const [showEarnings, setShowEarnings] = useState(false);
 
-  const snapPoints = useMemo(() => ['20%', '80%'], []);
+  // Get config based on current step
+  const stepConfig = STEP_CONFIG[rideStep] || STEP_CONFIG[RIDE_STEPS.GOING_TO_PICKUP];
+  const snapPoints = useMemo(() => [stepConfig.bottomSheetHeight], [stepConfig.bottomSheetHeight]);
 
   const handleSheetChange = useCallback((index) => {
     setSheetIndex(index);
@@ -67,25 +366,87 @@ export default function ActiveRideBottomSheet({
     outputRange: ['0deg', '180deg'],
   });
 
+  // Handle primary button press based on step
+  const handlePrimaryAction = () => {
+    switch (rideStep) {
+      case RIDE_STEPS.GOING_TO_PICKUP:
+        onArrived?.();
+        break;
+      case RIDE_STEPS.ARRIVED_AT_PICKUP:
+        onStartDropoff?.();
+        break;
+      case RIDE_STEPS.GOING_TO_DROPOFF:
+        onArrived?.();
+        break;
+      case RIDE_STEPS.ARRIVED_AT_DROPOFF:
+        onCompleteRide?.();
+        break;
+      default:
+        onArrived?.();
+    }
+  };
+
+  // Handle showing pickup confirmation
+  const handleShowConfirmation = () => {
+    setShowPickupConfirmation(true);
+  };
+
+  // Handle continue to next stop
+  const handleContinueToNextStop = () => {
+    setShowPickupConfirmation(false);
+    onStartDropoff?.();
+  };
+
+  // Handle go back
+  const handleGoBack = () => {
+    setShowPickupConfirmation(false);
+  };
+
+  // Handle complete delivery - show rating sheet
+  const handleCompleteDelivery = () => {
+    setShowRating(true);
+  };
+
+  // Handle submit rating - show earnings sheet
+  const handleSubmitRating = () => {
+    setShowRating(false);
+    setShowEarnings(true);
+  };
+
+  // Handle done - complete ride and return to online
+  const handleDone = () => {
+    setShowEarnings(false);
+    onCompleteRide?.();
+  };
+
+  // Reset confirmation state when step changes
+  useEffect(() => {
+    setShowPickupConfirmation(false);
+    setShowRating(false);
+    setShowEarnings(false);
+  }, [rideStep]);
+
   // Snap bottom sheet when visibility changes
   useEffect(() => {
     if (isVisible && ride) {
-      // Delay to ensure ref is ready
       setTimeout(() => {
         bottomSheetRef.current?.snapToIndex(0);
       }, 100);
     }
-  }, [isVisible, ride]);
+  }, [isVisible, ride, snapPoints]);
 
   if (!isVisible || !ride) return null;
 
   const distance = ride?.pickup?.distance || '0.0';
   const eta = ride?.pickup?.eta || '0';
-  const pickupName = ride?.pickup?.name || 'Pickup Location';
-  const pickupAddress = ride?.pickup?.address || '';
 
   return (
     <>
+      {/* Navigation FAB - only show when configured */}
+      {stepConfig.showNavigationButton && (
+        <NavigationFAB onPress={onNavigate} />
+      )}
+
       {/* Bottom Sheet */}
       <BottomSheet
         ref={bottomSheetRef}
@@ -97,13 +458,11 @@ export default function ActiveRideBottomSheet({
         animateOnMount
         enablePanDownToClose={false}
       >
-        <BottomSheetScrollView
-          style={styles.sheetBody}
-          showsVerticalScrollIndicator={false}
-        >
-            {/* Header Row: Chevron + ETA + Distance */}
+        {rideStep === RIDE_STEPS.ARRIVED_AT_PICKUP ? (
+          <BottomSheetScrollView style={styles.arrivedScrollView} showsVerticalScrollIndicator={false}>
+            {/* Header Row: Chevron + ETA + Distance + Menu */}
             <View style={styles.headerRow}>
-              <TouchableOpacity onPress={handleChevron} style={styles.chevronBtn} activeOpacity={0.7}>
+              <TouchableOpacity onPress={handleChevron} style={styles.iconBtn} activeOpacity={0.7}>
                 <RNAnimated.View style={{ transform: [{ rotate: chevronAngle }] }}>
                   <ChevronDown size={moderateScale(22)} color={colors.mediumGrey} />
                 </RNAnimated.View>
@@ -116,70 +475,152 @@ export default function ActiveRideBottomSheet({
                 <Text style={styles.distanceText}>{distance} km</Text>
               </View>
 
-              {/* Invisible placeholder to balance the chevron */}
-              <View style={styles.placeholderBtn} />
-            </View>
-
-            {/* Restaurant Info */}
-            <View style={styles.restaurantSection}>
-              <View style={styles.restaurantHeader}>
-                <View style={styles.restaurantInfo}>
-                  <Text style={styles.restaurantName}>{pickupName}</Text>
-                  <Text style={styles.restaurantAddress}>{pickupAddress}</Text>
+              <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
+                <View style={styles.menuIcon}>
+                  <View style={styles.menuLine} />
+                  <View style={styles.menuLine} />
+                  <View style={styles.menuLine} />
                 </View>
-                <TouchableOpacity style={styles.phoneBtn} activeOpacity={0.7}>
-                  <View style={styles.phoneIconBg}>
-                    <Phone size={moderateScale(16)} color={colors.white} />
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Note from Business */}
-            <View style={styles.noteSection}>
-              <Text style={styles.noteTitle}>Note from Business</Text>
-              <Text style={styles.noteText}>
-                Park near restaurant. Go in the front entrance, say with FDS Driver. Verify order #230203
-              </Text>
-            </View>
-
-            {/* Pick up order section */}
-            <Text style={styles.pickupTitle}>Pick up 1 order</Text>
-
-            {/* Customer Card */}
-            <View style={styles.customerCard}>
-              <View style={styles.customerHeader}>
-                <View style={styles.customerInfo}>
-                  <Text style={styles.customerName}>Kelsey Lavin.</Text>
-                  <Text style={styles.orderDetails}>308YY - 2 items</Text>
-                  <Text style={styles.expectedTime}>Expected time 10:32 AM</Text>
-                </View>
-                <ChevronRight size={moderateScale(20)} color={colors.grey} />
-              </View>
-
-              {/* Verify Order Button */}
-              <TouchableOpacity style={styles.verifyBtn} activeOpacity={0.8}>
-                <Text style={styles.verifyBtnText}>Verify Order</Text>
               </TouchableOpacity>
             </View>
 
-           
+            {/* Scrollable content - show either pickup view or confirmation */}
+            {showPickupConfirmation ? (
+              <PickupConfirmationView 
+                onContinue={handleContinueToNextStop}
+                onGoBack={handleGoBack}
+              />
+            ) : (
+              <ArrivedAtPickupView 
+                ride={ride} 
+                onCall={onCall} 
+                onShowConfirmation={handleShowConfirmation}
+              />
+            )}
+          </BottomSheetScrollView>
+        ) : rideStep === RIDE_STEPS.GOING_TO_DROPOFF || rideStep === RIDE_STEPS.ARRIVED_AT_DROPOFF ? (
+          <BottomSheetScrollView style={styles.arrivedScrollView} showsVerticalScrollIndicator={false}>
+            {/* Header Row: Chevron + ETA + Distance + Menu */}
+            <View style={styles.headerRow}>
+              <TouchableOpacity onPress={handleChevron} style={styles.iconBtn} activeOpacity={0.7}>
+                <RNAnimated.View style={{ transform: [{ rotate: chevronAngle }] }}>
+                  <ChevronDown size={moderateScale(22)} color={colors.mediumGrey} />
+                </RNAnimated.View>
+              </TouchableOpacity>
 
-            {/* Help & Support */}
-            <TouchableOpacity style={styles.helpRow} activeOpacity={0.7}>
-              <Text style={styles.helpText}>Help & Support</Text>
-              <ChevronRight size={moderateScale(20)} color={colors.grey} />
-            </TouchableOpacity>
+              <View style={styles.etaRowCentered}>
+                <Text style={styles.etaText}>{eta} min</Text>
+                <View style={styles.dot} />
+                <MapPin size={moderateScale(14)} color={colors.secondary} />
+                <Text style={styles.distanceText}>{distance} km</Text>
+              </View>
 
-            {/* Complete Pickup Button */}
-            <TouchableOpacity
-              style={styles.completeButton}
-              onPress={onCompletePickup}
+              <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
+                <View style={styles.menuIcon}>
+                  <View style={styles.menuLine} />
+                  <View style={styles.menuLine} />
+                  <View style={styles.menuLine} />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Status Text */}
+            <Text style={styles.statusText}>Arriving Time</Text>
+
+            {/* Dropoff Details View */}
+            {showRating ? (
+              <RatingView
+                customerName={ride?.passengerName || 'Kelsey Lavin'}
+                onSubmit={handleSubmitRating}
+              />
+            ) : showEarnings ? (
+              <EarningsView
+                tripId="#0001"
+                amount="18.05"
+                customerName={ride?.passengerName || 'Kelsey'}
+                onDone={handleDone}
+              />
+            ) : (
+              <DropoffDetailsView
+                ride={ride}
+                onCall={onCall}
+                onChat={onChat}
+                onConfirmOrder={() => {}}
+                onCompleteDelivery={handleCompleteDelivery}
+              />
+            )}
+          </BottomSheetScrollView>
+        ) : (
+          <BottomSheetView style={styles.sheetBody}>
+            {/* Header Row: Chevron + ETA + Distance + Menu */}
+            <View style={styles.headerRow}>
+              <TouchableOpacity onPress={handleChevron} style={styles.iconBtn} activeOpacity={0.7}>
+                <RNAnimated.View style={{ transform: [{ rotate: chevronAngle }] }}>
+                  <ChevronDown size={moderateScale(22)} color={colors.mediumGrey} />
+                </RNAnimated.View>
+              </TouchableOpacity>
+
+              <View style={styles.etaRowCentered}>
+                <Text style={styles.etaText}>{eta} min</Text>
+                <View style={styles.dot} />
+                <MapPin size={moderateScale(14)} color={colors.secondary} />
+                <Text style={styles.distanceText}>{distance} km</Text>
+              </View>
+
+              <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
+                <View style={styles.menuIcon}>
+                  <View style={styles.menuLine} />
+                  <View style={styles.menuLine} />
+                  <View style={styles.menuLine} />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Status Text */}
+            <Text style={styles.statusText}>{stepConfig.statusText}</Text>
+
+            <View style={{ height: scale(10) }} />
+
+            {/* Action Buttons Row: Call, Chat, Cancel */}
+            <View style={styles.actionsRow}>
+              {stepConfig.actions.includes('call') && (
+                <TouchableOpacity style={styles.actionBtn} onPress={onCall} activeOpacity={0.7}>
+                  <View style={styles.actionIconBg}>
+                    <Phone size={moderateScale(22)} color={colors.secondary} />
+                  </View>
+                  <Text style={styles.actionText}>Call</Text>
+                </TouchableOpacity>
+              )}
+
+              {stepConfig.actions.includes('chat') && (
+                <TouchableOpacity style={styles.actionBtn} onPress={onChat} activeOpacity={0.7}>
+                  <View style={styles.actionIconBg}>
+                    <MessageSquare size={moderateScale(22)} color={colors.secondary} />
+                  </View>
+                  <Text style={styles.actionText}>Chat</Text>
+                </TouchableOpacity>
+              )}
+
+              {stepConfig.actions.includes('cancel') && (
+                <TouchableOpacity style={styles.actionBtn} onPress={onCancel} activeOpacity={0.7}>
+                  <View style={styles.actionIconBg}>
+                    <X size={moderateScale(22)} color={colors.secondary} />
+                  </View>
+                  <Text style={styles.actionText}>Cancel Trip</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Primary Action Button */}
+            <TouchableOpacity 
+              style={styles.arrivedBtn} 
+              onPress={handlePrimaryAction}
               activeOpacity={0.8}
             >
-              <Text style={styles.completeButtonText}>Picked Up</Text>
+              <Text style={styles.arrivedBtnText}>{stepConfig.primaryButtonText}</Text>
             </TouchableOpacity>
-          </BottomSheetScrollView>
+          </BottomSheetView>
+        )}
       </BottomSheet>
     </>
   );
@@ -189,22 +630,36 @@ export default function ActiveRideBottomSheet({
    Styles
    ════════════════════════════════════════════════════════════════ */
 const styles = StyleSheet.create({
+  /* Arrived View Container */
+  arrivedContainer: {
+    flex: 1,
+  },
+
+  /* Arrived ScrollView */
+  arrivedScrollView: {
+    flex: 1,
+    paddingHorizontal: scale(16),
+    paddingTop: scale(8),
+    paddingBottom: verticalScale(20),
+  },
+
   /* Navigation FAB - positioned just above 20% bottom sheet */
   navFab: {
     position: 'absolute',
-    bottom: verticalScale(180),
+    bottom: verticalScale(120),
     right: scale(16),
     alignItems: 'center',
     zIndex: 0,
     elevation: 0,
   },
   navFabInner: {
-    width: scale(48),
-    height: scale(48),
-    borderRadius: scale(24),
+    borderRadius: scale(8),
     backgroundColor: colors.white,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(8),
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
@@ -214,12 +669,8 @@ const styles = StyleSheet.create({
   navFabText: {
     fontSize: moderateScale(11),
     fontWeight: '600',
+    marginLeft: scale(4),
     color: colors.secondary,
-    marginTop: verticalScale(4),
-    backgroundColor: colors.white,
-    paddingHorizontal: scale(8),
-    paddingVertical: verticalScale(2),
-    borderRadius: moderateScale(8),
     overflow: 'hidden',
   },
 
@@ -230,31 +681,26 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   sheetBody: {
+    flex: 1,
     paddingHorizontal: scale(16),
-    paddingTop: scale(6),
+    paddingTop: scale(8),
     paddingBottom: verticalScale(20),
-    maxHeight: '100%',
   },
 
   /* Header Row */
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: verticalScale(8),
-    marginBottom: verticalScale(8),
   },
-  chevronBtn: {
+  iconBtn: {
     width: scale(44),
     height: scale(44),
     alignItems: 'center',
     justifyContent: 'center',
   },
-  placeholderBtn: {
-    width: scale(44),
-    height: scale(44),
-  },
   etaRowCentered: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -275,6 +721,80 @@ const styles = StyleSheet.create({
     height: scale(6),
     borderRadius: scale(3),
     backgroundColor: colors.grey,
+  },
+  menuIcon: {
+    width: scale(20),
+    height: scale(16),
+    justifyContent: 'space-between',
+  },
+  menuLine: {
+    width: scale(20),
+    height: scale(2),
+    backgroundColor: colors.mediumGrey,
+    borderRadius: scale(1),
+  },
+
+  /* Status Text */
+  statusText: {
+    fontSize: moderateScale(14),
+    fontWeight: '500',
+    color: colors.grey,
+    textAlign: 'center',
+    marginTop: verticalScale(-4),
+    marginBottom: verticalScale(16),
+  },
+
+  /* Action Buttons Row */
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: verticalScale(16),
+    paddingHorizontal: scale(8),
+  },
+  actionBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionIconBg: {
+    width: scale(48),
+    height: scale(48),
+    borderRadius: scale(24),
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: verticalScale(6),
+  },
+  actionText: {
+    fontSize: moderateScale(12),
+    fontWeight: '500',
+    color: colors.secondary,
+  },
+
+  /* Arrived Button */
+  arrivedBtn: {
+    backgroundColor: '#D3D3D3',
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: verticalScale(4),
+  },
+  arrivedBtnText: {
+    fontSize: moderateScale(16),
+    fontWeight: '700',
+    color: '#666666',
+  },
+
+  /* Legacy styles (keep for compatibility) */
+  chevronBtn: {
+    width: scale(44),
+    height: scale(44),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderBtn: {
+    width: scale(44),
+    height: scale(44),
   },
 
   /* Restaurant Section */
@@ -408,6 +928,351 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(20),
   },
   completeButtonText: {
+    color: '#C8FF00',
+    fontSize: moderateScale(16),
+    fontWeight: '700',
+  },
+
+  /* Pickup Confirmation View */
+  confirmationContainer: {
+    flex: 1,
+    paddingTop: verticalScale(8),
+  },
+  confirmationTitle: {
+    fontSize: moderateScale(18),
+    fontWeight: '700',
+    color: colors.secondary,
+    textAlign: 'center',
+    marginBottom: verticalScale(24),
+  },
+  infoList: {
+    marginBottom: verticalScale(24),
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: verticalScale(16),
+  },
+  infoIconBg: {
+    width: scale(40),
+    height: scale(40),
+    borderRadius: scale(20),
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: scale(12),
+    position: 'relative',
+  },
+  handIcon: {
+    fontSize: moderateScale(20),
+  },
+  personIcon: {
+    fontSize: moderateScale(20),
+  },
+  checkBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: scale(16),
+    height: scale(16),
+    borderRadius: scale(8),
+    backgroundColor: colors.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
+  checkText: {
+    color: colors.white,
+    fontSize: moderateScale(10),
+    fontWeight: '700',
+  },
+  infoText: {
+    flex: 1,
+    fontSize: moderateScale(14),
+    color: colors.secondary,
+    lineHeight: moderateScale(20),
+  },
+  continueButton: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: verticalScale(12),
+  },
+  continueButtonText: {
+    color: '#C8FF00',
+    fontSize: moderateScale(16),
+    fontWeight: '700',
+  },
+  goBackButton: {
+    backgroundColor: '#E0E0E0',
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: verticalScale(20),
+  },
+  goBackButtonText: {
+    color: colors.secondary,
+    fontSize: moderateScale(16),
+    fontWeight: '600',
+  },
+
+  /* Dropoff Details View */
+  dropoffContainer: {
+    flex: 1,
+    paddingTop: verticalScale(8),
+  },
+  customerHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: verticalScale(16),
+  },
+  customerNameSection: {
+    flex: 1,
+    marginRight: scale(12),
+  },
+  dropoffCustomerName: {
+    fontSize: moderateScale(18),
+    fontWeight: '700',
+    color: colors.secondary,
+    marginBottom: verticalScale(4),
+  },
+  dropoffAddress: {
+    fontSize: moderateScale(13),
+    color: colors.grey,
+    lineHeight: moderateScale(18),
+    marginBottom: verticalScale(6),
+  },
+  homeTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+    borderRadius: moderateScale(6),
+    paddingHorizontal: scale(8),
+    paddingVertical: verticalScale(4),
+    alignSelf: 'flex-start',
+    gap: scale(4),
+  },
+  homeTagText: {
+    fontSize: moderateScale(12),
+    fontWeight: '500',
+    color: colors.grey,
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: scale(8),
+  },
+  actionIconBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionIconBgSmall: {
+    width: scale(36),
+    height: scale(36),
+    borderRadius: scale(18),
+    backgroundColor: colors.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dropoffSection: {
+    marginBottom: verticalScale(16),
+  },
+  dropoffLabel: {
+    fontSize: moderateScale(14),
+    fontWeight: '600',
+    color: colors.secondary,
+    marginBottom: verticalScale(4),
+  },
+  dropoffValue: {
+    fontSize: moderateScale(13),
+    color: colors.grey,
+  },
+  dropoffNoteText: {
+    fontSize: moderateScale(13),
+    color: colors.grey,
+    lineHeight: moderateScale(18),
+  },
+  dropoffOrderTitle: {
+    fontSize: moderateScale(14),
+    fontWeight: '600',
+    color: colors.secondary,
+    marginBottom: verticalScale(12),
+  },
+  orderCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: moderateScale(12),
+    padding: scale(16),
+    marginBottom: verticalScale(16),
+  },
+  orderCardContent: {
+    flex: 1,
+  },
+  orderId: {
+    fontSize: moderateScale(16),
+    fontWeight: '700',
+    color: colors.secondary,
+    marginBottom: verticalScale(2),
+  },
+  orderRestaurant: {
+    fontSize: moderateScale(13),
+    color: colors.grey,
+    marginBottom: verticalScale(2),
+  },
+  orderExpectedTime: {
+    fontSize: moderateScale(12),
+    color: colors.grey,
+    marginBottom: verticalScale(4),
+  },
+  orderVerifyText: {
+    fontSize: moderateScale(13),
+    fontWeight: '500',
+    color: colors.secondary,
+  },
+  confirmOrderBtn: {
+    backgroundColor: '#E0E0E0',
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(14),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: verticalScale(12),
+  },
+  confirmOrderBtnText: {
+    fontSize: moderateScale(15),
+    fontWeight: '600',
+    color: colors.secondary,
+  },
+  completeDeliveryBtn: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: verticalScale(20),
+  },
+  completeDeliveryBtnText: {
+    color: '#C8FF00',
+    fontSize: moderateScale(16),
+    fontWeight: '700',
+  },
+
+  /* Rating View */
+  ratingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: verticalScale(16),
+    paddingBottom: verticalScale(20),
+  },
+  ratingTitle: {
+    fontSize: moderateScale(16),
+    fontWeight: '500',
+    color: colors.grey,
+    marginBottom: verticalScale(16),
+  },
+  ratingCustomerName: {
+    fontSize: moderateScale(20),
+    fontWeight: '700',
+    color: colors.secondary,
+    marginBottom: verticalScale(20),
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: scale(8),
+    marginBottom: verticalScale(24),
+  },
+  star: {
+    fontSize: moderateScale(32),
+    color: '#FFD700',
+  },
+  ratingDivider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginBottom: verticalScale(20),
+  },
+  submitBtn: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(16),
+    paddingHorizontal: scale(24),
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  submitBtnText: {
+    color: '#C8FF00',
+    fontSize: moderateScale(16),
+    fontWeight: '700',
+  },
+
+  /* Earnings View */
+  earningsContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: verticalScale(16),
+    paddingBottom: verticalScale(20),
+  },
+  tripIdText: {
+    fontSize: moderateScale(14),
+    fontWeight: '600',
+    color: colors.secondary,
+    marginBottom: verticalScale(20),
+  },
+  successBadge: {
+    width: scale(60),
+    height: scale(60),
+    borderRadius: scale(30),
+    backgroundColor: '#4CAF50',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: verticalScale(16),
+  },
+  checkMark: {
+    fontSize: moderateScale(28),
+    color: colors.white,
+    fontWeight: '700',
+  },
+  earningsAmount: {
+    fontSize: moderateScale(32),
+    fontWeight: '700',
+    color: colors.secondary,
+    marginBottom: verticalScale(8),
+  },
+  collectText: {
+    fontSize: moderateScale(14),
+    color: colors.grey,
+    marginBottom: verticalScale(16),
+  },
+  viewDetailsText: {
+    fontSize: moderateScale(13),
+    fontWeight: '600',
+    color: '#4CAF50',
+    textTransform: 'uppercase',
+    marginBottom: verticalScale(20),
+  },
+  earningsDivider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginBottom: verticalScale(20),
+  },
+  doneBtn: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(16),
+    paddingHorizontal: scale(24),
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  doneBtnText: {
     color: '#C8FF00',
     fontSize: moderateScale(16),
     fontWeight: '700',

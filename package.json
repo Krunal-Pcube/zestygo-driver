@@ -6,9 +6,9 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
-    "start": "react-native start",
+    "start": "react-native start --port=8081",
     "test": "jest",
-    "rev": "adb reverse tcp:8082 tcp:8082"
+    "rev": "adb reverse tcp:8081 tcp:8081"
   },
   "dependencies": {
     "@callstack/liquid-glass": "^0.7.1",

@@ -38,6 +38,7 @@ import MapComponent from '../components/homeComponents/MapComponent';
 import BottomSheetComponent from '../components/homeComponents/bottomsheetComponent';
 import RideArrivingComponent from '../components/homeComponents/RideArrivingComponent';
 import ActiveRideBottomSheet from '../components/homeComponents/ActiveRideBottomSheet';
+import useRideState from '../hooks/useRideState';
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 
@@ -157,14 +158,26 @@ const StatsContent = () => (
 ───────────────────────────────────────────────────────────────── */
 export default function HomeScreen({ navigation }) {
 
+  // Use ride state machine
+  const {
+    currentStep,
+    rideData,
+    isActive,
+    startRide,
+    arriveAtPickup,
+    startDropoff,
+    arriveAtDropoff,
+    completeRide,
+    cancelRide,
+  } = useRideState();
+
   const [isOnline, setIsOnline] = useState(false);
   const [earnings] = useState(154.75);
   const [rideRequests, setRideRequests] = useState([]);
-  const [activeRide, setActiveRide] = useState(null);
   const [hasArrived, setHasArrived] = useState(false);
   const [showRideRequests, setShowRideRequests] = useState(false);
   const [sheetIndex, setSheetIndex] = useState(0);
-  const [location, setLocation] = useState({ latitude: 37.3541, longitude: -121.9552 });
+  const [location, setLocation] = useState(null);
   const [heading, setHeading] = useState(0);
   const [cameraHeading, setCameraHeading] = useState(0);
 
@@ -213,8 +226,14 @@ export default function HomeScreen({ navigation }) {
             { duration: 800 },
           );
         },
-        err => console.warn('[GPS] getCurrentPosition error:', err),
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 },
+        err => {
+          console.warn('[GPS] getCurrentPosition error:', err);
+          // Only fallback to default if we still don't have a location
+          if (!location) {
+            setLocation({ latitude: 37.3541, longitude: -121.9552 });
+          }
+        },
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 5000 },
       );
 
       // ── Continuous watch ──────────────────────────────────────
@@ -237,7 +256,7 @@ export default function HomeScreen({ navigation }) {
         },
         err => console.warn('[GPS] watchPosition error:', err),
         {
-          enableHighAccuracy: true,
+          enableHighAccuracy: false,
           timeout: 20000,
           maximumAge: 1000,
           distanceFilter: 3, // metres
@@ -258,10 +277,10 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     if (!isOnline) return;
     const interval = setInterval(() => {
-      if (Math.random() > 0.7 && !activeRide) generateNewRide();
+      if (Math.random() > 0.7 && !rideData) generateNewRide();
     }, 8000);
     return () => clearInterval(interval);
-  }, [isOnline, activeRide]);
+  }, [isOnline, rideData]);
 
   /* ── Pulse online dot ─────────────────────────────────────────── */
   useEffect(() => {
@@ -326,8 +345,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   const acceptRide = (ride) => {
-    setActiveRide(ride);
-    setHasArrived(false);
+    startRide(ride);
     setRideRequests(prev => prev.filter(r => r.id !== ride.id));
     setShowRideRequests(false);
   };
@@ -341,7 +359,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleArrived = () => {
-    setHasArrived(true);
+    arriveAtPickup();
     console.log('[RIDE] Driver arrived at pickup location');
   };
 
@@ -353,16 +371,14 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleCancelRide = () => {
-    setActiveRide(null);
-    setHasArrived(false);
+    cancelRide();
   };
 
   const toggleOnline = useCallback(() => {
     setIsOnline(prev => {
       if (prev) {
         setRideRequests([]);
-        setActiveRide(null);
-        setShowRideRequests(false);
+        setHasArrived(false);
       }
       return !prev;
     });
@@ -395,6 +411,9 @@ export default function HomeScreen({ navigation }) {
     );
   }, [location]);
 
+  const handleMapClick = useCallback(() => {
+  }, [navigation, rideData, location]);
+
   return (
     <View style={{ flex: 1 }}>
 
@@ -405,12 +424,14 @@ export default function HomeScreen({ navigation }) {
         heading={heading}
         cameraHeading={cameraHeading}
         setCameraHeading={setCameraHeading}
-        activeRide={activeRide}
+        activeRide={rideData}
+        deliveryStep={currentStep}
         isOnline={isOnline}
         floatBtnOffset={floatBtnOffset}
         animatedPosition={animatedPosition}
         mapRef={mapRef}
         handleLocate={handleLocate}
+        onMapClick={handleMapClick}
       />
 
       <RideRequestCard
@@ -421,30 +442,21 @@ export default function HomeScreen({ navigation }) {
         duration={14}
       />
 
-      {/* Navigation Button for Active Ride - rendered before bottom sheet so it appears behind */}
-      {activeRide && (
-        <TouchableOpacity 
-          style={styles.navButton}
-          onPress={() => console.log('[NAV] Starting navigation')}
-          activeOpacity={0.8}
-        >
-          <View style={styles.navButtonInner}>
-            <Navigation size={moderateScale(18)} color={colors.blue} />
-          </View>
-          <Text style={styles.navButtonText}>Navigation</Text>
-        </TouchableOpacity>
-      )}
-
       <ActiveRideBottomSheet
-        ride={activeRide}
+        ride={rideData}
         driverLocation={location}
-        isVisible={!!activeRide}
-        onCompletePickup={handleCompletePickup}
+        rideStep={currentStep}
+        isVisible={isActive}
+        onArrived={handleArrived}
         onNavigate={() => console.log('[NAV] Starting navigation')}
+        onCall={() => console.log('[CALL] Calling customer')}
+        onChat={() => console.log('[CHAT] Opening chat')}
         onCancel={handleCancelRide}
+        onStartDropoff={startDropoff}
+        onCompleteRide={completeRide}
       />
 
-      {!activeRide && (
+      {!isActive && (
         <BottomSheetComponent
           bottomSheetRef={bottomSheetRef}
           snapPoints={snapPoints}
@@ -452,15 +464,12 @@ export default function HomeScreen({ navigation }) {
           handleSheetChange={handleSheetChange}
           isOnline={isOnline}
           setIsOnline={setIsOnline}
-          setRideRequests={setRideRequests}
-          setActiveRide={setActiveRide}
-          setShowRideRequests={setShowRideRequests}
           sheetIndex={sheetIndex}
           setSheetIndex={setSheetIndex}
           animateChevron={animateChevron}
           chevronRot={chevronRot}
           dotPulse={dotPulse}
-          activeRide={activeRide}
+          activeRide={rideData}
         >
           <StatsContent />
         </BottomSheetComponent>
