@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "rev": "adb reverse tcp:8081 tcp:8081"
+    "rev": "adb reverse tcp:8082 tcp:8082"
   },
   "dependencies": {
     "@callstack/liquid-glass": "^0.7.1",
