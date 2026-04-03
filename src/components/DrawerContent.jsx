@@ -1,33 +1,66 @@
 import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {
-  DrawerContentScrollView,
-} from '@react-navigation/drawer';
-import {User, Wallet, History, Settings, LogOut, Home} from 'lucide-react-native';
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Switch,
+  ScrollView,
+} from 'react-native';
+import { DrawerContentScrollView } from '@react-navigation/drawer';
+import {
+  ChevronLeft,
+  ChevronRight,
+  User,
+  Wallet,
+  History,
+  Bell,
+  FileText,
+  HelpCircle,
+  Settings,
+  LogOut,
+} from 'lucide-react-native';
+import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
 
 function DrawerContent(props) {
-  const {navigation} = props;
- 
+  const { navigation } = props;
+  const [onRideBooking, setOnRideBooking] = React.useState(true);
+
   const menuItems = [
-    {name: 'Home', icon: Home, label: 'Home'},
-    {name: 'Profile', icon: User, label: 'Profile'},
-    {name: 'Earnings', icon: Wallet, label: 'Earnings'},
-    {name: 'TripHistory', icon: History, label: 'Trip History'},
-    {name: 'Settings', icon: Settings, label: 'Settings'},
+    { name: 'Earnings', icon: Wallet, label: 'Earnings' },
+    { name: 'TripHistory', icon: History, label: 'History' },
+    { name: 'Notifications', icon: Bell, label: 'Notifications' },
+    { name: 'Documents', icon: FileText, label: 'Documents' },
+    { name: 'Help', icon: HelpCircle, label: 'Help' },
+    { name: 'Settings', icon: Settings, label: 'Settings' },
   ];
 
   return (
-    <DrawerContentScrollView {...props} style={styles.container}>
-      {/* Driver Profile Header */}
+    <ScrollView {...props} style={styles.container} contentContainerStyle={{ paddingHorizontal: 0, paddingTop: 0 }} >
+      {/* Header with Profile title */}
       <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
-            <User size={40} color="#666" />
-          </View>
-        </View>
-        <Text style={styles.driverName}>John Driver</Text>
-        <Text style={styles.driverInfo}>4.75 ★ | 1,234 trips</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.closeDrawer()}>
+          <ChevronLeft size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profile</Text>
+        <View style={styles.placeholder} />
       </View>
+
+      {/* Full-width Profile Card - Dark */}
+      <TouchableOpacity
+        style={styles.profileCard}
+        onPress={() => navigation.navigate('Profile')}>
+        <View style={styles.avatarContainer}>
+          <User size={40} color="#666" />
+        </View>
+        <View style={styles.profileInfo}>
+          <Text style={styles.profileName}>James Smith</Text>
+          <Text style={styles.profilePhone}>+251 455 222 22</Text>
+        </View>
+        <ChevronRight size={24} color="#fff" />
+      </TouchableOpacity>
 
       {/* Menu Items */}
       <View style={styles.menuContainer}>
@@ -36,86 +69,128 @@ function DrawerContent(props) {
             key={index}
             style={styles.menuItem}
             onPress={() => navigation.navigate(item.name)}>
-            <item.icon size={24} color="#333" />
+            <item.icon size={22} color="#333" strokeWidth={1.5} />
             <Text style={styles.menuLabel}>{item.label}</Text>
           </TouchableOpacity>
         ))}
-      </View>
 
-      {/* Logout */}
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.logoutButton}>
-          <LogOut size={24} color="#E74C3C" />
-          <Text style={styles.logoutText}>Logout</Text>
+        {/* Logout */}
+        <TouchableOpacity style={styles.menuItem}>
+          <LogOut size={22} color="#333" strokeWidth={1.5} />
+          <Text style={styles.menuLabel}>Logout</Text>
         </TouchableOpacity>
       </View>
-    </DrawerContentScrollView>
+
+      {/* Divider */}
+      <View style={styles.divider} />
+
+      {/* On-Ride Booking Toggle */}
+      <View style={styles.toggleContainer}>
+        <Text style={styles.toggleLabel}>On-Ride Booking</Text>
+        <Switch
+          value={onRideBooking}
+          onValueChange={setOnRideBooking}
+          trackColor={{ false: '#767577', true: '#4CAF50' }}
+          thumbColor={onRideBooking ? '#fff' : '#f4f3f4'}
+        />
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 20,
-    marginBottom: 20,
+    backgroundColor: '#fff',
   },
-  header: { 
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-  }, 
-  avatarContainer: {
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: scale(12),
+    paddingTop: verticalScale(12),
+    paddingBottom: verticalScale(16),
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#F0F0F0',
-    alignItems: 'center',
+  backButton: {
+    width: scale(40),
+    height: scale(40),
     justifyContent: 'center',
   },
-  driverName: {
-    fontSize: 18,
-    fontWeight: '700',
+  backArrow: {
+    fontSize: moderateScale(24),
     color: '#333',
-    marginBottom: 4,
   },
-  driverInfo: {
-    fontSize: 14,
-    color: '#666',
+  headerTitle: {
+    fontSize: moderateScale(18),
+    fontWeight: '600',
+    color: '#333',
+  },
+  placeholder: {
+    width: scale(40),
+  },
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2C2C2C',
+    marginHorizontal: 0,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(20),
+    borderRadius: 0,
+    marginBottom: verticalScale(20),
+  },
+  avatarContainer: {
+    width: scale(52),
+    height: scale(52),
+    borderRadius: scale(26),
+    backgroundColor: '#ddd',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: scale(16),
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: moderateScale(16),
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: verticalScale(2),
+  },
+  profilePhone: {
+    fontSize: moderateScale(13),
+    color: '#999',
   },
   menuContainer: {
-    paddingTop: 10,
+    paddingHorizontal: scale(16),
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: verticalScale(14),
+    gap: scale(16),
   },
   menuLabel: {
-    fontSize: 16,
-    marginLeft: 15,
+    fontSize: moderateScale(15),
     color: '#333',
-    fontWeight: '500',
+    fontWeight: '400',
   },
-  footer: {
-    marginTop: 'auto',
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+  divider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginHorizontal: scale(16),
+    marginVertical: verticalScale(12),
   },
-  logoutButton: {
+  toggleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(8),
   },
-  logoutText: {
-    fontSize: 16,
-    marginLeft: 15,
-    color: '#E74C3C',
-    fontWeight: '500',
+  toggleLabel: {
+    fontSize: moderateScale(14),
+    color: '#333',
+    fontWeight: '400',
   },
 });
 

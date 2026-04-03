@@ -279,8 +279,8 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     if (!isOnline) return;
     const interval = setInterval(() => {
-      if (Math.random() > 0.7 && !rideData) generateNewRide();
-    }, 8000);
+      if (Math.random() > 0.4 && !rideData) generateNewRide();
+    }, 5000);
     return () => clearInterval(interval);
   }, [isOnline, rideData]);
 
@@ -372,7 +372,8 @@ export default function HomeScreen({ navigation }) {
     // Could transition to showing dropoff/delivery screen here
   };
 
-  const handleCancelRide = () => {
+  const handleCancelRide = (reason) => {
+    console.log('[RIDE] Cancel reason:', reason);
     cancelRide();
   };
 
@@ -427,12 +428,42 @@ export default function HomeScreen({ navigation }) {
 
   const handleCloseRatingModal = useCallback(() => {
     setShowRatingModal(false);
+    setShowEarningsModal(true);
   }, []);
 
   const handleEarningsDone = useCallback(() => {
     setShowEarningsModal(false);
     completeRide();
   }, [completeRide]);
+
+  const handleViewTripDetails = useCallback(() => {
+    setShowEarningsModal(false);
+    // Complete the ride so bottom sheet doesn't show when returning
+    completeRide();
+    navigation.navigate('TripDetails', {
+      tripId: '#0001',
+      amount: '18.05',
+      customerName: rideData?.passengerName || 'Kelsey',
+      date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      duration: '40 min 25 sec',
+      distance: '11 km',
+      vehicleType: 'Bike',
+      paymentMethod: 'Cash',
+      pickup: {
+        address: rideData?.pickup?.address?.split(',')[0] || '1582 Queen St W',
+        city: rideData?.pickup?.address?.split(',')[1] || 'Toronto, ON M6R 1A6, Canada',
+      },
+      dropoff: {
+        address: rideData?.dropoff?.address?.split(',')[0] || '825 Caledonia Rd',
+        city: rideData?.dropoff?.address?.split(',')[1] || 'North York, ON M6B 3X8, Canada',
+      },
+      fare: '18.06',
+      taxes: '0.1',
+      totalEarning: '18.05',
+      payouts: '18.05',
+    });
+  }, [navigation, rideData, completeRide]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -492,6 +523,7 @@ export default function HomeScreen({ navigation }) {
         amount="18.05"
         customerName={rideData?.passengerName || 'Kelsey'}
         onDone={handleEarningsDone}
+        onViewDetails={handleViewTripDetails}
       />
 
       {!isActive && (

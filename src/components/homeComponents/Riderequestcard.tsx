@@ -139,29 +139,48 @@ export default function RideRequestCard({
   }, [visible]);
 
   /* ── Countdown tick ──────────────────────────────────────── */
-/* ── Countdown tick ──────────────────────────────────────── */
-useEffect(() => {
-  if (!visible || accepted) return;
-
-  intervalRef.current = setInterval(() => {
-    setRemaining(prev => {
-      if (prev <= 1) {
+  useEffect(() => {
+    if (!visible || accepted) {
+      if (intervalRef.current) {
         clearInterval(intervalRef.current);
-        return 0; // ✅ pure updater, no side-effects
+        intervalRef.current = null;
       }
-      return prev - 1;
-    });
-  }, 1000);
+      return;
+    }
 
-  return () => clearInterval(intervalRef.current);
-}, [visible, accepted]);
+    intervalRef.current = setInterval(() => {
+      setRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-/* ── Auto-dismiss when timer expires ─────────────────────── */
-useEffect(() => {
-  if (remaining === 0 && visible && !accepted) {
-    onDecline?.(); // ✅ called cleanly as a side-effect
-  }
-}, [remaining]);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [visible, accepted]);
+
+  /* ── Auto-dismiss when timer expires ─────────────────────── */
+  useEffect(() => {
+    if (remaining === 0 && visible && !accepted) {
+      onDecline?.();
+    }
+  }, [remaining, visible, accepted, onDecline]);
+
+  /* ── Reset timer when new ride appears ──────────────────── */
+  useEffect(() => {
+    if (visible) {
+      setRemaining(duration);
+      setAccepted(false);
+    }
+  }, [visible, ride?.id, duration]);
 
   const handleAccept = useCallback(() => {
     clearInterval(intervalRef.current);

@@ -17,9 +17,9 @@ function DrawerNavigator() {
       screenOptions={{
         headerShown: false,
         drawerStyle: {
-          width: '80%',
-          marginTop: scale(12),
-          marginBottom: scale(12),
+          width: '82%',
+          marginTop: scale(14),
+          
         },
       }}>
       <Drawer.Screen name="Home" component={HomeScreen} />

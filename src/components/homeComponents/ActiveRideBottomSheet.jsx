@@ -16,6 +16,7 @@ import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { MapPin, Navigation, ChevronDown, ChevronRight, Phone, MessageSquare, X, Clock, ChevronUp, Home } from 'lucide-react-native';
 import { colors } from '../../utils/colors';
 import { RIDE_STEPS, STEP_CONFIG } from '../../hooks/useRideState';
+import { CancelConfirmationModal, CancelReasonModal, VerifyOrderModal, DropOffOrderModal, TakePhotoModal, DeliveryInfoModal } from './TripCompletionModals';
 
 /* ════════════════════════════════════════════════════════════════
    Navigation FAB
@@ -156,14 +157,8 @@ function DropoffDetailsView({ ride, onCall, onChat, onConfirmOrder, onCompleteDe
         <Text style={styles.confirmOrderBtnText}>Confirm Order</Text>
       </TouchableOpacity>
 
-      {/* Complete Delivery Button */}
-      <TouchableOpacity 
-        style={styles.completeDeliveryBtn} 
-        onPress={onCompleteDelivery}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.completeDeliveryBtnText}>Complete Delivery</Text>
-      </TouchableOpacity>
+
+
     </View>
   );
 }
@@ -249,7 +244,7 @@ function EarningsView({ tripId, amount, customerName, onDone }) {
 /* ════════════════════════════════════════════════════════════════
    Arrived At Pickup View - Shows restaurant details like screenshot
    ════════════════════════════════════════════════════════════════ */
-function ArrivedAtPickupView({ ride, onCall, onShowConfirmation }) {
+function ArrivedAtPickupView({ ride, onCall, onShowConfirmation, onVerifyOrder, isOrderVerified }) {
   const restaurant = ride?.pickup;
   const customerName = ride?.passengerName || 'Kelsey Lavin';
   const orderCount = 1;
@@ -292,12 +287,30 @@ function ArrivedAtPickupView({ ride, onCall, onShowConfirmation }) {
             <Text style={styles.orderDetails}>308YY • {items}</Text>
             <Text style={styles.expectedTime}>Expected time {expectedTime}</Text>
           </View>
-          <ChevronRight size={moderateScale(24)} color={colors.grey} />
+          {isOrderVerified ? (
+            <View style={styles.verifiedBadge}>
+              <Text style={styles.verifiedCheck}>✓</Text>
+            </View>
+          ) : (
+            <ChevronRight size={moderateScale(24)} color={colors.grey} />
+          )}
         </View>
 
-        {/* Verify Order Button */}
-        <TouchableOpacity style={styles.verifyBtn} activeOpacity={0.8}>
-          <Text style={styles.verifyBtnText}>Verify Order</Text>
+        {/* Verify Order Button - changes to verified state */}
+        <TouchableOpacity 
+          style={[
+            styles.verifyBtn, 
+            isOrderVerified && styles.verifyBtnVerified
+          ]} 
+          onPress={isOrderVerified ? null : onVerifyOrder}
+          activeOpacity={isOrderVerified ? 1 : 0.8}
+        >
+          <Text style={[
+            styles.verifyBtnText,
+            isOrderVerified && styles.verifyBtnTextVerified
+          ]}>
+            {isOrderVerified ? 'Order verified' : 'Verify Order'}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -340,6 +353,14 @@ export default function ActiveRideBottomSheet({
   const chevronRot = useRef(new RNAnimated.Value(0)).current;
   const [sheetIndex, setSheetIndex] = useState(0);
   const [showPickupConfirmation, setShowPickupConfirmation] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showCancelReason, setShowCancelReason] = useState(false);
+  const [showVerifyOrder, setShowVerifyOrder] = useState(false);
+  const [isOrderVerified, setIsOrderVerified] = useState(false);
+  // Drop-off flow modals
+  const [showDropOffOrder, setShowDropOffOrder] = useState(false);
+  const [showTakePhoto, setShowTakePhoto] = useState(false);
+  const [showDeliveryInfo, setShowDeliveryInfo] = useState(false);
 
   // Get config based on current step
   const stepConfig = STEP_CONFIG[rideStep] || STEP_CONFIG[RIDE_STEPS.GOING_TO_PICKUP];
@@ -396,20 +417,93 @@ export default function ActiveRideBottomSheet({
     onStartDropoff?.();
   };
 
-  // Handle go back
+  // Handle go back - preserve order verification state
   const handleGoBack = () => {
     setShowPickupConfirmation(false);
+    // Note: isOrderVerified is intentionally preserved
   };
 
-  // Handle complete delivery - trigger rating modal via callback
+  // Handle complete delivery - show delivery info modal instead of rating directly
   const handleCompleteDelivery = () => {
+    setShowDeliveryInfo(true);
+  };
+
+  // Handle confirm order - show drop off order modal
+  const handleConfirmOrder = () => {
+    setShowDropOffOrder(true);
+  };
+
+  // Handle take photo - show take photo modal
+  const handleTakePhoto = () => {
+    setShowDropOffOrder(false);
+    setShowTakePhoto(true);
+  };
+
+  // Handle photo taken - close take photo and show delivery info
+  const handlePhotoTaken = () => {
+    setShowTakePhoto(false);
+    setShowDeliveryInfo(true);
+  };
+
+  // Handle close drop off modal
+  const handleCloseDropOff = () => {
+    setShowDropOffOrder(false);
+  };
+
+  // Handle close take photo
+  const handleCloseTakePhoto = () => {
+    setShowTakePhoto(false);
+  };
+
+  // Handle close delivery info
+  const handleCloseDeliveryInfo = () => {
+    setShowDeliveryInfo(false);
+  };
+
+  // Handle final complete delivery - trigger rating modal
+  const handleFinalCompleteDelivery = () => {
+    setShowDeliveryInfo(false);
     onShowRating?.();
   };
 
-  // Reset confirmation state when step changes
-  useEffect(() => {
-    setShowPickupConfirmation(false);
-  }, [rideStep]);
+  // Handle cancel button press - show confirmation first
+  const handleCancelPress = () => {
+    setShowCancelConfirm(true);
+  };
+
+  // Handle yes cancel - show reason modal
+  const handleYesCancel = () => {
+    setShowCancelConfirm(false);
+    setShowCancelReason(true);
+  };
+
+  // Handle cancel close
+  const handleCancelClose = () => {
+    setShowCancelConfirm(false);
+    setShowCancelReason(false);
+  };
+
+  // Handle reason selected - actually cancel the ride
+  const handleReasonSelected = (reason) => {
+    setShowCancelReason(false);
+    onCancel?.(reason);
+  };
+
+  // Handle verify order button press
+  const handleVerifyPress = () => {
+    setShowVerifyOrder(true);
+  };
+
+  // Handle order verified
+  const handleOrderVerified = () => {
+    setShowVerifyOrder(false);
+    setIsOrderVerified(true);
+  };
+
+  // Handle close verify modal
+  const handleCloseVerify = () => {
+    setShowVerifyOrder(false);
+  };
 
   // Snap bottom sheet when visibility changes
   useEffect(() => {
@@ -480,6 +574,8 @@ export default function ActiveRideBottomSheet({
                 ride={ride} 
                 onCall={onCall} 
                 onShowConfirmation={handleShowConfirmation}
+                onVerifyOrder={handleVerifyPress}
+                isOrderVerified={isOrderVerified}
               />
             )}
           </BottomSheetScrollView>
@@ -512,12 +608,12 @@ export default function ActiveRideBottomSheet({
             {/* Status Text */}
             <Text style={styles.statusText}>Arriving Time</Text>
 
-            {/* Dropoff Details View - Rating/Earnings now shown as separate modals */}
+            {/* Dropoff Details View - with confirm order flow */}
             <DropoffDetailsView
               ride={ride}
               onCall={onCall}
               onChat={onChat}
-              onConfirmOrder={() => {}}
+              onConfirmOrder={handleConfirmOrder}
               onCompleteDelivery={handleCompleteDelivery}
             />
           </BottomSheetScrollView>
@@ -573,7 +669,7 @@ export default function ActiveRideBottomSheet({
               )}
 
               {stepConfig.actions.includes('cancel') && (
-                <TouchableOpacity style={styles.actionBtn} onPress={onCancel} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.actionBtn} onPress={handleCancelPress} activeOpacity={0.7}>
                   <View style={styles.actionIconBg}>
                     <X size={moderateScale(22)} color={colors.secondary} />
                   </View>
@@ -593,6 +689,51 @@ export default function ActiveRideBottomSheet({
           </BottomSheetView>
         )}
       </BottomSheet>
+
+      {/* Cancel Confirmation Modal */}
+      <CancelConfirmationModal
+        visible={showCancelConfirm}
+        customerName={ride?.passengerName || 'Kelsey'}
+        onYesCancel={handleYesCancel}
+        onNo={handleCancelClose}
+      />
+
+      {/* Cancel Reason Modal */}
+      <CancelReasonModal
+        visible={showCancelReason}
+        onSelectReason={handleReasonSelected}
+        onClose={handleCancelClose}
+      />
+
+      {/* Verify Order Modal */}
+      <VerifyOrderModal
+        visible={showVerifyOrder}
+        ride={ride}
+        onVerify={handleOrderVerified}
+        onClose={handleCloseVerify}
+      />
+
+      {/* Drop Off Order Modal */}
+      <DropOffOrderModal
+        visible={showDropOffOrder}
+        ride={ride}
+        onTakePhoto={handleTakePhoto}
+        onClose={handleCloseDropOff}
+      />
+
+      {/* Take Photo Modal */}
+      <TakePhotoModal
+        visible={showTakePhoto}
+        onPhotoTaken={handlePhotoTaken}
+        onClose={handleCloseTakePhoto}
+      />
+
+      {/* Delivery Info Modal */}
+      <DeliveryInfoModal
+        visible={showDeliveryInfo}
+        onCompleteDelivery={handleFinalCompleteDelivery}
+        onClose={handleCloseDeliveryInfo}
+      />
     </>
   );
 }
@@ -743,7 +884,7 @@ const styles = StyleSheet.create({
 
   /* Arrived Button */
   arrivedBtn: {
-    backgroundColor: '#D3D3D3',
+    backgroundColor: colors.secondary,
     borderRadius: moderateScale(12),
     paddingVertical: verticalScale(16),
     alignItems: 'center',
@@ -753,7 +894,7 @@ const styles = StyleSheet.create({
   arrivedBtnText: {
     fontSize: moderateScale(16),
     fontWeight: '700',
-    color: '#666666',
+    color: colors.primary,
   },
 
   /* Legacy styles (keep for compatibility) */
@@ -869,10 +1010,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  verifyBtnVerified: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(16),
+  },
   verifyBtnText: {
     fontSize: moderateScale(15),
     fontWeight: '600',
     color: colors.secondary,
+  },
+  verifyBtnTextVerified: {
+    color: '#C8FF00',
+    fontSize: moderateScale(16),
+    fontWeight: '700',
+  },
+  verifiedBadge: {
+    width: scale(24),
+    height: scale(24),
+    borderRadius: scale(12),
+    backgroundColor: '#4CAF50',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verifiedCheck: {
+    color: colors.white,
+    fontSize: moderateScale(14),
+    fontWeight: '700',
   },
 
   /* Help Row */
@@ -1108,7 +1272,7 @@ const styles = StyleSheet.create({
     color: colors.secondary,
   },
   confirmOrderBtn: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: colors.secondary,
     borderRadius: moderateScale(12),
     paddingVertical: verticalScale(14),
     alignItems: 'center',
@@ -1118,7 +1282,7 @@ const styles = StyleSheet.create({
   confirmOrderBtnText: {
     fontSize: moderateScale(15),
     fontWeight: '600',
-    color: colors.secondary,
+    color: colors.primary,
   },
   completeDeliveryBtn: {
     backgroundColor: '#1A1A1A',
