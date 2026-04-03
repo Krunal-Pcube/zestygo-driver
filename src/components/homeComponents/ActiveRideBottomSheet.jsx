@@ -333,14 +333,13 @@ export default function ActiveRideBottomSheet({
   onCancel,
   onStartDropoff,
   onCompleteRide,
+  onShowRating,  // New callback to show rating modal
   isVisible,
 }) {
   const bottomSheetRef = useRef(null);
   const chevronRot = useRef(new RNAnimated.Value(0)).current;
   const [sheetIndex, setSheetIndex] = useState(0);
   const [showPickupConfirmation, setShowPickupConfirmation] = useState(false);
-  const [showRating, setShowRating] = useState(false);
-  const [showEarnings, setShowEarnings] = useState(false);
 
   // Get config based on current step
   const stepConfig = STEP_CONFIG[rideStep] || STEP_CONFIG[RIDE_STEPS.GOING_TO_PICKUP];
@@ -402,28 +401,14 @@ export default function ActiveRideBottomSheet({
     setShowPickupConfirmation(false);
   };
 
-  // Handle complete delivery - show rating sheet
+  // Handle complete delivery - trigger rating modal via callback
   const handleCompleteDelivery = () => {
-    setShowRating(true);
-  };
-
-  // Handle submit rating - show earnings sheet
-  const handleSubmitRating = () => {
-    setShowRating(false);
-    setShowEarnings(true);
-  };
-
-  // Handle done - complete ride and return to online
-  const handleDone = () => {
-    setShowEarnings(false);
-    onCompleteRide?.();
+    onShowRating?.();
   };
 
   // Reset confirmation state when step changes
   useEffect(() => {
     setShowPickupConfirmation(false);
-    setShowRating(false);
-    setShowEarnings(false);
   }, [rideStep]);
 
   // Snap bottom sheet when visibility changes
@@ -527,28 +512,14 @@ export default function ActiveRideBottomSheet({
             {/* Status Text */}
             <Text style={styles.statusText}>Arriving Time</Text>
 
-            {/* Dropoff Details View */}
-            {showRating ? (
-              <RatingView
-                customerName={ride?.passengerName || 'Kelsey Lavin'}
-                onSubmit={handleSubmitRating}
-              />
-            ) : showEarnings ? (
-              <EarningsView
-                tripId="#0001"
-                amount="18.05"
-                customerName={ride?.passengerName || 'Kelsey'}
-                onDone={handleDone}
-              />
-            ) : (
-              <DropoffDetailsView
-                ride={ride}
-                onCall={onCall}
-                onChat={onChat}
-                onConfirmOrder={() => {}}
-                onCompleteDelivery={handleCompleteDelivery}
-              />
-            )}
+            {/* Dropoff Details View - Rating/Earnings now shown as separate modals */}
+            <DropoffDetailsView
+              ride={ride}
+              onCall={onCall}
+              onChat={onChat}
+              onConfirmOrder={() => {}}
+              onCompleteDelivery={handleCompleteDelivery}
+            />
           </BottomSheetScrollView>
         ) : (
           <BottomSheetView style={styles.sheetBody}>

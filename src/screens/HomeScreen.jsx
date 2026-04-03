@@ -36,8 +36,8 @@ import RideRequestCard from '../components/homeComponents/Riderequestcard';
 import HomeHeader from '../components/homeComponents/homeHeader';
 import MapComponent from '../components/homeComponents/MapComponent';
 import BottomSheetComponent from '../components/homeComponents/bottomsheetComponent';
-import RideArrivingComponent from '../components/homeComponents/RideArrivingComponent';
 import ActiveRideBottomSheet from '../components/homeComponents/ActiveRideBottomSheet';
+import { RatingModal, EarningsModal } from '../components/homeComponents/TripCompletionModals';
 import useRideState from '../hooks/useRideState';
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -177,6 +177,8 @@ export default function HomeScreen({ navigation }) {
   const [hasArrived, setHasArrived] = useState(false);
   const [showRideRequests, setShowRideRequests] = useState(false);
   const [sheetIndex, setSheetIndex] = useState(0);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showEarningsModal, setShowEarningsModal] = useState(false);
   const [location, setLocation] = useState(null);
   const [heading, setHeading] = useState(0);
   const [cameraHeading, setCameraHeading] = useState(0);
@@ -414,6 +416,24 @@ export default function HomeScreen({ navigation }) {
   const handleMapClick = useCallback(() => {
   }, [navigation, rideData, location]);
 
+  const handleShowRating = useCallback(() => {
+    setShowRatingModal(true);
+  }, []);
+
+  const handleRatingSubmit = useCallback(() => {
+    setShowRatingModal(false);
+    setShowEarningsModal(true);
+  }, []);
+
+  const handleCloseRatingModal = useCallback(() => {
+    setShowRatingModal(false);
+  }, []);
+
+  const handleEarningsDone = useCallback(() => {
+    setShowEarningsModal(false);
+    completeRide();
+  }, [completeRide]);
+
   return (
     <View style={{ flex: 1 }}>
 
@@ -446,7 +466,7 @@ export default function HomeScreen({ navigation }) {
         ride={rideData}
         driverLocation={location}
         rideStep={currentStep}
-        isVisible={isActive}
+        isVisible={isActive && !showRatingModal && !showEarningsModal}
         onArrived={handleArrived}
         onNavigate={() => console.log('[NAV] Starting navigation')}
         onCall={() => console.log('[CALL] Calling customer')}
@@ -454,6 +474,24 @@ export default function HomeScreen({ navigation }) {
         onCancel={handleCancelRide}
         onStartDropoff={startDropoff}
         onCompleteRide={completeRide}
+        onShowRating={handleShowRating}
+      />
+
+      {/* Rating Modal */}
+      <RatingModal
+        visible={showRatingModal}
+        customerName={rideData?.passengerName || 'Kelsey Lavin'}
+        onSubmit={handleRatingSubmit}
+        onClose={handleCloseRatingModal}
+      />
+
+      {/* Earnings Modal */}
+      <EarningsModal
+        visible={showEarningsModal}
+        tripId="#0001"
+        amount="18.05"
+        customerName={rideData?.passengerName || 'Kelsey'}
+        onDone={handleEarningsDone}
       />
 
       {!isActive && (

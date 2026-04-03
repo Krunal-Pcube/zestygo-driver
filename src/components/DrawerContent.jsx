@@ -2,7 +2,6 @@ import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {
   DrawerContentScrollView,
-  DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import {User, Wallet, History, Settings, LogOut, Home} from 'lucide-react-native';
 
@@ -60,7 +59,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 20,
   },
-  header: {
+  header: { 
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
