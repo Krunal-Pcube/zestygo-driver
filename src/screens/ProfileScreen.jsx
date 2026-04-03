@@ -4,20 +4,8 @@ import {
   ScrollView, Image, StatusBar,
 } from 'react-native';
 import { ArrowLeft, Pencil, Star, Save } from 'lucide-react-native';
+import { colors } from '../utils/colors';
 import { scale, moderateScale } from 'react-native-size-matters';
-
-const C = {
-  primary: '#CFFF04',
-  secondary: '#1F1F1F',
-  white: '#FFFFFF',
-  inputBg: '#F5F5F5',
-  inputBorder: '#E8E8E8',
-  muted: '#AAAAAA',
-  divider: '#F0F0F0',
-  orange: '#FFA033',
-  dark: '#1A1A1A',
-  mediumGrey: '#888888',
-};
 
 const profileData = {
   firstName: 'James',
@@ -40,7 +28,6 @@ const InfoRow = ({ label, value }) => (
 function ProfileScreen({ navigation }) {
   return (
     <View style={styles.container}>
-   
 
       {/* ── Dark Header Bar ── */}
       <View style={styles.header}>
@@ -49,10 +36,10 @@ function ProfileScreen({ navigation }) {
           style={styles.headerBtn}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={22} color={C.white} strokeWidth={2.5} />
+          <ArrowLeft size={22} color={colors.white} strokeWidth={2.5} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7}>
-          <Pencil size={20} color={C.white} strokeWidth={2.5} />
+          <Pencil size={20} color={colors.white} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
@@ -68,7 +55,7 @@ function ProfileScreen({ navigation }) {
           <View style={styles.avatarWrapper}>
             <Image source={{ uri: profileData.avatar }} style={styles.avatar} />
             <View style={styles.ratingBadge}>
-              <Star size={10} color={C.white} fill={C.white} />
+              <Star size={10} color={colors.white} fill={colors.white} />
               <Text style={styles.ratingText}>{profileData.rating}</Text>
             </View>
           </View>
@@ -104,7 +91,7 @@ function ProfileScreen({ navigation }) {
         {/* ── Update Button ── */}
         <View style={styles.updateWrapper}>
           <TouchableOpacity style={styles.updateBtn} activeOpacity={0.85}>
-            <Save size={18} color={C.secondary} strokeWidth={2.5} />
+            <Save size={18} color={colors.secondary} strokeWidth={2.5} />
             <Text style={styles.updateBtnText}>Update Profile</Text>
           </TouchableOpacity>
         </View>
@@ -115,7 +102,7 @@ function ProfileScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.white },
+  container: { flex: 1, backgroundColor: colors.white },
 
   // ── Header ────────────────────────────────────────────────────────────────
   header: {
@@ -125,7 +112,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: scale(16),
     paddingTop: scale(20),
     paddingBottom: scale(50),          // extra bottom so card overlaps nicely
-    backgroundColor: C.secondary,
+    backgroundColor: colors.secondary,
   },
   headerBtn: {
     width: 36, height: 36, borderRadius: 10,
@@ -139,7 +126,7 @@ const styles = StyleSheet.create({
 
   // ── Avatar Card ───────────────────────────────────────────────────────────
   avatarCard: {
-    backgroundColor: C.white,
+    backgroundColor: colors.white,
     marginHorizontal: scale(16),
     borderRadius: scale(16),
     alignItems: 'center',
@@ -162,7 +149,7 @@ const styles = StyleSheet.create({
     height: scale(90),
     borderRadius: scale(45),
     borderWidth: 3,
-    borderColor: C.white,
+    borderColor: colors.white,
   },
   ratingBadge: {
     position: 'absolute',
@@ -172,14 +159,14 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -scale(18) }],
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.orange,
+    backgroundColor: colors.orange,
     paddingHorizontal: scale(7),
     paddingVertical: scale(2),
     borderRadius: scale(12),
     gap: 3,
   },
   ratingText: {
-    color: C.white,
+    color: colors.white,
     fontSize: moderateScale(11),
     fontWeight: '700',
   },
@@ -187,7 +174,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: moderateScale(19),
     fontWeight: '700',
-    color: C.dark,
+    color: colors.dark,
     marginBottom: scale(16),
   },
 
@@ -196,23 +183,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
     borderTopWidth: 1,
-    borderTopColor: C.divider,
+    borderTopColor: colors.divider,
     paddingVertical: scale(14),
   },
   statItem: { flex: 1, alignItems: 'center' },
   statValue: {
     fontSize: moderateScale(17),
     fontWeight: '700',
-    color: C.dark,
+    color: colors.dark,
     marginBottom: 2,
   },
   statLabel: {
     fontSize: moderateScale(12),
-    color: C.mediumGrey,
+    color: colors.mediumGrey,
   },
   statDivider: {
     width: 1, height: scale(30),
-    backgroundColor: C.divider,
+    backgroundColor: colors.divider,
     alignSelf: 'center',
   },
 
@@ -224,22 +211,22 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: moderateScale(14),
     fontWeight: '700',
-    color: C.dark,
+    color: colors.dark,
     marginBottom: scale(4),
   },
   infoRow: {
     borderBottomWidth: 1,
-    borderBottomColor: C.divider,
+    borderBottomColor: colors.divider,
     paddingVertical: scale(12),
   },
   infoLabel: {
     fontSize: moderateScale(12),
-    color: C.mediumGrey,
+    color: colors.mediumGrey,
     marginBottom: scale(3),
   },
   infoValue: {
     fontSize: moderateScale(15),
-    color: C.dark,
+    color: colors.dark,
     fontWeight: '500',
   },
 
@@ -253,17 +240,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: C.primary,
+    backgroundColor: colors.primary,
     borderRadius: 16,
     paddingVertical: scale(16),
-    shadowColor: C.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.45,
     shadowRadius: 14,
     elevation: 7,
   },
   updateBtnText: {
-    color: C.secondary,
+    color: colors.secondary,
     fontSize: moderateScale(15),
     fontWeight: '900',
     letterSpacing: 0.4,

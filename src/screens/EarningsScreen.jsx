@@ -6,9 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { ArrowLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { colors } from '../utils/colors';
 import { scale, moderateScale } from 'react-native-size-matters';
+import Header from '../components/Header';
 
 function EarningsScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('earnings');
@@ -25,17 +26,11 @@ function EarningsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation?.goBack()} 
-          style={styles.backBtn}
-          activeOpacity={0.7}
-        >
-          <ArrowLeft size={22} color={colors.darkText} strokeWidth={2.5} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Earnings</Text>
-        <View style={styles.placeholder} />
-      </View>
+      <Header 
+        title="Earnings" 
+        navigation={navigation}
+        showBack={true}
+      />
 
       {/* Tabs */}
       <View style={styles.tabContainer}>
@@ -48,7 +43,6 @@ function EarningsScreen({ navigation }) {
             All Earnings
           </Text>
         </TouchableOpacity>
-        <View style={styles.tabDivider} />
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'wallet' && styles.tabActive]}
           onPress={() => setActiveTab('wallet')}
@@ -68,7 +62,11 @@ function EarningsScreen({ navigation }) {
         </View>
 
         {/* All Orders Section */}
-        <TouchableOpacity style={styles.sectionItem} activeOpacity={0.7}>
+        <TouchableOpacity 
+          style={styles.sectionItem} 
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('AllOrders')}
+        >
           <View style={styles.sectionLeft}>
             <Text style={styles.sectionTitle}>All Orders</Text>
             <Text style={styles.sectionSubtitle}>Order history and Order Earnings</Text>
@@ -97,34 +95,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.white,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: scale(16),
-    paddingTop: scale(50),
-    paddingBottom: scale(16),
-    backgroundColor: colors.white,
-  },
-  backBtn: {
-    padding: scale(8),
-    marginLeft: -scale(8),
-  },
-  headerTitle: {
-    fontSize: moderateScale(18),
-    fontWeight: '700',
-    color: colors.darkText,
-  },
-  placeholder: {
-    width: scale(38),
-  },
   tabContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: scale(12),
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
   },
   tab: {
     flex: 1,
@@ -166,7 +141,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.mediumGrey,
     marginBottom: scale(4),
-  },
+  },           
   earningsAmount: {
     fontSize: moderateScale(32),
     fontWeight: '800',

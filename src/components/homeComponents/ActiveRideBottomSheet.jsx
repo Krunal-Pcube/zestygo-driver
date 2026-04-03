@@ -388,6 +388,7 @@ export default function ActiveRideBottomSheet({
 
   // Handle primary button press based on step
   const handlePrimaryAction = () => {
+    console.log('[ActiveRideBottomSheet] Primary action pressed, rideStep:', rideStep);
     switch (rideStep) {
       case RIDE_STEPS.GOING_TO_PICKUP:
         onArrived?.();
@@ -679,13 +680,15 @@ export default function ActiveRideBottomSheet({
             </View>
 
             {/* Primary Action Button */}
-            <TouchableOpacity 
-              style={styles.arrivedBtn} 
-              onPress={handlePrimaryAction}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.arrivedBtnText}>{stepConfig.primaryButtonText}</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonWrapper}>
+              <TouchableOpacity 
+                style={styles.arrivedBtn} 
+                onPress={handlePrimaryAction}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.arrivedBtnText}>{stepConfig.primaryButtonText}</Text>
+              </TouchableOpacity>
+            </View>
           </BottomSheetView>
         )}
       </BottomSheet>
@@ -890,6 +893,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: verticalScale(4),
+    minHeight: scale(48),
+    zIndex: 100,
+    elevation: 10,
   },
   arrivedBtnText: {
     fontSize: moderateScale(16),
@@ -897,7 +903,11 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
 
-  /* Legacy styles (keep for compatibility) */
+  /* Button Wrapper */
+  buttonWrapper: {
+    zIndex: 100,
+    elevation: 10,
+  },
   chevronBtn: {
     width: scale(44),
     height: scale(44),

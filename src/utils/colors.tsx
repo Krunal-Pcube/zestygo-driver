@@ -35,6 +35,7 @@ export const colors = {
   headerBg: '#F8F9FA',
   border: '#E0E0E0',
   darkText: '#333333',
+  dark: '#1A1A1A',
   cardBgBlue: '#F0F8FF',
   switchTrackOff: '#D3D3D3',
   accentBlue: '#4A90D9',
