@@ -22,4 +22,20 @@ export const colors = {
   
   errorColor: '#FF6B6B',
   comboheaderBlack: '#4D4D4D',
+
+  // Auth screen colors
+  muted: '#AAAAAA',
+  placeholder: '#BBBBBB',
+  divider: '#F0F0F0',
+  inputBg: '#F5F5F5',
+  inputBorder: '#E8E8E8',
+  success: '#00C27A',
+
+  // Additional app colors
+  headerBg: '#F8F9FA',
+  border: '#E0E0E0',
+  darkText: '#333333',
+  cardBgBlue: '#F0F8FF',
+  switchTrackOff: '#D3D3D3',
+  accentBlue: '#4A90D9',
 };

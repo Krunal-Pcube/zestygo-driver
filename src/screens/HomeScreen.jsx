@@ -30,6 +30,7 @@ import {
   Car, Users, MapPin, Navigation, Navigation2,
   Clock, Star, CheckCircle, X,
 } from 'lucide-react-native';
+import { useIsFocused } from '@react-navigation/native';
 
 import { colors } from '../utils/colors';
 import RideRequestCard from '../components/homeComponents/Riderequestcard';
@@ -193,6 +194,8 @@ export default function HomeScreen({ navigation }) {
   const snapPoints = useMemo(() => ['15%'], []);
   const floatBtnOffset = verticalScale(72);
 
+  const isFocused = useIsFocused();
+
   /* ── Request permission + start GPS ──────────────────────────── */
   useEffect(() => {
     let cancelled = false;
@@ -218,6 +221,7 @@ export default function HomeScreen({ navigation }) {
       });
 
       // ── Get initial fix right away ────────────────────────────
+      // First try: get cached location quickly (max 30s old)
       Geolocation.getCurrentPosition(
         pos => {
           if (cancelled) return;
@@ -235,7 +239,7 @@ export default function HomeScreen({ navigation }) {
             setLocation({ latitude: 37.3541, longitude: -121.9552 });
           }
         },
-        { enableHighAccuracy: false, timeout: 15000, maximumAge: 5000 },
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 30000 },
       );
 
       // ── Continuous watch ──────────────────────────────────────
@@ -471,6 +475,7 @@ export default function HomeScreen({ navigation }) {
       <HomeHeader navigation={navigation} earnings={earnings} />
 
       <MapComponent
+        key={`map-${isFocused ? 'focused' : 'blurred'}`}
         location={location}
         heading={heading}
         cameraHeading={cameraHeading}

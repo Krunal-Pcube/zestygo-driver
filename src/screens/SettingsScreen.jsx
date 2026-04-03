@@ -9,6 +9,7 @@ import {
   Switch,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { colors } from '../utils/colors';
 
 function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
@@ -27,37 +28,37 @@ function SettingsScreen() {
           
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Icon name="notifications-outline" size={24} color="#4A90D9" />
+              <Icon name="notifications-outline" size={24} color={colors.accentBlue} />
               <Text style={styles.settingText}>Notifications</Text>
             </View>
             <Switch
               value={notifications}
               onValueChange={setNotifications}
-              trackColor={{false: '#D3D3D3', true: '#4A90D9'}}
+              trackColor={{false: colors.switchTrackOff, true: colors.accentBlue}}
             />
           </View>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Icon name="moon-outline" size={24} color="#4A90D9" />
+              <Icon name="moon-outline" size={24} color={colors.accentBlue} />
               <Text style={styles.settingText}>Dark Mode</Text>
             </View>
             <Switch
               value={darkMode}
               onValueChange={setDarkMode}
-              trackColor={{false: '#D3D3D3', true: '#4A90D9'}}
+              trackColor={{false: colors.switchTrackOff, true: colors.accentBlue}}
             />
           </View>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Icon name="car-outline" size={24} color="#4A90D9" />
+              <Icon name="car-outline" size={24} color={colors.accentBlue} />
               <Text style={styles.settingText}>Auto Accept Rides</Text>
             </View>
             <Switch
               value={autoAccept}
               onValueChange={setAutoAccept}
-              trackColor={{false: '#D3D3D3', true: '#4A90D9'}}
+              trackColor={{false: colors.switchTrackOff, true: colors.accentBlue}}
             />
           </View>
         </View>
@@ -67,18 +68,18 @@ function SettingsScreen() {
           
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Icon name="help-circle-outline" size={24} color="#4A90D9" />
+              <Icon name="help-circle-outline" size={24} color={colors.accentBlue} />
               <Text style={styles.settingText}>Help Center</Text>
             </View>
-            <Icon name="chevron-forward" size={20} color="#999" />
+            <Icon name="chevron-forward" size={20} color={colors.grey} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Icon name="chatbubble-outline" size={24} color="#4A90D9" />
+              <Icon name="chatbubble-outline" size={24} color={colors.accentBlue} />
               <Text style={styles.settingText}>Contact Support</Text>
             </View>
-            <Icon name="chevron-forward" size={20} color="#999" />
+            <Icon name="chevron-forward" size={20} color={colors.grey} />
           </TouchableOpacity>
         </View>
 
@@ -87,18 +88,18 @@ function SettingsScreen() {
           
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Icon name="document-text-outline" size={24} color="#4A90D9" />
+              <Icon name="document-text-outline" size={24} color={colors.accentBlue} />
               <Text style={styles.settingText}>Terms of Service</Text>
             </View>
-            <Icon name="chevron-forward" size={20} color="#999" />
+            <Icon name="chevron-forward" size={20} color={colors.grey} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Icon name="shield-outline" size={24} color="#4A90D9" />
+              <Icon name="shield-outline" size={24} color={colors.accentBlue} />
               <Text style={styles.settingText}>Privacy Policy</Text>
             </View>
-            <Icon name="chevron-forward" size={20} color="#999" />
+            <Icon name="chevron-forward" size={20} color={colors.grey} />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -109,18 +110,18 @@ function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: colors.white,
   },
   header: {
     padding: 20,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.headerBg,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#333',
+    color: colors.darkText,
   },
   content: {
     flex: 1,
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: colors.mediumGrey,
     paddingHorizontal: 20,
     marginBottom: 8,
     textTransform: 'uppercase',
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: 'white',
+    backgroundColor: colors.white,
   },
   settingLeft: {
     flexDirection: 'row',
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
   },
   settingText: {
     fontSize: 16,
-    color: '#333',
+    color: colors.darkText,
     marginLeft: 12,
   },
 });

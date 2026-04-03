@@ -50,6 +50,7 @@ function DrawerContent(props) {
 
       {/* Full-width Profile Card - Dark */}
       <TouchableOpacity
+        activeOpacity={0.7}
         style={styles.profileCard}
         onPress={() => navigation.navigate('Profile')}>
         <View style={styles.avatarContainer}>

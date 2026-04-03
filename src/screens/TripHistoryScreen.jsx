@@ -7,6 +7,7 @@ import {
   ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { colors } from '../utils/colors';
 
 function TripHistoryScreen() {
   const trips = [
@@ -29,9 +30,9 @@ function TripHistoryScreen() {
               <Text style={styles.tripFare}>${trip.fare.toFixed(2)}</Text>
             </View>
             <View style={styles.tripRoute}>
-              <Icon name="location" size={16} color="#4A90D9" />
+              <Icon name="location" size={16} color={colors.accentBlue} />
               <Text style={styles.routeText}>{trip.from}</Text>
-              <Icon name="arrow-forward" size={16} color="#999" />
+              <Icon name="arrow-forward" size={16} color={colors.grey} />
               <Text style={styles.routeText}>{trip.to}</Text>
             </View>
           </View>
@@ -44,25 +45,25 @@ function TripHistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: colors.white,
   },
   header: {
     padding: 20,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.headerBg,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#333',
+    color: colors.darkText,
   },
   content: {
     flex: 1,
     padding: 16,
   },
   tripCard: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.headerBg,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -74,12 +75,12 @@ const styles = StyleSheet.create({
   },
   tripDate: {
     fontSize: 14,
-    color: '#666',
+    color: colors.mediumGrey,
   },
   tripFare: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#4CAF50',
+    color: colors.green,
   },
   tripRoute: {
     flexDirection: 'row',
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
   },
   routeText: {
     fontSize: 14,
-    color: '#333',
+    color: colors.darkText,
   },
 });
 

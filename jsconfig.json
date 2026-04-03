@@ -11,7 +11,7 @@
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "baseUrl": "."
+    "baseUrl": "." 
   },
   "exclude": [ 
     "node_modules",
@@ -23,5 +23,5 @@
   "include": [
     "**/*.js",
     "**/*.jsx"
-, "src/screens/HomeScreen.jsx", "src/components/homeComponents/homeHeader.tsx"  ]
+, "src/screens/HomeScreen.jsx", "src/components/homeComponents/homeHeader.tsx", "src/navigation/RootNavigator.tsx"  ]
 }

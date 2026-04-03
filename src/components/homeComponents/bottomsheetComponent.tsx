@@ -118,8 +118,8 @@ function AnimatedOnlineStrip() {
 
 const stripStyles = StyleSheet.create({
   track: {
-    width: '95%',                  // full width of parent
-    height: verticalScale(1.5),
+    width: '100%',                  // full width of parent
+    height: verticalScale(2),
     borderRadius: scale(4),
     backgroundColor: colors.lightgrey,
     overflow: 'hidden',
