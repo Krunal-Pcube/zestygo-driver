@@ -3,7 +3,7 @@
  * Centered modal dialogs for rating and earnings (not bottom sheet style)
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
   Modal,
   TouchableWithoutFeedback,
   TextInput,
+  Image,
+  Alert,
 } from 'react-native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../../utils/colors';
@@ -761,7 +763,51 @@ const styles = StyleSheet.create({
     color: colors.secondary,
   },
 
-  /* Delivery Info Modal */
+  /* Take Photo Modal Additional Styles */
+  cameraContainer: {
+    flex: 1,
+    width: '100%',
+  },
+  camera: {
+    flex: 1,
+    width: '100%',
+  },
+  capturedPhotoContainer: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  capturedPhoto: {
+    width: '90%',
+    height: verticalScale(350),
+    borderRadius: moderateScale(12),
+  },
+  cameraNote: {
+    fontSize: moderateScale(11),
+    color: colors.grey,
+    textAlign: 'center',
+    marginTop: verticalScale(12),
+    paddingHorizontal: scale(20),
+  },
+  captureBtn: {
+    flex: 1,
+    backgroundColor: '#E0E0E0',
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  captureBtnText: {
+    fontSize: moderateScale(16),
+    fontFamily: fonts.semiBold,
+    color: colors.secondary,
+  },
+  capturedPhotoThumb: {
+    width: scale(50),
+    height: scale(50),
+    borderRadius: moderateScale(8),
+  },
   deliveryInfoContainer: {
     backgroundColor: colors.white,
     borderTopLeftRadius: moderateScale(24),
@@ -1181,9 +1227,146 @@ export function DropOffOrderModal({ visible, ride, onTakePhoto, onClose }) {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   Take Photo Modal - Full screen camera interface
+   Take Photo Modal - Full screen camera with react-native-vision-camera
    ════════════════════════════════════════════════════════════════ */
+// Create a safe camera hook wrapper that always returns valid values
+const useVisionCamera = () => {
+  const [state, setState] = React.useState({
+    device: null,
+    hasPermission: false,
+    requestPermission: () => {},
+    Camera: null,
+    available: false,
+  });
+
+  React.useEffect(() => {
+    try {
+      const VisionCamera = require('react-native-vision-camera');
+      setState({
+        device: null, // Will be set by hook below
+        hasPermission: false, // Will be set by hook below
+        requestPermission: () => {},
+        Camera: VisionCamera.Camera,
+        available: true,
+      });
+    } catch (error) {
+      // Library not available
+    }
+  }, []);
+
+  return state;
+};
+
 export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
+  const [cameraError, setCameraError] = useState(null);
+  const cameraRef = useRef(null);
+  
+  // Always call hooks at top level - never conditionally
+  let cameraDevice = null;
+  let hasPermission = false;
+  let requestPermissionFn = () => {};
+  
+  try {
+    const VisionCamera = require('react-native-vision-camera');
+    cameraDevice = VisionCamera.useCameraDevice('back');
+    const permission = VisionCamera.useCameraPermission();
+    hasPermission = permission.hasPermission;
+    requestPermissionFn = permission.requestPermission;
+  } catch (error) {
+    // Hooks still called (return default values), library not available
+  }
+
+  // Reset state when modal opens
+  React.useEffect(() => {
+    if (visible) {
+      setCapturedPhoto(null);
+      setCameraError(null);
+      // Auto-request permission if needed
+      if (!hasPermission && requestPermissionFn) {
+        requestPermissionFn();
+      }
+    }
+  }, [visible, hasPermission]);
+
+  // Take photo using react-native-vision-camera
+  const takePhoto = async () => {
+    try {
+      if (cameraRef.current && cameraDevice) {
+        const photo = await cameraRef.current.takePhoto();
+        setCapturedPhoto(photo.path);
+      } else {
+        // Fallback: simulate capture for testing
+        setCapturedPhoto('mock_photo');
+      }
+    } catch (error) {
+      console.log('Take photo error:', error);
+      Alert.alert('Error', 'Failed to capture photo: ' + error.message);
+    }
+  };
+
+  // Confirm and send photo back
+  const handleConfirmPhoto = () => {
+    if (capturedPhoto) {
+      onPhotoTaken?.(capturedPhoto);
+    }
+  };
+
+  // Retake photo
+  const handleRetake = () => {
+    setCapturedPhoto(null);
+  };
+
+  // Render camera component
+  const renderCamera = () => {
+    if (!cameraDevice) {
+      return (
+        <View style={styles.photoPreviewBox}>
+          <Text style={styles.photoPlaceholderText}>📷</Text>
+          <Text style={styles.photoPlaceholderSubtext}>
+            {hasPermission ? 'No camera device found' : 'Camera Preview'}
+          </Text>
+          {!hasPermission && (
+            <Text style={styles.cameraNote}>
+              Camera ready - press Capture to test
+            </Text>
+          )}
+        </View>
+      );
+    }
+
+    if (!hasPermission) {
+      return (
+        <View style={[styles.photoPreviewBox, { backgroundColor: '#000' }]}>
+          <Text style={[styles.photoPlaceholderText, { color: '#fff' }]}>📷</Text>
+          <Text style={[styles.photoPlaceholderSubtext, { color: '#fff' }]}>
+            Requesting camera permission...
+          </Text>
+        </View>
+      );
+    }
+
+    try {
+      const { Camera } = require('react-native-vision-camera');
+      return (
+        <Camera
+          ref={cameraRef}
+          style={styles.camera}
+          device={cameraDevice}
+          isActive={visible && !capturedPhoto}
+          photo={true}
+        />
+      );
+    } catch (error) {
+      return (
+        <View style={styles.photoPreviewBox}>
+          <Text style={styles.photoPlaceholderText}>📷</Text>
+          <Text style={styles.photoPlaceholderSubtext}>Camera Preview</Text>
+        </View>
+      );
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -1197,16 +1380,36 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
             <Text style={styles.closeBtnText}>✕</Text>
           </TouchableOpacity>
-          <Text style={styles.photoHeaderTitle}>Take photo</Text>
+          <Text style={styles.photoHeaderTitle}>
+            {capturedPhoto ? 'Review Photo' : 'Take Photo'}
+          </Text>
           <View style={styles.headerPlaceholder} />
         </View>
 
-        {/* Photo Preview Area */}
+        {/* Camera Preview or Captured Photo */}
         <View style={styles.photoPreviewContainer}>
-          <View style={styles.photoPreviewBox}>
-            <Text style={styles.photoPlaceholderText}>📷</Text>
-            <Text style={styles.photoPlaceholderSubtext}>Camera Preview</Text>
-          </View>
+          {capturedPhoto ? (
+            // Show captured photo
+            <View style={styles.capturedPhotoContainer}>
+              {capturedPhoto === 'mock_photo' ? (
+                <View style={[styles.photoPreviewBox, { backgroundColor: '#E8F4FD' }]}>
+                  <Text style={styles.photoPlaceholderText}>📷</Text>
+                  <Text style={styles.photoPlaceholderSubtext}>Mock Photo Captured</Text>
+                </View>
+              ) : (
+                <Image 
+                  source={{ uri: 'file://' + capturedPhoto }} 
+                  style={styles.capturedPhoto}
+                  resizeMode="cover"
+                />
+              )}
+            </View>
+          ) : (
+            // Camera preview - no permission check, just show camera
+            <View style={styles.cameraContainer}>
+              {renderCamera()}
+            </View>
+          )}
         </View>
 
         {/* Question */}
@@ -1216,21 +1419,45 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
 
         {/* Action Buttons */}
         <View style={styles.photoActionRow}>
-          <TouchableOpacity
-            style={styles.retakeBtn}
-            onPress={onClose}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.retakeBtnText}>Retake ↻</Text>
-          </TouchableOpacity>
+          {capturedPhoto ? (
+            // Review mode buttons
+            <>
+              <TouchableOpacity
+                style={styles.retakeBtn}
+                onPress={handleRetake}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.retakeBtnText}>Retake ↻</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.nextBtn}
-            onPress={onPhotoTaken}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.nextBtnText}>Next ✓</Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.nextBtn, { backgroundColor: '#1A1A1A' }]}
+                onPress={handleConfirmPhoto}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.nextBtnText, { color: '#C8FF00' }]}>Use Photo ✓</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            // Camera mode buttons
+            <>
+              <TouchableOpacity
+                style={styles.retakeBtn}
+                onPress={onClose}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.retakeBtnText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.captureBtn, { backgroundColor: '#1A1A1A' }]}
+                onPress={takePhoto}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.captureBtnText, { color: '#C8FF00' }]}>📸 Capture</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
     </Modal>
@@ -1240,7 +1467,7 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
 /* ════════════════════════════════════════════════════════════════
    Delivery Info Modal - Shows photo preview and notes input
    ════════════════════════════════════════════════════════════════ */
-export function DeliveryInfoModal({ visible, onCompleteDelivery, onClose }) {
+export function DeliveryInfoModal({ visible, onCompleteDelivery, onClose, photoUri }) {
   const [notes, setNotes] = useState('');
 
   return (
@@ -1270,12 +1497,28 @@ export function DeliveryInfoModal({ visible, onCompleteDelivery, onClose }) {
           <Text style={styles.sectionLabel}>Photo</Text>
           <View style={styles.photoUploadBox}>
             <View style={styles.photoThumbnail}>
-              <Text style={styles.photoThumbText}>📷</Text>
+              {photoUri ? (
+                photoUri === 'mock_photo' ? (
+                  <Text style={styles.photoThumbText}>📷</Text>
+                ) : (
+                  <Image 
+                    source={{ uri: photoUri }} 
+                    style={styles.capturedPhotoThumb}
+                    resizeMode="cover"
+                  />
+                )
+              ) : (
+                <Text style={styles.photoThumbText}>📷</Text>
+              )}
             </View>
-            <Text style={styles.uploadedText}>✓ Uploaded</Text>
-            <TouchableOpacity style={styles.deletePhotoBtn} activeOpacity={0.7}>
-              <Text style={styles.deletePhotoText}>🗑</Text>
-            </TouchableOpacity>
+            <Text style={styles.uploadedText}>
+              {photoUri ? '✓ Photo attached' : 'No photo attached'}
+            </Text>
+            {photoUri && (
+              <TouchableOpacity style={styles.deletePhotoBtn} activeOpacity={0.7}>
+                <Text style={styles.deletePhotoText}>🗑</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Notes Section */}

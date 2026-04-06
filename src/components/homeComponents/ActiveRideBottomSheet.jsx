@@ -19,6 +19,7 @@ import { RIDE_STEPS, STEP_CONFIG } from '../../hooks/useRideState';
 import fonts from '../../utils/fonts/fontsList';
 import ChevronIcon from '../../assets/homeIcons/chevron.svg';
 import VectorIcon from '../../assets/homeIcons/Vector.svg';
+import ActionButton from '../../components/common/ActionButton';
 import { CancelConfirmationModal, CancelReasonModal, VerifyOrderModal, DropOffOrderModal, TakePhotoModal, DeliveryInfoModal, PickupConfirmationModal } from './TripCompletionModals';
 
 /* ════════════════════════════════════════════════════════════════
@@ -102,15 +103,12 @@ const DropoffDetailsView = ({ ride, onCall, onChat, onConfirmOrder, onCompleteDe
       </TouchableOpacity>
 
       {/* Confirm Order Button */}
-      <TouchableOpacity 
-        style={styles.confirmOrderBtn} 
+      <ActionButton
+        title="Confirm Order"
         onPress={onConfirmOrder}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.confirmOrderBtnText}>Confirm Order</Text>
-      </TouchableOpacity>
-
-
+        variant="secondary"
+        style={{ marginBottom: verticalScale(12) }}
+      />
 
     </View>
   );
@@ -145,13 +143,11 @@ const RatingView = ({ customerName, onSubmit }) => {
       <View style={styles.ratingDivider} />
 
       {/* Submit Button */}
-      <TouchableOpacity 
-        style={styles.submitBtn} 
+      <ActionButton
+        title="Submit"
         onPress={onSubmit}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.submitBtnText}>Submit</Text>
-      </TouchableOpacity>
+        variant="dark"
+      />
     </View>
   );
 }
@@ -183,13 +179,11 @@ const EarningsView = ({ tripId, amount, customerName, onDone }) => {
       <View style={styles.earningsDivider} />
 
       {/* Done Button */}
-      <TouchableOpacity 
-        style={styles.doneBtn} 
+      <ActionButton
+        title="Done"
         onPress={onDone}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.doneBtnText}>Done</Text>
-      </TouchableOpacity>
+        variant="dark"
+      />
     </View>
   );
 }
@@ -250,21 +244,12 @@ const ArrivedAtPickupView = ({ ride, onCall, onShowConfirmation, onVerifyOrder, 
         </View>
 
         {/* Verify Order Button - changes to verified state */}
-        <TouchableOpacity 
-          style={[
-            styles.verifyBtn, 
-            isOrderVerified && styles.verifyBtnVerified
-          ]} 
+        <ActionButton
+          title={isOrderVerified ? 'Order verified' : 'Verify Order'}
           onPress={isOrderVerified ? null : onVerifyOrder}
-          activeOpacity={isOrderVerified ? 1 : 0.8}
-        >
-          <Text style={[
-            styles.verifyBtnText,
-            isOrderVerified && styles.verifyBtnTextVerified
-          ]}>
-            {isOrderVerified ? 'Order verified' : 'Verify Order'}
-          </Text>
-        </TouchableOpacity>
+          variant={isOrderVerified ? 'verified' : 'gray'}
+          disabled={isOrderVerified}
+        />
       </View>
 
       {/* Help & Support */}
@@ -274,13 +259,12 @@ const ArrivedAtPickupView = ({ ride, onCall, onShowConfirmation, onVerifyOrder, 
       </TouchableOpacity>
 
       {/* Complete Pickup Button */}
-      <TouchableOpacity 
-        style={styles.completeButton} 
+      <ActionButton
+        title="Complete Pickup"
         onPress={onShowConfirmation}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.completeButtonText}>Complete Pickup</Text>
-      </TouchableOpacity>
+        variant="dark"
+        style={{ marginBottom: verticalScale(20) }}
+      />
     </View>
   );
 }
@@ -314,6 +298,7 @@ export default function ActiveRideBottomSheet({
   const [showDropOffOrder, setShowDropOffOrder] = useState(false);
   const [showTakePhoto, setShowTakePhoto] = useState(false);
   const [showDeliveryInfo, setShowDeliveryInfo] = useState(false);
+  const [capturedPhotoUri, setCapturedPhotoUri] = useState(null);
 
   // Get config based on current step
   const stepConfig = STEP_CONFIG[rideStep] || STEP_CONFIG[RIDE_STEPS.GOING_TO_PICKUP];
@@ -394,8 +379,9 @@ export default function ActiveRideBottomSheet({
     setShowTakePhoto(true);
   };
 
-  // Handle photo taken - close take photo and show delivery info
-  const handlePhotoTaken = () => {
+  // Handle photo taken - store photo URI and show delivery info
+  const handlePhotoTaken = (photoUri) => {
+    setCapturedPhotoUri(photoUri);
     setShowTakePhoto(false);
     setShowDeliveryInfo(true);
   };
@@ -615,15 +601,12 @@ export default function ActiveRideBottomSheet({
             </View>
 
             {/* Primary Action Button */}
-          
-            <TouchableOpacity
-              style={[styles.arrivedBtn, { marginTop: verticalScale(20), marginBottom: verticalScale(10) }]}
+            <ActionButton
+              title={stepConfig.primaryButtonText}
               onPress={handlePrimaryAction}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.arrivedBtnText}>{stepConfig.primaryButtonText}</Text>
-            </TouchableOpacity>
-          
+              variant="secondary"
+              style={{ marginTop: verticalScale(20), marginBottom: verticalScale(10) }}
+            />
 
           </BottomSheetScrollView>
         )}
@@ -679,6 +662,7 @@ export default function ActiveRideBottomSheet({
         visible={showDeliveryInfo}
         onCompleteDelivery={handleFinalCompleteDelivery}
         onClose={handleCloseDeliveryInfo}
+        photoUri={capturedPhotoUri}
       />
     </>
   );
@@ -825,7 +809,7 @@ const styles = StyleSheet.create({
     color: colors.secondary,
   },
 
-  /* Arrived Button */
+  /* Arrived Button - DEPRECATED: use ActionButton instead */
   arrivedBtn: {
     backgroundColor: colors.secondary,
     borderRadius: moderateScale(12),
@@ -876,12 +860,14 @@ const styles = StyleSheet.create({
   },
   restaurantName: {
     fontSize: moderateScale(18),
-    fontFamily: fonts.bold,
+    fontFamily: fonts.bold,  
     color: colors.secondary,
     marginBottom: verticalScale(4),
   },
-  restaurantAddress: {
+  restaurantAddress: {                 
     fontSize: moderateScale(13),
+
+  
     color: colors.grey,
     lineHeight: moderateScale(18),
   },
@@ -955,7 +941,7 @@ const styles = StyleSheet.create({
     color: colors.grey,
   },
 
-  /* Verify Button */
+  /* Verify Button - DEPRECATED: use ActionButton instead */
   verifyBtn: {
     backgroundColor: '#E8E8E8',
     borderRadius: moderateScale(10),
@@ -1006,7 +992,7 @@ const styles = StyleSheet.create({
     color: colors.secondary,
   },
 
-  /* Complete Button */
+  /* Complete Button - DEPRECATED: use ActionButton with variant="dark" instead */
   completeButton: {
     backgroundColor: '#1A1A1A',
     borderRadius: moderateScale(14),
@@ -1279,3 +1265,4 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
   },
 });
+ 

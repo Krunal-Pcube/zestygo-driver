@@ -383,7 +383,7 @@ export default function MapComponent({
   };
 
   const routeCoordinates = getRouteCoordinates();
-  const hasActiveRide = deliveryStep && deliveryStep !== RIDE_STEPS.IDLE;
+  const hasActiveRide = deliveryStep && deliveryStep !== RIDE_STEPS.IDLE && deliveryStep !== RIDE_STEPS.COMPLETED;
 
   // Don't render map until we have a valid location
   if (!location || !location.latitude || !location.longitude) {
