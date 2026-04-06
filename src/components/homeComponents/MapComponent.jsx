@@ -22,7 +22,7 @@ import { colors } from '../../utils/colors';
    ─ Bold arrow inside pointing in heading direction
    ─ Subtle transparent halo ring around the whole thing
    ════════════════════════════════════════════════════════════════ */
-function DriverMarker({ coordinate, heading, cameraHeading }) {
+const DriverMarker = ({ coordinate, heading, cameraHeading }) => {
 
   /* ── Smooth coordinate interpolation (600 ms glide) ─────────── */
   const animLat = useRef(new Animated.Value(coordinate.latitude)).current;
@@ -122,7 +122,7 @@ function DriverMarker({ coordinate, heading, cameraHeading }) {
 /* ════════════════════════════════════════════════════════════════
    Restaurant Marker (Green with store icon)
    ════════════════════════════════════════════════════════════════ */
-function RestaurantMarker({ coordinate, name }) {
+const RestaurantMarker = ({ coordinate, name }) => {
   return (
     <Marker coordinate={coordinate} anchor={{ x: 0.5, y: 1 }} title={name}>
       <View style={markerStyles.restaurantWrapper}>
@@ -139,7 +139,7 @@ function RestaurantMarker({ coordinate, name }) {
 /* ════════════════════════════════════════════════════════════════
    Customer Marker (Orange with home icon)
    ════════════════════════════════════════════════════════════════ */
-function CustomerMarker({ coordinate, name }) {
+const CustomerMarker = ({ coordinate, name }) => {
   return (
     <Marker coordinate={coordinate} anchor={{ x: 0.5, y: 1 }} title={name}>
       <View style={markerStyles.customerWrapper}>

@@ -21,7 +21,7 @@ import { CancelConfirmationModal, CancelReasonModal, VerifyOrderModal, DropOffOr
 /* ════════════════════════════════════════════════════════════════
    Navigation FAB
    ════════════════════════════════════════════════════════════════ */
-function NavigationFAB({ onPress }) {
+const NavigationFAB = ({ onPress }) => {
   return (
     <TouchableOpacity style={styles.navFab} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.navFabInner}>
@@ -36,7 +36,7 @@ function NavigationFAB({ onPress }) {
 /* ════════════════════════════════════════════════════════════════
    Pickup Confirmation View - Shows after Complete Pickup clicked
    ════════════════════════════════════════════════════════════════ */
-function PickupConfirmationView({ onContinue, onGoBack }) {
+const PickupConfirmationView = ({ onContinue, onGoBack }) => {
   return (
     <View style={styles.confirmationContainer}>
       {/* Title */}
@@ -86,7 +86,7 @@ function PickupConfirmationView({ onContinue, onGoBack }) {
 /* ════════════════════════════════════════════════════════════════
    Dropoff Details View - Shows after Continue to next stop clicked
    ════════════════════════════════════════════════════════════════ */
-function DropoffDetailsView({ ride, onCall, onChat, onConfirmOrder, onCompleteDelivery }) {
+const DropoffDetailsView = ({ ride, onCall, onChat, onConfirmOrder, onCompleteDelivery }) => {
   const customerName = ride?.passengerName || 'Kelsey Lavin';
   const address = ride?.dropoff?.address || '825 Caledonia Rd, North York, ON M6B 3X8, Canada';
   const dropoffType = 'Leave the door';
@@ -166,7 +166,7 @@ function DropoffDetailsView({ ride, onCall, onChat, onConfirmOrder, onCompleteDe
 /* ════════════════════════════════════════════════════════════════
    Rating View - Shows after Complete Delivery clicked
    ════════════════════════════════════════════════════════════════ */
-function RatingView({ customerName, onSubmit }) {
+const RatingView = ({ customerName, onSubmit }) => {
   const [rating, setRating] = useState(4);
 
   return (
@@ -206,7 +206,7 @@ function RatingView({ customerName, onSubmit }) {
 /* ════════════════════════════════════════════════════════════════
    Earnings View - Shows after Rating submitted
    ════════════════════════════════════════════════════════════════ */
-function EarningsView({ tripId, amount, customerName, onDone }) {
+const EarningsView = ({ tripId, amount, customerName, onDone }) => {
   return (
     <View style={styles.earningsContainer}>
       <Text style={styles.tripIdText}>Trip {tripId}</Text>
@@ -244,7 +244,7 @@ function EarningsView({ tripId, amount, customerName, onDone }) {
 /* ════════════════════════════════════════════════════════════════
    Arrived At Pickup View - Shows restaurant details like screenshot
    ════════════════════════════════════════════════════════════════ */
-function ArrivedAtPickupView({ ride, onCall, onShowConfirmation, onVerifyOrder, isOrderVerified }) {
+const ArrivedAtPickupView = ({ ride, onCall, onShowConfirmation, onVerifyOrder, isOrderVerified }) => {
   const restaurant = ride?.pickup;
   const customerName = ride?.passengerName || 'Kelsey Lavin';
   const orderCount = 1;

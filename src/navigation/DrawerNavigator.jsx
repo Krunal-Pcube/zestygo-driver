@@ -2,16 +2,18 @@ import React from 'react';
 import {createDrawerNavigator} from '@react-navigation/drawer';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import EarningsScreen from '../screens/EarningsScreen';
-import AllOrdersScreen from '../screens/AllOrdersScreen';
+import EarningsStackNavigator from './EarningsStackNavigator';
 import TripHistoryScreen from '../screens/TripHistoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import HelpScreen from '../screens/HelpScreen';
+import DocumentsScreen from '../screens/DocumentsScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 import DrawerContent from '../components/DrawerContent';
 import { scale } from 'react-native-size-matters';
 
 const Drawer = createDrawerNavigator();
 
-function DrawerNavigator() {
+const DrawerNavigator = () => {
   return (
     <Drawer.Navigator
       drawerContent={props => <DrawerContent {...props} />}
@@ -25,10 +27,12 @@ function DrawerNavigator() {
       }}>
       <Drawer.Screen name="Home" component={HomeScreen} />
       <Drawer.Screen name="Profile" component={ProfileScreen} />
-      <Drawer.Screen name="Earnings" component={EarningsScreen} />
-      <Drawer.Screen name="AllOrders" component={AllOrdersScreen} />
+      <Drawer.Screen name="Earnings" component={EarningsStackNavigator} />
       <Drawer.Screen name="TripHistory" component={TripHistoryScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
+      <Drawer.Screen name="Help" component={HelpScreen} />
+      <Drawer.Screen name="Documents" component={DocumentsScreen} />
+      <Drawer.Screen name="Notifications" component={NotificationsScreen} />
     </Drawer.Navigator>
   );
 }

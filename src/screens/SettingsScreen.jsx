@@ -1,158 +1,115 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   Switch,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import {
+  Volume2,
+  Navigation,
+  Accessibility,
+  Globe,
+  Moon,
+  MapPin,
+  Phone,
+  Gauge,
+  ChevronRight,
+} from 'lucide-react-native';
 import { colors } from '../utils/colors';
+import { scale, moderateScale } from 'react-native-size-matters';
+import Header from '../components/Header';
 
-function SettingsScreen() {
-  const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
-  const [autoAccept, setAutoAccept] = useState(false);
+const settingsData = [
+  { id: 1, title: 'Sound and Voice', icon: Volume2, type: 'toggle', value: true },
+  { id: 2, title: 'Navigation', icon: Navigation, type: 'link' },
+  { id: 3, title: 'Accessibility', icon: Accessibility, type: 'link' },
+  { id: 4, title: 'App Language', icon: Globe, type: 'link' },
+  { id: 5, title: 'Dark Mode', icon: Moon, type: 'toggle', value: false },
+  { id: 6, title: 'Follow my ride', icon: MapPin, type: 'link' },
+  { id: 7, title: 'Emergency Contact', icon: Phone, type: 'link' },
+  { id: 8, title: 'Speed Limit', icon: Gauge, type: 'link' },
+];
+
+const SettingsScreen = ({ navigation }) => {
+  const [toggles, setToggles] = useState({
+    1: true,
+    5: false,
+  });
+
+  const handleToggle = (id) => {
+    setToggles((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const renderSettingItem = (item) => {
+    const Icon = item.icon;
+    const isToggled = toggles[item.id];
+
+    return (
+      <TouchableOpacity
+        key={item.id}
+        style={styles.settingItem}
+        activeOpacity={0.7}
+        onPress={() => {
+          if (item.type === 'toggle') {
+            handleToggle(item.id);
+          }
+        }}
+      >
+        <View style={styles.settingLeft}>
+          <Icon size={22} color={colors.darkText} strokeWidth={1.5} />
+          <Text style={styles.settingText}>{item.title}</Text>
+        </View>
+        {item.type === 'toggle' ? (
+          <Switch
+            value={isToggled}
+            onValueChange={() => handleToggle(item.id)}
+            trackColor={{ false: '#767577', true: colors.primary }}
+            thumbColor={isToggled ? colors.white : '#f4f3f4'}
+          />
+        ) : (
+          <ChevronRight size={20} color={colors.grey} />
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Settings</Text>
-      </View>
-      
-      <ScrollView style={styles.content}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
-          
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Icon name="notifications-outline" size={24} color={colors.accentBlue} />
-              <Text style={styles.settingText}>Notifications</Text>
-            </View>
-            <Switch
-              value={notifications}
-              onValueChange={setNotifications}
-              trackColor={{false: colors.switchTrackOff, true: colors.accentBlue}}
-            />
-          </View>
+    <View style={styles.container}>
+      <Header title="Settings" showBack={true} />
 
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Icon name="moon-outline" size={24} color={colors.accentBlue} />
-              <Text style={styles.settingText}>Dark Mode</Text>
-            </View>
-            <Switch
-              value={darkMode}
-              onValueChange={setDarkMode}
-              trackColor={{false: colors.switchTrackOff, true: colors.accentBlue}}
-            />
-          </View>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Icon name="car-outline" size={24} color={colors.accentBlue} />
-              <Text style={styles.settingText}>Auto Accept Rides</Text>
-            </View>
-            <Switch
-              value={autoAccept}
-              onValueChange={setAutoAccept}
-              trackColor={{false: colors.switchTrackOff, true: colors.accentBlue}}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
-          
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Icon name="help-circle-outline" size={24} color={colors.accentBlue} />
-              <Text style={styles.settingText}>Help Center</Text>
-            </View>
-            <Icon name="chevron-forward" size={20} color={colors.grey} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Icon name="chatbubble-outline" size={24} color={colors.accentBlue} />
-              <Text style={styles.settingText}>Contact Support</Text>
-            </View>
-            <Icon name="chevron-forward" size={20} color={colors.grey} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Legal</Text>
-          
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Icon name="document-text-outline" size={24} color={colors.accentBlue} />
-              <Text style={styles.settingText}>Terms of Service</Text>
-            </View>
-            <Icon name="chevron-forward" size={20} color={colors.grey} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Icon name="shield-outline" size={24} color={colors.accentBlue} />
-              <Text style={styles.settingText}>Privacy Policy</Text>
-            </View>
-            <Icon name="chevron-forward" size={20} color={colors.grey} />
-          </TouchableOpacity>
-        </View>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {settingsData.map((item) => renderSettingItem(item))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.white,
   },
-  header: {
-    padding: 20,
-    backgroundColor: colors.headerBg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.darkText,
-  },
-  content: {
-    flex: 1,
-  },
-  section: {
-    paddingVertical: 16,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.mediumGrey,
-    paddingHorizontal: 20,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-  },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: colors.white,
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(16),
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: scale(16),
   },
   settingText: {
-    fontSize: 16,
+    fontSize: moderateScale(15),
     color: colors.darkText,
-    marginLeft: 12,
+    fontWeight: '400',
   },
 });
 

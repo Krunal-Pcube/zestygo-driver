@@ -11,7 +11,7 @@ import { colors } from '../utils/colors';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
-function EarningsScreen({ navigation }) {
+const EarningsScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('earnings');
 
   const earningsData = {
@@ -28,7 +28,6 @@ function EarningsScreen({ navigation }) {
       {/* Header */}
       <Header 
         title="Earnings" 
-        navigation={navigation}
         showBack={true}
       />
 
@@ -45,7 +44,7 @@ function EarningsScreen({ navigation }) {
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'wallet' && styles.tabActive]}
-          onPress={() => setActiveTab('wallet')}
+          onPress={() => navigation.navigate('Wallet')}
           activeOpacity={0.7}
         >
           <Text style={[styles.tabText, activeTab === 'wallet' && styles.tabTextActive]}>
@@ -75,7 +74,7 @@ function EarningsScreen({ navigation }) {
         </TouchableOpacity>
 
         {/* Last Order Earnings Section */}
-        <TouchableOpacity style={styles.sectionItem} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.sectionItem} activeOpacity={0.7} onPress={() => navigation.navigate('LastOrderEarnings')}>
           <View style={styles.sectionLeft}>
             <Text style={styles.sectionTitle}>Last Order Earnings</Text>
             <Text style={styles.orderDetail}>

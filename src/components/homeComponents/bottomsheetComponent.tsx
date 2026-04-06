@@ -8,7 +8,7 @@ import { colors } from '../../utils/colors';
 /* ════════════════════════════════════════════════════════════════
    Online Toggle Button
    ════════════════════════════════════════════════════════════════ */
-function OnlineToggleButton({ isOnline, onPress }) {
+const OnlineToggleButton = ({ isOnline, onPress }) => {
   const pressScale = React.useRef(new RNAnimated.Value(1)).current;
   const bgProgress = React.useRef(new RNAnimated.Value(isOnline ? 1 : 0)).current;
 
@@ -74,7 +74,7 @@ const btnStyles = StyleSheet.create({
 
 
 
-function AnimatedOnlineStrip() {
+const AnimatedOnlineStrip = () => {
   const translateX = React.useRef(new RNAnimated.Value(0)).current;
   const [trackWidth, setTrackWidth] = React.useState(0);
   const GLOW_WIDTH = scale(60);
@@ -137,7 +137,7 @@ const stripStyles = StyleSheet.create({
 /* ════════════════════════════════════════════════════════════════
    Stats Content
    ════════════════════════════════════════════════════════════════ */
-function StatsContent({ styleSheet }) {
+const StatsContent = ({ styleSheet }) => {
   const s = styleSheet;
   return (
     <View style={s.statsRow}>

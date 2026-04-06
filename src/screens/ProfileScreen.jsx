@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ScrollView, Image, StatusBar,
+  ScrollView, Image,
 } from 'react-native';
 import { ArrowLeft, Pencil, Star, Save } from 'lucide-react-native';
 import { colors } from '../utils/colors';
@@ -25,7 +25,7 @@ const InfoRow = ({ label, value }) => (
   </View>
 );
 
-function ProfileScreen({ navigation }) {
+const ProfileScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
 

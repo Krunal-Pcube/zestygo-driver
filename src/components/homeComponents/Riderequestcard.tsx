@@ -27,7 +27,7 @@ const SCREEN_W = Dimensions.get('window').width;
 const CARD_W = SCREEN_W - scale(32);
 
 /* ─── Fork / cutlery icon (simple SVG-free version using View) ─── */
-function ForkIcon() {
+const ForkIcon = () => {
   return (
     <View style={icon.wrap}>
       <View style={icon.tine} />
@@ -42,7 +42,7 @@ const icon = StyleSheet.create({
 });
 
 /* ─── Badge row ─────────────────────────────────────────────────── */
-function BadgeRow({ type, onClose }) {
+const BadgeRow = ({ type, onClose }) => {
   return (
     <View style={s.badgeRow}>
       <View style={s.badgeDelivery}>
@@ -62,7 +62,7 @@ function BadgeRow({ type, onClose }) {
 }
 
 /* ─── Route row ──────────────────────────────────────────────────── */
-function RouteRow({ dotColor, time, name, isLast }) {
+const RouteRow = ({ dotColor, time, name, isLast }) => {
   return (
     <View style={[s.routeRow, !isLast && s.routeRowBorder]}>
       <View style={[s.dot, { backgroundColor: dotColor }]} />
@@ -75,7 +75,7 @@ function RouteRow({ dotColor, time, name, isLast }) {
 }
 
 /* ─── Countdown button ───────────────────────────────────────────── */
-function CountdownButton({ remaining, total, onPress, accepted }) {
+const CountdownButton = ({ remaining, total, onPress, accepted }) => {
   const progress = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {

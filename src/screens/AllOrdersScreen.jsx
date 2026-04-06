@@ -44,14 +44,14 @@ const orders = [
   },
 ];
 
-function AllOrdersScreen({ navigation }) {
+const AllOrdersScreen = ({ navigation }) => {
   const [periodTab, setPeriodTab] = useState('day');
   const [statusTab, setStatusTab] = useState('completed');
   const [selectedDate, setSelectedDate] = useState('26');
 
   return (
     <View style={styles.container}>
-      <Header title="All Orders" navigation={navigation} showBack={true} />
+      <Header title="All Orders" showBack={true} />
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Period Tabs */}

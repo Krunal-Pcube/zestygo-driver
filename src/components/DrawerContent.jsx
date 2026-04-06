@@ -22,7 +22,7 @@ import {
 } from 'lucide-react-native';
 import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
 
-function DrawerContent(props) {
+const DrawerContent = (props) => {
   const { navigation } = props;
   const [onRideBooking, setOnRideBooking] = React.useState(true);
 

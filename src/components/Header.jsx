@@ -8,12 +8,15 @@ import {
 import { ArrowLeft } from 'lucide-react-native';
 import { colors } from '../utils/colors';
 import { scale, moderateScale } from 'react-native-size-matters';
+import { useNavigation } from '@react-navigation/native';
 
-function Header({
+const Header = ({
   title, 
-  navigation,
   showBack = true,
-}) {
+}) => {
+
+  const navigation = useNavigation();
+
   const handleBack = () => {
     navigation.goBack();
   };

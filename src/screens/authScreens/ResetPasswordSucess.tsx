@@ -1,12 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import CommonButton from '../components/CommonBtn';
+
+import AuthHeader from '../../components/AuthHeader';
+import CommonButton from '../../components/CommonBtn';
+import fonts from '../../utils/fonts/fontsList';
+import { colors } from '../../utils/colors';
 import { scale } from 'react-native-size-matters';
-import fonts from '../utils/fonts/fontsList';
 
 const ResetPasswordSuccess = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation(); 
 
   const handleGoToLogin = () => {
     navigation.reset({
@@ -19,7 +22,7 @@ const ResetPasswordSuccess = () => {
     <View style={styles.container}>
       {/* Success Image */}
       <Image
-        source={require('../assets/icons/check.png')} // replace if needed
+        source={require('../../assets/check.png')} // replace if needed
         style={styles.image}
         resizeMode="contain"
       />
