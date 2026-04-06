@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { colors } from '../utils/colors';
 import { scale, moderateScale } from 'react-native-size-matters';
 import { useNavigation } from '@react-navigation/native';
+import fonts from '../utils/fonts/fontsList';
 
 const Header = ({
   title, 
@@ -48,7 +49,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingHorizontal: scale(20),
-    paddingVertical: scale(12),
+    paddingVertical: scale(16),
     borderColor: colors.divider,
     borderBottomWidth: 1,
     backgroundColor: colors.white,
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: moderateScale(18),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.darkText,
   },
   placeholder: {

@@ -7,6 +7,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
@@ -128,13 +129,13 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: moderateScale(14),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: '#999',
     marginBottom: scale(8),
   },
   balanceAmount: {
     fontSize: moderateScale(32),
-    fontWeight: '800',
+    fontFamily: fonts.bold,
     color: '#d4f935',
   },
   actionButtons: {
@@ -157,7 +158,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
   },
   transactionsContainer: {
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
   },
   transactionTitle: {
     fontSize: moderateScale(14),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.darkText,
     marginBottom: scale(4),
   },
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
   },
   transactionAmount: {
     fontSize: moderateScale(15),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
   },
   debitAmount: {

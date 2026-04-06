@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { ChevronLeft, Bike, MapPin, CheckCircle2 } from 'lucide-react-native';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
   },
   periodTabText: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
   },
   periodTabTextActive: {
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
   },
   dateNum: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.darkText,
   },
   dateTextActive: {
@@ -256,7 +257,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: moderateScale(20),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.darkText,
     marginBottom: scale(4),
   },
@@ -273,7 +274,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.darkText,
     marginBottom: scale(12),
   },
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
   },
   statusTabText: {
     fontSize: moderateScale(13),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
   },
   statusTabTextActive: {
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
   },
   dateHeader: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
     marginBottom: scale(12),
   },
@@ -326,7 +327,7 @@ const styles = StyleSheet.create({
   },
   orderType: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
   },
   orderAmountRow: {
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
   },
   orderAmount: {
     fontSize: moderateScale(15),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.green,
   },
   addressRow: {

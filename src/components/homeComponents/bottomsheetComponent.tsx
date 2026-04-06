@@ -2,8 +2,14 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated as RNAnimated } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
-import { ChevronDown, List, Car, DollarSign } from 'lucide-react-native';
+import { Car, DollarSign } from 'lucide-react-native';
+import ChevronIcon from '../../assets/homeIcons/chevron.svg';
+import VectorIcon from '../../assets/homeIcons/Vector.svg';
+import AcceptenceIcon from '../../assets/homeIcons/acceptence.svg';
+import RatingIcon from '../../assets/homeIcons/rating.svg';
+import CancellationIcon from '../../assets/homeIcons/cancellation.svg';
 import { colors } from '../../utils/colors';
+import fonts from '../../utils/fonts/fontsList';
 
 /* ════════════════════════════════════════════════════════════════
    Online Toggle Button
@@ -31,7 +37,7 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
 
   const bgColor = bgProgress.interpolate({
     inputRange: [0, 1],
-    outputRange: [colors.secondary, '#FF4444'],
+    outputRange: [colors.secondary, colors.errorColor],
   });
 
   const textColor = bgProgress.interpolate({
@@ -67,13 +73,14 @@ const btnStyles = StyleSheet.create({
   },
   label: {
     fontSize: moderateScale(15),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     letterSpacing: 0.3,
   },
 });
 
-
-
+/* ════════════════════════════════════════════════════════════════
+   Animated Online Strip
+   ════════════════════════════════════════════════════════════════ */
 const AnimatedOnlineStrip = () => {
   const translateX = React.useRef(new RNAnimated.Value(0)).current;
   const [trackWidth, setTrackWidth] = React.useState(0);
@@ -134,17 +141,7 @@ const stripStyles = StyleSheet.create({
   },
 });
 
-/* ════════════════════════════════════════════════════════════════
-   Stats Content
-   ════════════════════════════════════════════════════════════════ */
-const StatsContent = ({ styleSheet }) => {
-  const s = styleSheet;
-  return (
-    <View style={s.statsRow}>
-      {/* Stats implementation can be customized or passed as props */}
-    </View>
-  );
-}
+
 
 /* ════════════════════════════════════════════════════════════════
    Bottom Sheet Component
@@ -200,7 +197,7 @@ export default function BottomSheetComponent({
           {/* Left: Chevron */}
           <TouchableOpacity onPress={handleChevron} style={styles.sideBtn} activeOpacity={0.7}>
             <RNAnimated.View style={{ transform: [{ rotate: chevronAngle }] }}>
-              <ChevronDown size={moderateScale(22)} color={colors.mediumGrey} />
+              <ChevronIcon width={moderateScale(16)} height={moderateScale(16)} fill={colors.mediumGrey} />
             </RNAnimated.View>
           </TouchableOpacity>
 
@@ -215,9 +212,9 @@ export default function BottomSheetComponent({
             <OnlineToggleButton isOnline={isOnline} onPress={toggleOnlineStatus} />
           )}
 
-          {/* Right: List icon */}
+          {/* Right: Vector icon */}
           <TouchableOpacity style={styles.sideBtn} activeOpacity={0.7}>
-            <List size={moderateScale(22)} color={colors.mediumGrey} />
+            <VectorIcon width={moderateScale(18)} height={moderateScale(18)} fill={colors.mediumGrey} />
           </TouchableOpacity>
         </View>
 
@@ -307,7 +304,7 @@ const styles = StyleSheet.create({
   },
   onlineBadgeText: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.black
     ,
   },
@@ -334,7 +331,7 @@ const styles = StyleSheet.create({
   activeRideSheetTitle: {
     flex: 1,
     fontSize: moderateScale(14),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
   },
   farePill: {
@@ -348,7 +345,7 @@ const styles = StyleSheet.create({
   },
   farePillText: {
     fontSize: moderateScale(12),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
   },
   activeRideRoute: {

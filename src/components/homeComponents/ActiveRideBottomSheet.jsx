@@ -13,10 +13,13 @@ import {
 } from 'react-native';
 import BottomSheet, { BottomSheetView, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
-import { MapPin, Navigation, ChevronDown, ChevronRight, Phone, MessageSquare, X, Clock, ChevronUp, Home } from 'lucide-react-native';
+import { MapPin, Navigation, ChevronRight, Phone, MessageSquare, X, Clock, ChevronUp, Home } from 'lucide-react-native';
 import { colors } from '../../utils/colors';
 import { RIDE_STEPS, STEP_CONFIG } from '../../hooks/useRideState';
-import { CancelConfirmationModal, CancelReasonModal, VerifyOrderModal, DropOffOrderModal, TakePhotoModal, DeliveryInfoModal } from './TripCompletionModals';
+import fonts from '../../utils/fonts/fontsList';
+import ChevronIcon from '../../assets/homeIcons/chevron.svg';
+import VectorIcon from '../../assets/homeIcons/Vector.svg';
+import { CancelConfirmationModal, CancelReasonModal, VerifyOrderModal, DropOffOrderModal, TakePhotoModal, DeliveryInfoModal, PickupConfirmationModal } from './TripCompletionModals';
 
 /* ════════════════════════════════════════════════════════════════
    Navigation FAB
@@ -30,56 +33,6 @@ const NavigationFAB = ({ onPress }) => {
 
       </View>
     </TouchableOpacity>
-  );
-}
-
-/* ════════════════════════════════════════════════════════════════
-   Pickup Confirmation View - Shows after Complete Pickup clicked
-   ════════════════════════════════════════════════════════════════ */
-const PickupConfirmationView = ({ onContinue, onGoBack }) => {
-  return (
-    <View style={styles.confirmationContainer}>
-      {/* Title */}
-      <Text style={styles.confirmationTitle}>Ready for the next stop?</Text>
-
-      {/* Info Items */}
-      <View style={styles.infoList}>
-        <View style={styles.infoItem}>
-          <View style={styles.infoIconBg}>
-            <Text style={styles.handIcon}>✋</Text>
-            <View style={styles.checkBadge}>
-              <Text style={styles.checkText}>✓</Text>
-            </View>
-          </View>
-          <Text style={styles.infoText}>Confirm that the order has been Collected</Text>
-        </View>
-
-        <View style={styles.infoItem}>
-          <View style={styles.infoIconBg}>
-            <Text style={styles.personIcon}>👤</Text>
-          </View>
-          <Text style={styles.infoText}>We'll let the customer know you have their order</Text>
-        </View>
-      </View>
-
-      {/* Continue Button */}
-      <TouchableOpacity 
-        style={styles.continueButton} 
-        onPress={onContinue}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.continueButtonText}>Continue to next stop</Text>
-      </TouchableOpacity>
-
-      {/* Go Back Button */}
-      <TouchableOpacity 
-        style={styles.goBackButton} 
-        onPress={onGoBack}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.goBackButtonText}>Go Back</Text>
-      </TouchableOpacity>
-    </View>
   );
 }
 
@@ -388,7 +341,8 @@ export default function ActiveRideBottomSheet({
 
   // Handle primary button press based on step
   const handlePrimaryAction = () => {
-    console.log('[ActiveRideBottomSheet] Primary action pressed, rideStep:', rideStep);
+    console.log('[ActiveRideBottomSheet] Primary action PRESSED, rideStep:', rideStep);
+    console.log('[ActiveRideBottomSheet] Button onArrived:', onArrived);
     switch (rideStep) {
       case RIDE_STEPS.GOING_TO_PICKUP:
         onArrived?.();
@@ -544,7 +498,7 @@ export default function ActiveRideBottomSheet({
             <View style={styles.headerRow}>
               <TouchableOpacity onPress={handleChevron} style={styles.iconBtn} activeOpacity={0.7}>
                 <RNAnimated.View style={{ transform: [{ rotate: chevronAngle }] }}>
-                  <ChevronDown size={moderateScale(22)} color={colors.mediumGrey} />
+                  <ChevronIcon width={moderateScale(16)} height={moderateScale(16)} fill={colors.mediumGrey} />
                 </RNAnimated.View>
               </TouchableOpacity>
 
@@ -556,29 +510,18 @@ export default function ActiveRideBottomSheet({
               </View>
 
               <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
-                <View style={styles.menuIcon}>
-                  <View style={styles.menuLine} />
-                  <View style={styles.menuLine} />
-                  <View style={styles.menuLine} />
-                </View>
+                <VectorIcon width={moderateScale(18)} height={moderateScale(18)} fill={colors.mediumGrey} />
               </TouchableOpacity>
             </View>
 
-            {/* Scrollable content - show either pickup view or confirmation */}
-            {showPickupConfirmation ? (
-              <PickupConfirmationView 
-                onContinue={handleContinueToNextStop}
-                onGoBack={handleGoBack}
-              />
-            ) : (
-              <ArrivedAtPickupView 
-                ride={ride} 
-                onCall={onCall} 
-                onShowConfirmation={handleShowConfirmation}
-                onVerifyOrder={handleVerifyPress}
-                isOrderVerified={isOrderVerified}
-              />
-            )}
+            {/* Scrollable content - ArrivedAtPickupView always */}
+            <ArrivedAtPickupView 
+              ride={ride} 
+              onCall={onCall} 
+              onShowConfirmation={handleShowConfirmation}
+              onVerifyOrder={handleVerifyPress}
+              isOrderVerified={isOrderVerified}
+            />
           </BottomSheetScrollView>
         ) : rideStep === RIDE_STEPS.GOING_TO_DROPOFF || rideStep === RIDE_STEPS.ARRIVED_AT_DROPOFF ? (
           <BottomSheetScrollView style={styles.arrivedScrollView} showsVerticalScrollIndicator={false}>
@@ -586,7 +529,7 @@ export default function ActiveRideBottomSheet({
             <View style={styles.headerRow}>
               <TouchableOpacity onPress={handleChevron} style={styles.iconBtn} activeOpacity={0.7}>
                 <RNAnimated.View style={{ transform: [{ rotate: chevronAngle }] }}>
-                  <ChevronDown size={moderateScale(22)} color={colors.mediumGrey} />
+                  <ChevronIcon width={moderateScale(16)} height={moderateScale(16)} fill={colors.mediumGrey} />
                 </RNAnimated.View>
               </TouchableOpacity>
 
@@ -598,11 +541,7 @@ export default function ActiveRideBottomSheet({
               </View>
 
               <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
-                <View style={styles.menuIcon}>
-                  <View style={styles.menuLine} />
-                  <View style={styles.menuLine} />
-                  <View style={styles.menuLine} />
-                </View>
+                <VectorIcon width={moderateScale(18)} height={moderateScale(18)} fill={colors.mediumGrey} />
               </TouchableOpacity>
             </View>
 
@@ -619,12 +558,12 @@ export default function ActiveRideBottomSheet({
             />
           </BottomSheetScrollView>
         ) : (
-          <BottomSheetView style={styles.sheetBody}>
+          <BottomSheetScrollView style={styles.scrollViewBody} showsVerticalScrollIndicator={false}>
             {/* Header Row: Chevron + ETA + Distance + Menu */}
             <View style={styles.headerRow}>
               <TouchableOpacity onPress={handleChevron} style={styles.iconBtn} activeOpacity={0.7}>
                 <RNAnimated.View style={{ transform: [{ rotate: chevronAngle }] }}>
-                  <ChevronDown size={moderateScale(22)} color={colors.mediumGrey} />
+                  <ChevronIcon width={moderateScale(16)} height={moderateScale(16)} fill={colors.mediumGrey} />
                 </RNAnimated.View>
               </TouchableOpacity>
 
@@ -636,11 +575,7 @@ export default function ActiveRideBottomSheet({
               </View>
 
               <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
-                <View style={styles.menuIcon}>
-                  <View style={styles.menuLine} />
-                  <View style={styles.menuLine} />
-                  <View style={styles.menuLine} />
-                </View>
+                <VectorIcon width={moderateScale(18)} height={moderateScale(18)} fill={colors.mediumGrey} />
               </TouchableOpacity>
             </View>
 
@@ -680,18 +615,26 @@ export default function ActiveRideBottomSheet({
             </View>
 
             {/* Primary Action Button */}
-            <View style={styles.buttonWrapper}>
-              <TouchableOpacity 
-                style={styles.arrivedBtn} 
-                onPress={handlePrimaryAction}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.arrivedBtnText}>{stepConfig.primaryButtonText}</Text>
-              </TouchableOpacity>
-            </View>
-          </BottomSheetView>
+          
+            <TouchableOpacity
+              style={[styles.arrivedBtn, { marginTop: verticalScale(20), marginBottom: verticalScale(10) }]}
+              onPress={handlePrimaryAction}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.arrivedBtnText}>{stepConfig.primaryButtonText}</Text>
+            </TouchableOpacity>
+          
+
+          </BottomSheetScrollView>
         )}
       </BottomSheet>
+
+      {/* Pickup Confirmation Modal */}
+      <PickupConfirmationModal
+        visible={showPickupConfirmation}
+        onContinue={handleContinueToNextStop}
+        onGoBack={handleGoBack}
+      />
 
       {/* Cancel Confirmation Modal */}
       <CancelConfirmationModal
@@ -758,6 +701,14 @@ const styles = StyleSheet.create({
     paddingBottom: verticalScale(20),
   },
 
+  /* ScrollView Body for default case */
+  scrollViewBody: {
+    flex: 1,
+    paddingHorizontal: scale(16),
+    paddingTop: scale(8),
+    paddingBottom: verticalScale(20),
+  },
+
   /* Navigation FAB - positioned just above 20% bottom sheet */
   navFab: {
     position: 'absolute',
@@ -783,7 +734,7 @@ const styles = StyleSheet.create({
   },
   navFabText: {
     fontSize: moderateScale(11),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     marginLeft: scale(4),
     color: colors.secondary,
     overflow: 'hidden',
@@ -823,12 +774,12 @@ const styles = StyleSheet.create({
   },
   etaText: {
     fontSize: moderateScale(18),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
   },
   distanceText: {
     fontSize: moderateScale(18),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
   },
   dot: {
@@ -837,22 +788,11 @@ const styles = StyleSheet.create({
     borderRadius: scale(3),
     backgroundColor: colors.grey,
   },
-  menuIcon: {
-    width: scale(20),
-    height: scale(16),
-    justifyContent: 'space-between',
-  },
-  menuLine: {
-    width: scale(20),
-    height: scale(2),
-    backgroundColor: colors.mediumGrey,
-    borderRadius: scale(1),
-  },
 
   /* Status Text */
   statusText: {
     fontSize: moderateScale(14),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.grey,
     textAlign: 'center',
     marginTop: verticalScale(-4),
@@ -881,7 +821,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: moderateScale(12),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.secondary,
   },
 
@@ -892,20 +832,23 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(16),
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: verticalScale(4),
-    minHeight: scale(48),
-    zIndex: 100,
-    elevation: 10,
+    minHeight: scale(50),
+    width: '100%',
   },
   arrivedBtnText: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.primary,
   },
 
-  /* Button Wrapper */
+  /* Button Wrapper - positioned at bottom */
   buttonWrapper: {
-    zIndex: 100,
+    marginTop: verticalScale(20),
+    marginBottom: verticalScale(10),
+    minHeight: scale(60),
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    zIndex: 999,
     elevation: 10,
   },
   chevronBtn: {
@@ -933,7 +876,7 @@ const styles = StyleSheet.create({
   },
   restaurantName: {
     fontSize: moderateScale(18),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(4),
   },
@@ -961,7 +904,7 @@ const styles = StyleSheet.create({
   },
   noteTitle: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(6),
   },
@@ -974,7 +917,7 @@ const styles = StyleSheet.create({
   /* Pickup Title */
   pickupTitle: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(12),
   },
@@ -998,7 +941,7 @@ const styles = StyleSheet.create({
   },
   customerName: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(2),
   },
@@ -1027,13 +970,13 @@ const styles = StyleSheet.create({
   },
   verifyBtnText: {
     fontSize: moderateScale(15),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
   },
   verifyBtnTextVerified: {
     color: '#C8FF00',
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   verifiedBadge: {
     width: scale(24),
@@ -1046,7 +989,7 @@ const styles = StyleSheet.create({
   verifiedCheck: {
     color: colors.white,
     fontSize: moderateScale(14),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
 
   /* Help Row */
@@ -1059,7 +1002,7 @@ const styles = StyleSheet.create({
   },
   helpText: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
   },
 
@@ -1075,94 +1018,7 @@ const styles = StyleSheet.create({
   completeButtonText: {
     color: '#C8FF00',
     fontSize: moderateScale(16),
-    fontWeight: '700',
-  },
-
-  /* Pickup Confirmation View */
-  confirmationContainer: {
-    flex: 1,
-    paddingTop: verticalScale(8),
-  },
-  confirmationTitle: {
-    fontSize: moderateScale(18),
-    fontWeight: '700',
-    color: colors.secondary,
-    textAlign: 'center',
-    marginBottom: verticalScale(24),
-  },
-  infoList: {
-    marginBottom: verticalScale(24),
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: verticalScale(16),
-  },
-  infoIconBg: {
-    width: scale(40),
-    height: scale(40),
-    borderRadius: scale(20),
-    backgroundColor: '#F5F5F5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: scale(12),
-    position: 'relative',
-  },
-  handIcon: {
-    fontSize: moderateScale(20),
-  },
-  personIcon: {
-    fontSize: moderateScale(20),
-  },
-  checkBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: scale(16),
-    height: scale(16),
-    borderRadius: scale(8),
-    backgroundColor: colors.secondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.white,
-  },
-  checkText: {
-    color: colors.white,
-    fontSize: moderateScale(10),
-    fontWeight: '700',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: moderateScale(14),
-    color: colors.secondary,
-    lineHeight: moderateScale(20),
-  },
-  continueButton: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: moderateScale(12),
-    paddingVertical: verticalScale(16),
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: verticalScale(12),
-  },
-  continueButtonText: {
-    color: '#C8FF00',
-    fontSize: moderateScale(16),
-    fontWeight: '700',
-  },
-  goBackButton: {
-    backgroundColor: '#E0E0E0',
-    borderRadius: moderateScale(12),
-    paddingVertical: verticalScale(16),
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: verticalScale(20),
-  },
-  goBackButtonText: {
-    color: colors.secondary,
-    fontSize: moderateScale(16),
-    fontWeight: '600',
+    fontFamily: fonts.bold,
   },
 
   /* Dropoff Details View */
@@ -1182,7 +1038,7 @@ const styles = StyleSheet.create({
   },
   dropoffCustomerName: {
     fontSize: moderateScale(18),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(4),
   },
@@ -1204,7 +1060,7 @@ const styles = StyleSheet.create({
   },
   homeTagText: {
     fontSize: moderateScale(12),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.grey,
   },
   actionButtonsRow: {
@@ -1228,7 +1084,7 @@ const styles = StyleSheet.create({
   },
   dropoffLabel: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
     marginBottom: verticalScale(4),
   },
@@ -1243,7 +1099,7 @@ const styles = StyleSheet.create({
   },
   dropoffOrderTitle: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
     marginBottom: verticalScale(12),
   },
@@ -1262,7 +1118,7 @@ const styles = StyleSheet.create({
   },
   orderId: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(2),
   },
@@ -1278,7 +1134,7 @@ const styles = StyleSheet.create({
   },
   orderVerifyText: {
     fontSize: moderateScale(13),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.secondary,
   },
   confirmOrderBtn: {
@@ -1291,7 +1147,7 @@ const styles = StyleSheet.create({
   },
   confirmOrderBtnText: {
     fontSize: moderateScale(15),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.primary,
   },
   completeDeliveryBtn: {
@@ -1305,7 +1161,7 @@ const styles = StyleSheet.create({
   completeDeliveryBtnText: {
     color: '#C8FF00',
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
 
   /* Rating View */
@@ -1317,13 +1173,13 @@ const styles = StyleSheet.create({
   },
   ratingTitle: {
     fontSize: moderateScale(16),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.grey,
     marginBottom: verticalScale(16),
   },
   ratingCustomerName: {
     fontSize: moderateScale(20),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(20),
   },
@@ -1354,7 +1210,7 @@ const styles = StyleSheet.create({
   submitBtnText: {
     color: '#C8FF00',
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
 
   /* Earnings View */
@@ -1366,7 +1222,7 @@ const styles = StyleSheet.create({
   },
   tripIdText: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
     marginBottom: verticalScale(20),
   },
@@ -1382,11 +1238,11 @@ const styles = StyleSheet.create({
   checkMark: {
     fontSize: moderateScale(28),
     color: colors.white,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   earningsAmount: {
     fontSize: moderateScale(32),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(8),
   },
@@ -1397,7 +1253,7 @@ const styles = StyleSheet.create({
   },
   viewDetailsText: {
     fontSize: moderateScale(13),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: '#4CAF50',
     textTransform: 'uppercase',
     marginBottom: verticalScale(20),
@@ -1420,6 +1276,6 @@ const styles = StyleSheet.create({
   doneBtnText: {
     color: '#C8FF00',
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
 });

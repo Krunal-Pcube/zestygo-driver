@@ -26,13 +26,13 @@ import Geolocation from '@react-native-community/geolocation';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { useSharedValue } from 'react-native-reanimated';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
-import {
-  Car, Users, MapPin, Navigation, Navigation2,
-  Clock, Star, CheckCircle, X,
-} from 'lucide-react-native';
+import { MapPin, Navigation, Navigation2, Clock, Star, CheckCircle, X, ChevronRight, Circle, Users, Car } from 'lucide-react-native';
 import { useIsFocused } from '@react-navigation/native';
-
+import AcceptenceIcon from '../assets/homeIcons/acceptence.svg';
+import RatingIcon from '../assets/homeIcons/rating.svg';
+import CancellationIcon from '../assets/homeIcons/cancellation.svg';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 import RideRequestCard from '../components/homeComponents/Riderequestcard';
 import HomeHeader from '../components/homeComponents/homeHeader';
 import MapComponent from '../components/homeComponents/MapComponent';
@@ -78,44 +78,6 @@ async function requestLocationPermission() {
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   ACTIVE RIDE OVERLAY
-───────────────────────────────────────────────────────────────── */
-const ActiveRideOverlay = ({ ride, hasArrived, onCancel }) => {
-  if (!ride) return null;
-  const isMatch = ride.type === 'match';
-
-  return (
-    <View style={styles.activeContainer}>
-      <View style={styles.activeCard}>
-        <View style={styles.activeHeader}>
-          <View style={styles.activeBadge}>
-            {isMatch
-              ? <Users size={moderateScale(14)} color={colors.white} />
-              : <Car size={moderateScale(14)} color={colors.white} />}
-            <Text style={styles.activeBadgeText}>{isMatch ? 'Match' : 'Accept'} Ride</Text>
-          </View>
-          <Text style={styles.activeStatus}>{hasArrived ? 'Waiting at pickup' : 'Heading to pickup'}</Text>
-        </View>
-
-        <View style={styles.activeRoute}>
-          <MapPin size={moderateScale(16)} color={colors.green} />
-          <Text style={styles.activeAddress} numberOfLines={1}>{ride.pickup.address}</Text>
-        </View>
-
-        <View style={styles.activeActions}>
-          <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navigateBtn}>
-            <Navigation size={moderateScale(16)} color={colors.white} />
-            <Text style={styles.navigateText}>Navigate</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-};
 
 /* ─────────────────────────────────────────────────────────────────
    STATS ROW
@@ -131,23 +93,19 @@ const StatCell = ({ icon, value, label }) => (
 const StatsContent = () => (
   <View style={styles.statsRow}>
     <StatCell
-      icon={<CheckCircle size={moderateScale(24)} color={colors.blue} />}
+      icon={<AcceptenceIcon width={moderateScale(24)} height={moderateScale(24)} fill={colors.blue} />}
       value="95.0%"
       label="Acceptance"
     />
     <View style={styles.statDivider} />
     <StatCell
-      icon={<Star size={moderateScale(24)} color={colors.orange} fill={colors.orange} />}
+      icon={<RatingIcon width={moderateScale(24)} height={moderateScale(24)} fill={colors.orange} />}
       value="4.75"
       label="Rating"
     />
     <View style={styles.statDivider} />
     <StatCell
-      icon={
-        <View style={styles.cancelIconBox}>
-          <X size={moderateScale(13)} color={colors.white} strokeWidth={3} />
-        </View>
-      }
+      icon={<CancellationIcon width={moderateScale(24)} height={moderateScale(24)} fill={colors.red} />}
       value="2.0%"
       label="Cancellation"
     />
@@ -574,12 +532,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.secondary, paddingHorizontal: scale(10),
     paddingVertical: verticalScale(4), borderRadius: scale(12), gap: scale(4),
   },
-  typeBadgeText: { color: colors.white, fontSize: moderateScale(12), fontWeight: '700' },
+  typeBadgeText: { color: colors.white, fontSize: moderateScale(12), fontFamily: fonts.bold },
   passengerInfo: { flex: 1, marginLeft: scale(12) },
-  passengerName: { fontSize: moderateScale(16), fontWeight: '700', color: colors.secondary },
+  passengerName: { fontSize: moderateScale(16), fontFamily: fonts.bold, color: colors.secondary },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: scale(4) },
   ratingText: { fontSize: moderateScale(12), color: colors.grey },
-  fare: { fontSize: moderateScale(24), fontWeight: '800', color: colors.secondary },
+  fare: { fontSize: moderateScale(24), fontFamily: fonts.bold, color: colors.secondary },
   fareLabel: { fontSize: moderateScale(10), color: colors.grey },
   routeBox: {
     backgroundColor: colors.background2, borderRadius: moderateScale(12),
@@ -596,7 +554,7 @@ const styles = StyleSheet.create({
     marginVertical: verticalScale(4),
   },
   routeLabel: { fontSize: moderateScale(10), color: colors.grey, textTransform: 'uppercase' },
-  routeAddress: { fontSize: moderateScale(14), fontWeight: '600', color: colors.secondary },
+  routeAddress: { fontSize: moderateScale(14), fontFamily: fonts.semiBold, color: colors.secondary },
   routeMeta: { flexDirection: 'row', alignItems: 'center', gap: scale(6) },
   routeMetaText: { fontSize: moderateScale(11), color: colors.grey },
   cardActions: { flexDirection: 'row', gap: scale(12) },
@@ -605,14 +563,14 @@ const styles = StyleSheet.create({
     gap: scale(6), paddingVertical: verticalScale(12),
     borderRadius: scale(12), backgroundColor: colors.veryLightGrey,
   },
-  declineText: { fontSize: moderateScale(14), fontWeight: '600', color: colors.grey },
+  declineText: { fontSize: moderateScale(14), fontFamily: fonts.semiBold, color: colors.grey },
   acceptBtn: {
     flex: 2, alignItems: 'center', justifyContent: 'center',
     paddingVertical: verticalScale(12), borderRadius: scale(12),
     backgroundColor: colors.secondary,
   },
   acceptBtnMatch: { backgroundColor: colors.blue },
-  acceptText: { fontSize: moderateScale(15), fontWeight: '700', color: colors.white },
+  acceptText: { fontSize: moderateScale(15), fontFamily: fonts.bold, color: colors.white },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   modalContainer: {
     backgroundColor: colors.white,
@@ -625,7 +583,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: scale(16), marginBottom: verticalScale(16),
   },
-  modalTitle: { fontSize: moderateScale(20), fontWeight: '800', color: colors.secondary },
+  modalTitle: { fontSize: moderateScale(20), fontFamily: fonts.bold, color: colors.secondary },
   modalSubtitle: { fontSize: moderateScale(13), color: colors.grey, marginTop: verticalScale(2) },
   modalCloseBtn: {
     width: scale(40), height: scale(40), borderRadius: scale(20),
@@ -649,34 +607,34 @@ const styles = StyleSheet.create({
     backgroundColor: colors.green, paddingHorizontal: scale(10),
     paddingVertical: verticalScale(4), borderRadius: scale(12), gap: scale(4),
   },
-  activeBadgeText: { color: colors.white, fontSize: moderateScale(12), fontWeight: '700' },
+  activeBadgeText: { color: colors.white, fontSize: moderateScale(12), fontFamily: fonts.bold },
   activeStatus: { fontSize: moderateScale(13), color: colors.grey },
   activeRoute: {
     flexDirection: 'row', alignItems: 'center', gap: scale(8),
     marginBottom: verticalScale(12), padding: scale(12),
     backgroundColor: colors.background2, borderRadius: moderateScale(10),
   },
-  activeAddress: { flex: 1, fontSize: moderateScale(14), fontWeight: '600', color: colors.secondary },
+  activeAddress: { flex: 1, fontSize: moderateScale(14), fontFamily: fonts.semiBold, color: colors.secondary },
   activeActions: { flexDirection: 'row', gap: scale(12) },
   cancelBtn: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
     paddingVertical: verticalScale(12), borderRadius: scale(12),
     backgroundColor: colors.veryLightGrey,
   },
-  cancelText: { fontSize: moderateScale(14), fontWeight: '600', color: colors.red },
+  cancelText: { fontSize: moderateScale(14), fontFamily: fonts.semiBold, color: colors.red },
   navigateBtn: {
     flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: scale(6), paddingVertical: verticalScale(12),
     borderRadius: scale(12), backgroundColor: colors.secondary,
   },
-  navigateText: { fontSize: moderateScale(14), fontWeight: '700', color: colors.white },
+  navigateText: { fontSize: moderateScale(14), fontFamily: fonts.bold, color: colors.white },
   statsRow: {
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-evenly', paddingVertical: verticalScale(12),
   },
   statCell: { alignItems: 'center', gap: verticalScale(4), flex: 1 },
-  statValue: { fontSize: moderateScale(16), fontWeight: '700', color: colors.secondary },
-  statLabel: { fontSize: moderateScale(11), color: colors.grey },
+  statValue: { fontSize: moderateScale(16), fontFamily: fonts.bold, color: colors.secondary },
+  statLabel: { fontSize: moderateScale(11), fontFamily: fonts.regular, color: colors.grey },
   statDivider: { width: 1, height: verticalScale(40), backgroundColor: colors.veryLightGrey },
   cancelIconBox: {
     width: scale(22), height: scale(22), borderRadius: scale(6),
@@ -719,7 +677,7 @@ const styles = StyleSheet.create({
   },
   navButtonText: {
     fontSize: moderateScale(11),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
     marginTop: verticalScale(4),
     backgroundColor: colors.white,

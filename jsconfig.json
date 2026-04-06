@@ -22,6 +22,9 @@
   ],
   "include": [
     "**/*.js",
-    "**/*.jsx"
-, "src/screens/HomeScreen.jsx", "src/components/homeComponents/homeHeader.tsx", "src/navigation/RootNavigator.tsx"  ]
+    "**/*.jsx",
+    "**/*.ts",
+    "**/*.tsx",
+    "declarations.d.ts"
+  ]
 }

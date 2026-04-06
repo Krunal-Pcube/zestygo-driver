@@ -3,8 +3,12 @@ import {
   View, Text, StyleSheet, TouchableOpacity,
   ScrollView, Image,
 } from 'react-native';
-import { ArrowLeft, Pencil, Star, Save } from 'lucide-react-native';
+import { ArrowLeft, Pencil, Save } from 'lucide-react-native';
+import AcceptenceIcon from '../assets/homeIcons/acceptence.svg';
+import RatingIcon from '../assets/homeIcons/rating.svg';
+import CancellationIcon from '../assets/homeIcons/cancellation.svg';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 
 const profileData = {
@@ -15,6 +19,8 @@ const profileData = {
   rating: 4.89,
   trips: 3250,
   years: 2.5,
+  acceptance: 98,
+  cancellation: 2,
   avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
 };
 
@@ -55,7 +61,7 @@ const ProfileScreen = ({ navigation }) => {
           <View style={styles.avatarWrapper}>
             <Image source={{ uri: profileData.avatar }} style={styles.avatar} />
             <View style={styles.ratingBadge}>
-              <Star size={10} color={colors.white} fill={colors.white} />
+              <RatingIcon width={moderateScale(10)} height={moderateScale(10)} fill={colors.white} />
               <Text style={styles.ratingText}>{profileData.rating}</Text>
             </View>
           </View>
@@ -74,6 +80,27 @@ const ProfileScreen = ({ navigation }) => {
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{profileData.years}</Text>
               <Text style={styles.statLabel}>Year</Text>
+            </View>
+          </View>
+
+          {/* Additional Stats row - Acceptance, Rating, Cancellation */}
+          <View style={[styles.statsRow, styles.secondaryStatsRow]}>
+            <View style={styles.statItem}>
+              <AcceptenceIcon width={moderateScale(20)} height={moderateScale(20)} fill={colors.dark} />
+              <Text style={styles.statValue}>{profileData.acceptance}%</Text>
+              <Text style={styles.statLabel}>Acceptance</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <RatingIcon width={moderateScale(20)} height={moderateScale(20)} fill={colors.dark} />
+              <Text style={styles.statValue}>{profileData.rating}</Text>
+              <Text style={styles.statLabel}>Rating</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <CancellationIcon width={moderateScale(20)} height={moderateScale(20)} fill={colors.dark} />
+              <Text style={styles.statValue}>{profileData.cancellation}%</Text>
+              <Text style={styles.statLabel}>Cancellation</Text>
             </View>
           </View>
 
@@ -168,12 +195,12 @@ const styles = StyleSheet.create({
   ratingText: {
     color: colors.white,
     fontSize: moderateScale(11),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
 
   name: {
     fontSize: moderateScale(19),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.dark,
     marginBottom: scale(16),
   },
@@ -189,7 +216,7 @@ const styles = StyleSheet.create({
   statItem: { flex: 1, alignItems: 'center' },
   statValue: {
     fontSize: moderateScale(17),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.dark,
     marginBottom: 2,
   },
@@ -202,6 +229,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.divider,
     alignSelf: 'center',
   },
+  secondaryStatsRow: {
+    borderTopWidth: 0,
+    marginTop: -scale(10),
+    paddingBottom: scale(14),
+  },
 
   // ── Info Section ──────────────────────────────────────────────────────────
   infoSection: {
@@ -210,7 +242,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: moderateScale(14),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.dark,
     marginBottom: scale(4),
   },
@@ -227,7 +259,7 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: moderateScale(15),
     color: colors.dark,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
   },
 
   // ── Update Button ─────────────────────────────────────────────────────────
@@ -252,7 +284,7 @@ const styles = StyleSheet.create({
   updateBtnText: {
     color: colors.secondary,
     fontSize: moderateScale(15),
-    fontWeight: '900',
+    fontFamily: fonts.bold,
     letterSpacing: 0.4,
   },
 });

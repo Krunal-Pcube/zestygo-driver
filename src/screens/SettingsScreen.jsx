@@ -19,6 +19,7 @@ import {
   ChevronRight,
 } from 'lucide-react-native';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
   settingText: {
     fontSize: moderateScale(15),
     color: colors.darkText,
-    fontWeight: '400',
+    fontFamily: fonts.regular,
   },
 });
 

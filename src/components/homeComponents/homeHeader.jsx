@@ -6,20 +6,17 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
-import { Menu, Bell } from 'lucide-react-native';
+import NotificationIcon from '../../assets/homeIcons/zondicons_notification.svg';
+import MenuIcon from '../../assets/homeIcons/Menu.svg';
 import { colors } from '../../utils/colors';
+import fonts from '../../utils/fonts/fontsList';
 
-interface HomeHeaderProps {
-  navigation?: any;
-  earnings?: number;
-}
-
-export default function HomeHeader({ navigation, earnings = 0 }: HomeHeaderProps) {
+export default function HomeHeader({ navigation, earnings = 0 }) {
   return (
     <View style={styles.header}>
       {/* Left: Menu */}
-      <TouchableOpacity style={styles.iconBtn} onPress={() => navigation?.openDrawer()}>
-        <Menu size={moderateScale(22)} color={colors.secondary} />
+      <TouchableOpacity activeOpacity={0.7} style={styles.iconBtn} onPress={() => navigation?.openDrawer()}>
+        <MenuIcon width={moderateScale(28)} height={moderateScale(28)} fill={colors.secondary} />
       </TouchableOpacity>
 
       {/* Center: Earnings Pill */}
@@ -27,9 +24,9 @@ export default function HomeHeader({ navigation, earnings = 0 }: HomeHeaderProps
         <Text style={styles.earVal}>$ {earnings.toFixed(2)}</Text>
       </View>
 
-      {/* Right: Bell */}
+      {/* Right: Notification */}
       <TouchableOpacity style={styles.iconBtn}>
-        <Bell size={moderateScale(22)} color={colors.secondary} />
+        <NotificationIcon width={moderateScale(24)} height={moderateScale(24)} fill={colors.secondary} />
       </TouchableOpacity>
     </View>
   );
@@ -67,7 +64,7 @@ const styles = StyleSheet.create({
   earVal: {
     color: colors.white,
     fontSize: moderateScale(18),
-    fontWeight: '800',
+    fontFamily: fonts.bold,
     letterSpacing: 0.4,
   },
 });

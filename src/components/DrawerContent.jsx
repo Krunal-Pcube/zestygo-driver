@@ -21,6 +21,7 @@ import {
   LogOut,
 } from 'lucide-react-native';
 import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
+import fonts from '../utils/fonts/fontsList'; 
 
 const DrawerContent = (props) => {
   const { navigation } = props;
@@ -123,7 +124,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: moderateScale(18),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: '#333',
   },
   placeholder: {
@@ -153,7 +154,7 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontSize: moderateScale(16),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: '#fff',
     marginBottom: verticalScale(2),
   },
@@ -173,7 +174,7 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: moderateScale(15),
     color: '#333',
-    fontWeight: '400',
+    fontFamily: fonts.regular,
   },
   divider: {
     height: 1,
@@ -191,7 +192,7 @@ const styles = StyleSheet.create({
   toggleLabel: {
     fontSize: moderateScale(14),
     color: '#333',
-    fontWeight: '400',
+    fontFamily: fonts.regular,
   },
 });
 

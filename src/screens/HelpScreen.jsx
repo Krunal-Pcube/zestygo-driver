@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
@@ -114,7 +115,7 @@ const styles = StyleSheet.create({
   },
   questionText: {
     fontSize: moderateScale(15),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.darkText,
     flex: 1,
   },

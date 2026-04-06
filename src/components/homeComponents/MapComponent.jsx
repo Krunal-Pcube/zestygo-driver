@@ -15,13 +15,14 @@ import { MapPin, LocateFixed, PersonStanding, UtensilsCrossed, Home, Store, Info
 import Svg, { Polygon, Circle, G } from 'react-native-svg';
 import { RIDE_STEPS, STEP_CONFIG } from '../../hooks/useRideState';
 import { colors } from '../../utils/colors';
+import fonts from '../../utils/fonts/fontsList';
 
 /* ════════════════════════════════════════════════════════════════
    Uber-Style Driver Marker
    ─ Dark filled outer circle with a clean white inner ring
    ─ Bold arrow inside pointing in heading direction
    ─ Subtle transparent halo ring around the whole thing
-   ════════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════ */  
 const DriverMarker = ({ coordinate, heading, cameraHeading }) => {
 
   /* ── Smooth coordinate interpolation (600 ms glide) ─────────── */
@@ -461,22 +462,29 @@ export default function MapComponent({
 
    
       {/* ── Floating Action Buttons ── */}
-      {!hasActiveRide && (
-        <ReAnimated.View style={[styles.floatRow, floatBtnStyle]} pointerEvents="box-none">
-          <View style={styles.floatLeft}>
-            {isOnline && (
-              <TouchableOpacity activeOpacity={0.7} style={styles.mapBtn}>
-                <PersonStanding size={moderateScale(22)} color={colors.grey} />
-              </TouchableOpacity> 
-            )}
-          </View>
-          <View style={styles.floatRight}>
+      <ReAnimated.View 
+        style={[
+          styles.floatRow, 
+          floatBtnStyle, 
+          { zIndex: hasActiveRide ? 1 : 9 }
+        ]} 
+        pointerEvents="box-none"
+      >
+        <View style={styles.floatLeft}>
+          {!hasActiveRide && isOnline && (
+            <TouchableOpacity activeOpacity={0.7} style={styles.mapBtn}>
+              <PersonStanding size={moderateScale(22)} color={colors.grey} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={styles.floatRight}>
+          {!hasActiveRide && (
             <TouchableOpacity activeOpacity={0.7} style={styles.mapBtn} onPress={handleLocate}>
               <LocateFixed size={moderateScale(22)} color={colors.secondary} />
             </TouchableOpacity>
-          </View>
-        </ReAnimated.View>
-      )}
+          )}
+        </View>
+      </ReAnimated.View>
     </>
   );
 }
@@ -547,7 +555,7 @@ const styles = StyleSheet.create({
   },
   tapHintText: {
     fontSize: moderateScale(12),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.secondary,
   },
   loadingContainer: {
@@ -562,7 +570,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: moderateScale(16),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
   },
 });

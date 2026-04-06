@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Bell, Package, DollarSign, Info, ChevronRight } from 'lucide-react-native';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
@@ -138,12 +139,12 @@ const styles = StyleSheet.create({
   },
   notificationTitle: {
     fontSize: moderateScale(15),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.darkText,
     flex: 1,
   },
   unreadTitle: {
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   timeText: {
     fontSize: moderateScale(12),

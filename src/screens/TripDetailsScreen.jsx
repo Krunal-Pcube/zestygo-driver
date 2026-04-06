@@ -15,6 +15,7 @@ import {
 import { ArrowLeft, MapPin, Circle } from 'lucide-react-native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 
 export default function TripDetailsScreen({ navigation, route }) {
   const {
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: moderateScale(18),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
   },
   headerPlaceholder: {
@@ -208,7 +209,7 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontSize: moderateScale(32),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(4),
   },
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
   },
   statDivider: {
@@ -290,7 +291,7 @@ const styles = StyleSheet.create({
   routeAddress: {
     fontSize: moderateScale(14),
     color: colors.secondary,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     lineHeight: moderateScale(20),
   },
   routeCity: {
@@ -318,7 +319,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: moderateScale(14),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(12),
   },
@@ -334,7 +335,7 @@ const styles = StyleSheet.create({
   },
   earningsValue: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
   },
   negativeValue: {
@@ -353,7 +354,7 @@ const styles = StyleSheet.create({
   },
   paymentsAmount: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
   },
   footerNote: {

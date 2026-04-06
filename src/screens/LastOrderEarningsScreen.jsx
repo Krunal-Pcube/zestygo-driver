@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { CheckCircle2, Bike, MapPin, Clock, DollarSign } from 'lucide-react-native';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.green,
   },
   orderId: {
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
   },
   locationCard: {
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
   locationValue: {
     fontSize: moderateScale(14),
     color: colors.darkText,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
   },
   statsRow: {
     flexDirection: 'row',
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: moderateScale(18),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.darkText,
     marginBottom: scale(4),
   },
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
   },
   earningsTitle: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.darkText,
     marginBottom: scale(16),
   },
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
   },
   earningsValue: {
     fontSize: moderateScale(14),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.darkText,
   },
   earningsDivider: {
@@ -273,12 +274,12 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.darkText,
   },
   totalValue: {
     fontSize: moderateScale(18),
-    fontWeight: '800',
+    fontFamily: fonts.bold,
     color: colors.green,
   },
 });

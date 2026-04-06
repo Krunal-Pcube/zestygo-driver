@@ -8,6 +8,7 @@ import {
   TextInput,
 } from 'react-native';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
@@ -105,12 +106,12 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: moderateScale(14),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.darkText,
   },
   balanceValue: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
   },
   inputContainer: {
@@ -124,14 +125,14 @@ const styles = StyleSheet.create({
   },
   dollarSign: {
     fontSize: moderateScale(20),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
     marginRight: scale(4),
   },
   input: {
     flex: 1,
     fontSize: moderateScale(20),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
     padding: 0,
   },
@@ -151,7 +152,7 @@ const styles = StyleSheet.create({
   },
   quickAmountText: {
     fontSize: moderateScale(14),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.darkText,
   },
   bankSection: {
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
   },
   bankLabel: {
     fontSize: moderateScale(14),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.darkText,
     marginBottom: scale(12),
   },
@@ -173,7 +174,7 @@ const styles = StyleSheet.create({
   },
   bankName: {
     fontSize: moderateScale(14),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.darkText,
   },
   bankNumber: {
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     fontSize: moderateScale(15),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: '#d4f935',
   },
 });

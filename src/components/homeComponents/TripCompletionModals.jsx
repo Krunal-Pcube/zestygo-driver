@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../../utils/colors';
+import fonts from '../../utils/fonts/fontsList';
 
 /* ════════════════════════════════════════════════════════════════
    Rating Modal - Centered modal with backdrop
@@ -276,13 +277,13 @@ const styles = StyleSheet.create({
   /* Rating View */
   ratingTitle: {
     fontSize: moderateScale(16),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.grey,
     marginBottom: verticalScale(12),
   },
   ratingCustomerName: {
     fontSize: moderateScale(20),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(20),
   },
@@ -313,13 +314,13 @@ const styles = StyleSheet.create({
   submitBtnText: {
     color: '#C8FF00',
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
 
   /* Earnings View */
   tripIdText: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
     marginBottom: verticalScale(16),
   },
@@ -335,11 +336,11 @@ const styles = StyleSheet.create({
   checkMark: {
     fontSize: moderateScale(28),
     color: colors.white,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   earningsAmount: {
     fontSize: moderateScale(32),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(4),
   },
@@ -350,7 +351,7 @@ const styles = StyleSheet.create({
   },
   viewDetailsText: {
     fontSize: moderateScale(13),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: '#4CAF50',
     textTransform: 'uppercase',
     marginBottom: verticalScale(16),
@@ -373,13 +374,13 @@ const styles = StyleSheet.create({
   doneBtnText: {
     color: '#C8FF00',
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
 
   /* Cancel Confirmation Modal */
   cancelConfirmTitle: {
     fontSize: moderateScale(18),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
     textAlign: 'center',
     marginBottom: verticalScale(20),
@@ -403,7 +404,7 @@ const styles = StyleSheet.create({
   yesCancelBtnText: {
     color: '#C8FF00',
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   noBtn: {
     backgroundColor: '#E0E0E0',
@@ -417,7 +418,7 @@ const styles = StyleSheet.create({
   noBtnText: {
     color: colors.secondary,
     fontSize: moderateScale(16),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
 
   /* Cancel Reason Modal */
@@ -451,11 +452,11 @@ const styles = StyleSheet.create({
   closeBtnText: {
     fontSize: moderateScale(20),
     color: colors.secondary,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
   reasonHeaderTitle: {
     fontSize: moderateScale(18),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
   },
   headerPlaceholder: {
@@ -501,7 +502,7 @@ const styles = StyleSheet.create({
   checkIcon: {
     color: colors.white,
     fontSize: moderateScale(14),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   reasonText: {
     fontSize: moderateScale(16),
@@ -522,7 +523,7 @@ const styles = StyleSheet.create({
   doneReasonBtnText: {
     color: '#666666',
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
 
   /* Verify Order Modal */
@@ -544,7 +545,7 @@ const styles = StyleSheet.create({
   },
   verifyHeaderTitle: {
     fontSize: moderateScale(18),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
   },
   orderCardBox: {
@@ -557,7 +558,7 @@ const styles = StyleSheet.create({
   },
   orderCardName: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(4),
   },
@@ -615,7 +616,7 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: moderateScale(16),
     color: colors.secondary,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
   },
   issueBtn: {
     backgroundColor: '#E0E0E0',
@@ -628,7 +629,7 @@ const styles = StyleSheet.create({
   },
   issueBtnText: {
     fontSize: moderateScale(16),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
   },
   verifyOrderBtn: {
@@ -641,7 +642,7 @@ const styles = StyleSheet.create({
   verifyOrderBtnText: {
     color: '#C8FF00',
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
 
   /* Drop Off Order Modal */
@@ -670,7 +671,7 @@ const styles = StyleSheet.create({
   },
   takePhotoBtnText: {
     fontSize: moderateScale(16),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
   },
 
@@ -691,7 +692,7 @@ const styles = StyleSheet.create({
   },
   photoHeaderTitle: {
     fontSize: moderateScale(18),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
   },
   photoPreviewContainer: {
@@ -743,7 +744,7 @@ const styles = StyleSheet.create({
   },
   retakeBtnText: {
     fontSize: moderateScale(16),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
   },
   nextBtn: {
@@ -756,7 +757,7 @@ const styles = StyleSheet.create({
   },
   nextBtnText: {
     fontSize: moderateScale(16),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
   },
 
@@ -773,7 +774,7 @@ const styles = StyleSheet.create({
   },
   deliveryInfoTitle: {
     fontSize: moderateScale(18),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(4),
   },
@@ -784,7 +785,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.secondary,
     marginBottom: verticalScale(8),
   },
@@ -813,7 +814,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: moderateScale(14),
     color: '#4CAF50',
-    fontWeight: '500',
+    fontFamily: fonts.medium,
   },
   deletePhotoBtn: {
     width: scale(40),
@@ -870,9 +871,157 @@ const styles = StyleSheet.create({
   completeDeliveryBtnText: {
     color: '#C8FF00',
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
+  },
+
+  /* Pickup Confirmation Modal */
+  pickupConfirmTitle: {
+    fontSize: moderateScale(18),
+    fontFamily: fonts.bold,
+    color: colors.secondary,
+    textAlign: 'center',
+    marginBottom: verticalScale(24),
+  },
+  infoList: {
+    marginBottom: verticalScale(24),
+    width: '100%',
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: verticalScale(16),
+  },
+  infoIconBg: {
+    width: scale(40),
+    height: scale(40),
+    borderRadius: scale(20),
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: scale(12),
+    position: 'relative',
+  },
+  handIcon: {
+    fontSize: moderateScale(20),
+  },
+  personIcon: {
+    fontSize: moderateScale(20),
+  },
+  checkBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: scale(16),
+    height: scale(16),
+    borderRadius: scale(8),
+    backgroundColor: colors.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
+  checkText: {
+    color: colors.white,
+    fontSize: moderateScale(10),
+    fontFamily: fonts.bold,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: moderateScale(14),
+    color: colors.secondary,
+    lineHeight: moderateScale(20),
+  },
+  continueButton: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginBottom: verticalScale(12),
+  },
+  continueButtonText: {
+    color: '#C8FF00',
+    fontSize: moderateScale(16),
+    fontFamily: fonts.bold,
+  },
+  goBackButton: {
+    backgroundColor: '#E0E0E0',
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  goBackButtonText: {
+    color: colors.secondary,
+    fontSize: moderateScale(16),
+    fontFamily: fonts.semiBold,
   },
 });
+
+/* ════════════════════════════════════════════════════════════════
+   Pickup Confirmation Modal - Shows after Complete Pickup clicked
+   ════════════════════════════════════════════════════════════════ */
+export function PickupConfirmationModal({ visible, onContinue, onGoBack }) {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onGoBack}
+    >
+      <TouchableWithoutFeedback onPress={onGoBack}>
+        <View style={styles.backdrop}>
+          <TouchableWithoutFeedback>
+            <View style={styles.modalContainer}>
+              {/* Title */}
+              <Text style={styles.pickupConfirmTitle}>Ready for the next stop?</Text>
+
+              {/* Info Items */}
+              <View style={styles.infoList}>
+                <View style={styles.infoItem}>
+                  <View style={styles.infoIconBg}>
+                    <Text style={styles.handIcon}>✋</Text>
+                    <View style={styles.checkBadge}>
+                      <Text style={styles.checkText}>✓</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.infoText}>Confirm that the order has been Collected</Text>
+                </View>
+
+                <View style={styles.infoItem}>
+                  <View style={styles.infoIconBg}>
+                    <Text style={styles.personIcon}>👤</Text>
+                  </View>
+                  <Text style={styles.infoText}>We'll let the customer know you have their order</Text>
+                </View>
+              </View>
+
+              {/* Continue Button */}
+              <TouchableOpacity
+                style={styles.continueButton}
+                onPress={onContinue}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.continueButtonText}>Continue to next stop</Text>
+              </TouchableOpacity>
+
+              {/* Go Back Button */}
+              <TouchableOpacity
+                style={styles.goBackButton}
+                onPress={onGoBack}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.goBackButtonText}>Go Back</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+}
 
 /* ════════════════════════════════════════════════════════════════
    Verify Order Modal - Shows order details for verification

@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../../utils/colors';
+import fonts from '../../utils/fonts/fontsList';
 
 const SCREEN_W = Dimensions.get('window').width;
 const CARD_W = SCREEN_W - scale(32);
@@ -272,7 +273,7 @@ const s = StyleSheet.create({
   badgeDeliveryText: {
     color: colors.primary,
     fontSize: moderateScale(12),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     letterSpacing: 0.2,
   },
   badgeExclusive: {
@@ -284,7 +285,7 @@ const s = StyleSheet.create({
   badgeExclusiveText: {
     color: '#555555',
     fontSize: moderateScale(12),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
   closeBtn: {
     marginLeft: 'auto',
@@ -303,7 +304,7 @@ const s = StyleSheet.create({
   /* Price */
   price: {
     fontSize: moderateScale(34),
-    fontWeight: '800',
+    fontFamily: fonts.bold,
     color: '#1A1A1A',
     letterSpacing: -1,
     marginBottom: verticalScale(8),
@@ -318,7 +319,7 @@ const s = StyleSheet.create({
   },
   taxText: {
     fontSize: moderateScale(12),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: '#666666',
   },
 
@@ -347,7 +348,7 @@ const s = StyleSheet.create({
   routeText: { flex: 1 },
   routeTime: {
     fontSize: moderateScale(15),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: '#1A1A1A',
   },
   routeName: {
@@ -370,7 +371,7 @@ const s = StyleSheet.create({
   acceptBtnText: {
     color: colors.primary,
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     letterSpacing: 0.2,
   },
   progressBar: {

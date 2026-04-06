@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { FileText, ChevronRight, CheckCircle2 } from 'lucide-react-native';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
   },
   documentTitle: {
     fontSize: moderateScale(15),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.darkText,
     marginBottom: scale(4),
   },
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
   },
   uploadButtonText: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
   },
 });

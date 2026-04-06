@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
@@ -110,12 +111,12 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: moderateScale(14),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.mediumGrey,
   },
   tabTextActive: {
     color: colors.darkText,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   tabDivider: {
     width: 1,
@@ -137,13 +138,13 @@ const styles = StyleSheet.create({
   },
   earningsLabel: {
     fontSize: moderateScale(13),
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.mediumGrey,
     marginBottom: scale(4),
   },           
   earningsAmount: {
     fontSize: moderateScale(32),
-    fontWeight: '800',
+    fontFamily: fonts.bold,
     color: colors.primary,
   },
   sectionItem: {
@@ -159,7 +160,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: moderateScale(15),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
     marginBottom: scale(2),
   },
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
   },
   orderAmount: {
     fontSize: moderateScale(13),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.green,
   },
   orderInfo: {

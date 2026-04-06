@@ -6,6 +6,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { colors } from '../utils/colors';
+import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
   },
   tripDate: {
     fontSize: moderateScale(15),
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     color: colors.darkText,
     marginBottom: scale(4),
   },
@@ -69,7 +70,7 @@ const styles = StyleSheet.create({
   },
   tripAmount: {
     fontSize: moderateScale(16),
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.darkText,
   },
 });
