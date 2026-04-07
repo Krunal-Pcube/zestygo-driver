@@ -1,4 +1,4 @@
-package com.driverapp
+package com.zestygodriver
 
 import android.os.Bundle
 import com.swmansion.rnscreens.fragment.restoration.RNScreensFragmentFactory

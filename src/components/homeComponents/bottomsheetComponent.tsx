@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated as RNAnimated } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
@@ -161,6 +161,15 @@ export default function BottomSheetComponent({
   activeRide,
   children, // For custom content like stats
 }) {
+  // Force bottom sheet to show at index 0 when it mounts
+  // This fixes the issue where sheet doesn't show after accepting permissions
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      bottomSheetRef.current?.snapToIndex(0);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleChevron = () => {
     const next = sheetIndex === 0 ? 1 : 0;
     bottomSheetRef.current?.snapToIndex(next);

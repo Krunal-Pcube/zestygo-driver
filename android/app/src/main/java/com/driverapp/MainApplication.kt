@@ -1,4 +1,4 @@
-package com.driverapp
+package com.zestygodriver
 
 import android.app.Application
 import com.facebook.react.PackageList

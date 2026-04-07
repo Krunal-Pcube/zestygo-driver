@@ -6,13 +6,15 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { scale } from 'react-native-size-matters';
-
 import AuthHeader from '../../components/AuthHeader';
 import CommonButton from '../../components/CommonBtn';
 import fonts from '../../utils/fonts/fontsList';
+import Toast from 'react-native-toast-message';
+import { ForgotPasswordVerifyOTPController, ResetPasswordSendOTPController } from '../../MVC/controllers/authController';
 import { colors } from '../../utils/colors';
 
 const { width } = Dimensions.get('window');
@@ -20,36 +22,82 @@ const { width } = Dimensions.get('window');
 const OtpForgotPassword = () => {
   const navigation = useNavigation();
   const route = useRoute();
-
-  const { type, value } = route.params ?? { type: 'phone', value: '1234567890' };
+  const { value } = route.params;
 
   const otpLength = 6;
   const [otp, setOtp] = useState(new Array(otpLength).fill(''));
   const [loading, setLoading] = useState(false);
+  const [loadingResend, setLoadingResend] = useState(false);
   const inputRefs = useRef([]);
 
-  // ── MASK HELPERS ─────────────────────────────────────
-  const maskPhone = number => (number ? `******${number.slice(-4)}` : '');
+  // Auto focus first box
+  useEffect(() => {
+    setTimeout(() => {
+      inputRefs.current[0]?.focus();
+    }, 300);
+  }, []);
 
-  const maskEmail = email => {
+  const maskEmail = (email) => {
     const [n, d] = email?.split('@') || [];
     return d ? `${n.slice(0, 2)}****@${d}` : '';
   };
 
-  const subtitle =
-    type === 'email'
-      ? `Please type the code sent to ${maskEmail(value)}`
-      : `Please type the code sent to ${maskPhone(value)}`;
+  const subtitle = `Please type the code sent to ${maskEmail(value)}`;
 
-  // ── AUTO FOCUS ────────────────────────────────────────
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      inputRefs.current[0]?.focus();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
+  // ================= VERIFY OTP =================
+  const handleVerifyOtp = async () => {
+    const enteredOtp = otp.join('');
 
-  // ── OTP HANDLERS ─────────────────────────────────────
+    if (enteredOtp.length !== 6) {
+      Toast.show({
+        type: 'error',
+        text1: 'Invalid OTP',
+        text2: 'Please enter 6 digit OTP',
+        position: 'top',
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    const payload = {
+      otp: enteredOtp,
+      email: value,
+    };
+
+    try {
+      await ForgotPasswordVerifyOTPController({ payload, navigation });
+    } catch (error) {
+      console.log(
+        'OtpForgotPassword Screen Error :::',
+        error?.response?.data || error.message,
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleResendOtp = async () => {
+    setLoadingResend(true);
+
+    const payload = { email: value }; // ✅ always email
+
+    try {
+      await ResetPasswordSendOTPController({ payload, navigation: null }); // ✅ prevents re-navigation
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: err.message || 'Failed to resend OTP',
+        position: 'top',
+      });
+    } finally {
+      setLoadingResend(false);
+    }
+  };
+
+  // ================= OTP INPUT HANDLERS =================
   const handleChange = (text, index) => {
     if (text.length > 1) text = text.slice(-1);
 
@@ -68,19 +116,8 @@ const OtpForgotPassword = () => {
     }
   };
 
-  const handleVerify = () => {
-    // plug in API logic here
-    navigation.navigate('ResetPassword');
-  };
-
-  const handleResend = () => {
-    // plug in resend API logic here
-  };
-
   return (
     <View style={styles.container}>
-
-      {/* HEADER */}
       <AuthHeader
         title="OTP Verification"
         subtitle={subtitle}
@@ -88,83 +125,80 @@ const OtpForgotPassword = () => {
 
       />
 
-
-      {/* BODY */}
       <View style={styles.formContainer}>
-
         {/* OTP BOXES */}
         <View style={styles.otpWrapper}>
-          {otp.map((digit, index) => (
+          {otp.map((val, index) => (
             <TextInput
               key={index}
               ref={ref => (inputRefs.current[index] = ref)}
-              style={[
-                styles.otpBox,
-                otp[index] !== '' && styles.otpFilled,
-              ]}
+              style={[styles.otpBox, otp[index] && styles.otpFilled]}
               keyboardType="numeric"
               maxLength={1}
               value={otp[index]}
               onChangeText={text => handleChange(text, index)}
-              onKeyPress={({ nativeEvent }) => {
-                if (nativeEvent.key === 'Backspace') {
-                  handleBackspace(otp[index], index);
-                }
-              }}
+              onKeyPress={({ nativeEvent }) =>
+                nativeEvent.key === 'Backspace' &&
+                handleBackspace(otp[index], index)
+              }
             />
           ))}
         </View>
 
-        {/* VERIFY BUTTON */}
+        {/* BUTTON */}
         <CommonButton
           title="Verify & Proceed"
-          onPress={handleVerify}
+          onPress={handleVerifyOtp}
           loading={loading}
           disabled={loading}
         />
-
+ 
         {/* RESEND */}
-        <View style={styles.resendContainer}>
-          <Text style={styles.resendText}>Didn't receive OTP code? </Text>
-          <TouchableOpacity activeOpacity={0.7} onPress={handleResend}>
-            <Text style={styles.resendLink}>Resend OTP</Text>
+        <View style={styles.signupContainer}>
+          <Text style={styles.signupText}>Didn't receive OTP code? </Text>
+          <TouchableOpacity activeOpacity={0.7} onPress={handleResendOtp}>
+            {loadingResend ? (
+              <View style={{ marginLeft: scale(4) }}>
+                <ActivityIndicator size="small" color={colors.secondary} />
+              </View>
+            ) : (
+              <Text style={styles.signupLink}>Resend OTP</Text>
+            )}
           </TouchableOpacity>
         </View>
-
       </View>
     </View>
   );
 };
 
+// ================= STYLES =================
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+
   formContainer: {
     flex: 1,
     paddingHorizontal: scale(30),
     paddingTop: scale(24),
   },
 
-  // ── OTP BOXES ────────────────────────────────────────
   otpWrapper: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: scale(25),
     marginBottom: scale(25),
   },
+
   otpBox: {
-    fontFamily: fonts.semiBold,       // semiBold so digits feel prominent
     width: width * 0.123,
     height: scale(60),
+    fontFamily: fonts.medium,
     borderWidth: 1,
     borderRadius: 14,
     textAlign: 'center',
     fontSize: scale(22),
-    color: '#000',
     borderColor: '#dcdcdc',
   },
+
   otpFilled: {
     borderColor: '#00C27A',
     shadowColor: '#00C27A',
@@ -172,21 +206,23 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
 
-  // ── RESEND ROW ───────────────────────────────────────
-  resendContainer: {
+  signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: scale(25),
   },
-  resendText: {
-    fontFamily: fonts.medium,         // medium for supporting label
+
+  signupText: {
+    fontFamily: fonts.medium,
     fontSize: scale(13),
     color: '#666',
   },
-  resendLink: {
-    fontFamily: fonts.semiBold,       // semiBold for tappable action
+
+  signupLink: {
+    fontFamily: fonts.semiBold,
     fontSize: scale(13),
     color: '#333',
+    fontWeight: '600',
     textDecorationLine: 'underline',
   },
 });

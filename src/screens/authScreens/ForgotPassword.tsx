@@ -1,54 +1,92 @@
+import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-  View,
+  Dimensions,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
+  View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { scale } from 'react-native-size-matters';
 
 import AuthHeader from '../../components/AuthHeader';
 import CommonButton from '../../components/CommonBtn';
 import fonts from '../../utils/fonts/fontsList';
-import { colors } from '../../utils/colors';
+import Toast from 'react-native-toast-message';
+import { ResetPasswordSendOTPController } from '../../MVC/controllers/authController';
+
+const { width, height } = Dimensions.get('window');
 
 const ForgotPassword = () => {
-  const navigation = useNavigation();
-  const [emailOrPhone, setEmailOrPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
-  const handleSubmit = () => {
-    // plug in API logic here
-    navigation.navigate('OtpForgotPassword');
-  }
+  const handleSubmit = async () => {
+    const input = email.trim();
+
+    const isEmail = /\S+@\S+\.\S+/.test(input);
+
+    if (!input) {
+      Toast.show({
+        type: 'error',
+        text1: 'Email Required',
+        text2: 'Please enter your email address',
+        position: 'top',
+        visibilityTime: 3000,
+        topOffset: 50,
+      });
+      return;
+    }
+
+    if (!isEmail) { 
+      Toast.show({
+        type: 'error',
+        text1: 'Invalid Email',
+        text2: 'Please enter a valid email address',
+        position: 'top',
+        visibilityTime: 3000,
+        topOffset: 50,
+      });
+      return;
+    }
+
+    setLoading(true);
+    const payload = { email: input };
+
+    try {
+      await ResetPasswordSendOTPController({ payload, navigation });
+    } catch (err) {
+      console.log('OTP Error:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
-
-      {/* HEADER */}
       <AuthHeader
         title="Forgot Password?"
-        subtitle="Please enter your existing phone/email address"
+        subtitle="Please enter your registered email address"
         image={require('../../assets/food.png')}
-
+        
       />
 
-      {/* BODY */}
       <View style={styles.formContainer}>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your email"
+            placeholderTextColor="#999"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
 
-        {/* INPUT */}
-        <TextInput
-          style={styles.input}
-          placeholder="Enter email or phone"
-          placeholderTextColor="#999"
-          value={emailOrPhone}
-          onChangeText={setEmailOrPhone}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        {/* SUBMIT BUTTON */}
         <View style={{ marginTop: scale(10) }}>
           <CommonButton
             title="Submit Now"
@@ -58,54 +96,46 @@ const ForgotPassword = () => {
           />
         </View>
 
-        {/* BACK TO LOGIN */}
-        <View style={styles.backContainer}>
+        <View style={styles.signupContainer}>
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => navigation.navigate('Login')}
           >
-            <Text style={styles.backLink}>Back to login</Text>
+            <Text style={styles.signupLink}>Back to login</Text>
           </TouchableOpacity>
         </View>
-
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
   formContainer: {
     flex: 1,
     paddingHorizontal: scale(30),
     paddingTop: scale(24),
   },
-
-  // ── INPUT ────────────────────────────────────────────
+  inputContainer: { marginBottom: scale(10) },
   input: {
-    fontFamily: fonts.regular,          // regular for input text
-    backgroundColor: colors.background2,
+    fontFamily: fonts.regular,
+    backgroundColor: '#f5f5f5',
     borderRadius: 12,
     paddingHorizontal: scale(18),
     paddingVertical: scale(14),
     fontSize: scale(16),
     color: '#333',
-    marginBottom: scale(10),
   },
-
-  // ── BACK TO LOGIN ────────────────────────────────────
-  backContainer: {
+  signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: scale(4),
+    marginBottom: scale(25),
   },
-  backLink: {
-    fontFamily: fonts.semiBold,         // semiBold for tappable link
+  signupLink: {
+    fontFamily: fonts.semiBold,
     fontSize: scale(13),
     color: '#333',
+    fontWeight: '600',
     textDecorationLine: 'underline',
   },
 });

@@ -16,7 +16,7 @@ const CommonButton = ({
   textColor = colors.primary,
   borderRadius = 30,
   paddingVertical = 12,
-  style = {},
+  style = {}, 
   loading = false,
   disabled = false,
 }) => {
@@ -37,7 +37,11 @@ const CommonButton = ({
       onPress={onPress}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={textColor} />
+        <ActivityIndicator
+          size="small"
+          color={textColor}
+          style={styles.indicator} // ← fix: match text height
+        />
       ) : (
         <Text style={[styles.text, { color: textColor }]}>{title}</Text>
       )}
@@ -52,7 +56,11 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: scale(16),
-    fontFamily: fonts.semiBold,   // semiBold for CTA button labels
+    fontFamily: fonts.semiBold,
+    lineHeight: scale(22), // ← explicit lineHeight
+  },
+  indicator: {
+    height: scale(22), // ← same as text lineHeight so button doesn't shrink
   },
 });
 
