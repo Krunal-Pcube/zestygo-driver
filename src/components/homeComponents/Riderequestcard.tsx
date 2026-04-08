@@ -19,10 +19,12 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
+import Sound from 'react-native-sound';
 
 const SCREEN_W = Dimensions.get('window').width;
 const CARD_W = SCREEN_W - scale(32);
@@ -119,8 +121,56 @@ export default function RideRequestCard({
   const [remaining, setRemaining] = useState(duration);
   const [accepted, setAccepted] = useState(false);
   const intervalRef = useRef(null);
-  const slideY = useRef(new Animated.Value(300)).current;
+  const slideY = useRef(new Animated.Value(100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const soundRef = useRef(null);
+
+  // Initialize and play sound when ride arrives
+  useEffect(() => {
+    if (visible && !accepted) {
+      // Initialize sound
+      const sound = new Sound(
+        'ride_arriving.mp3',
+        Platform.OS === 'ios' ? Sound.MAIN_BUNDLE : '',
+        (error) => {
+          if (error) {
+            console.log('Failed to load sound', error);
+            return;
+          }
+          sound.setNumberOfLoops(-1); // Loop indefinitely
+          sound.setVolume(1.0);
+          sound.play((success) => {
+            if (!success) {
+              console.log('Sound playback failed');
+            }
+          });
+        }
+      );
+      soundRef.current = sound;
+    }
+
+    // Cleanup: stop sound when component unmounts or ride is no longer visible
+    return () => {
+      if (soundRef.current) {
+        const sound = soundRef.current;
+        sound.stop(() => {
+          sound.release();
+        });
+        soundRef.current = null;
+      }
+    };
+  }, [visible, ride?.id]);
+
+  // Stop sound when ride is accepted or times out
+  useEffect(() => {
+    if ((accepted || remaining === 0) && soundRef.current) {
+      const sound = soundRef.current;
+      sound.stop(() => {
+        sound.release();
+        soundRef.current = null;
+      });
+    }
+  }, [accepted, remaining]);
 
   /* ── Slide in when visible ───────────────────────────────── */
   useEffect(() => {
@@ -133,7 +183,7 @@ export default function RideRequestCard({
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(slideY, { toValue: 300, duration: 300, useNativeDriver: true }),
+        Animated.timing(slideY, { toValue: 100, duration: 300, useNativeDriver: true }),
         Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }),
       ]).start();
     }
@@ -186,6 +236,14 @@ export default function RideRequestCard({
   const handleAccept = useCallback(() => {
     clearInterval(intervalRef.current);
     setAccepted(true);
+    // Stop sound immediately on accept
+    if (soundRef.current) {
+      const sound = soundRef.current;
+      sound.stop(() => {
+        sound.release();
+        soundRef.current = null;
+      });
+    }
     setTimeout(() => onAccept?.(ride), 600);
   }, [ride]);
 
