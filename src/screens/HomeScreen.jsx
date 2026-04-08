@@ -140,6 +140,7 @@ export default function HomeScreen({ navigation }) {
   const [showEarningsModal, setShowEarningsModal] = useState(false);
   const [location, setLocation] = useState(null);
   const [heading, setHeading] = useState(0);
+  const [locationReady, setLocationReady] = useState(false);
   const [cameraHeading, setCameraHeading] = useState(0);
 
   const mapRef = useRef(null);
@@ -148,7 +149,7 @@ export default function HomeScreen({ navigation }) {
   const dotPulse = useRef(new Animated.Value(1)).current;
   const watchIdRef = useRef(null);
 
-const animatedPosition = useSharedValue(SCREEN_HEIGHT * 0.85);
+  const animatedPosition = useSharedValue(SCREEN_HEIGHT * 0.85);
   const snapPoints = useMemo(() => ['15%'], []);
   const floatBtnOffset = verticalScale(72);
 
@@ -167,8 +168,10 @@ const animatedPosition = useSharedValue(SCREEN_HEIGHT * 0.85);
           'Location Permission Denied',
           'Enable location in Settings to use the map.',
         );
+        setLocationReady(false);
         return;
       }
+      setLocationReady(true);
 
       // ── Configure the community geolocation library ───────────
       // Must call setRNConfiguration before any GPS calls.
@@ -503,6 +506,7 @@ const animatedPosition = useSharedValue(SCREEN_HEIGHT * 0.85);
           chevronRot={chevronRot}
           dotPulse={dotPulse}
           activeRide={rideData}
+          locationReady={locationReady}
         >
           <StatsContent />
         </BottomSheetComponent>

@@ -5,7 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { ArrowLeft } from 'lucide-react-native';
+import BackArrow from '../assets/drawerIcons/back_arrow.svg';
 import { colors } from '../utils/colors';
 import { scale, moderateScale } from 'react-native-size-matters';
 import { useNavigation } from '@react-navigation/native';
@@ -30,7 +30,7 @@ const Header = ({
           style={styles.backBtn}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={22} color={colors.darkText} strokeWidth={2.5} />
+          <BackArrow width={scale(24)} height={scale(24)} fill={colors.darkText} />
         </TouchableOpacity>
       ) : (
         <View style={styles.placeholder} />

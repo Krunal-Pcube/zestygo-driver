@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated as RNAnimated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated as RNAnimated, Image } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { Car, DollarSign } from 'lucide-react-native';
@@ -16,16 +16,6 @@ import fonts from '../../utils/fonts/fontsList';
    ════════════════════════════════════════════════════════════════ */
 const OnlineToggleButton = ({ isOnline, onPress }) => {
   const pressScale = React.useRef(new RNAnimated.Value(1)).current;
-  const bgProgress = React.useRef(new RNAnimated.Value(isOnline ? 1 : 0)).current;
-
-  React.useEffect(() => {
-    RNAnimated.spring(bgProgress, {
-      toValue: isOnline ? 1 : 0,
-      useNativeDriver: false,
-      tension: 80,
-      friction: 10,
-    }).start();
-  }, [isOnline]);
 
   const handlePress = () => {
     RNAnimated.sequence([
@@ -35,30 +25,36 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
     onPress();
   };
 
-  const bgColor = bgProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [colors.secondary, colors.errorColor],
-  });
+  // Go Offline UI - Red circle with hand icon and text below
+  if (isOnline) {
+    return (
+      <RNAnimated.View style={{ transform: [{ scale: pressScale }] }}>
+        <TouchableOpacity activeOpacity={1} onPress={handlePress} style={offlineStyles.container}>
+          <View style={offlineStyles.circle}>
+            <Image source={require('../../assets/homeIcons/hand.png')} style={offlineStyles.handIcon} resizeMode="contain" />
+          </View> 
+          <Text style={offlineStyles.text}>GO OFFLINE</Text>
+        </TouchableOpacity>
+      </RNAnimated.View>
+    );
+  }
 
-  const textColor = bgProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [colors.primary, colors.white],
-  });
-
+  // Go Online UI - Green pill button
   return (
     <RNAnimated.View style={{ transform: [{ scale: pressScale }] }}>
       <TouchableOpacity activeOpacity={1} onPress={handlePress}>
-        <RNAnimated.View style={[btnStyles.pill, { backgroundColor: bgColor }]}>
-          <RNAnimated.Text style={[btnStyles.label, { color: textColor }]}>
-            {isOnline ? 'Go Offline' : 'Go Online'}
-          </RNAnimated.Text>
-        </RNAnimated.View>
+        <View style={[onlineBtnStyles.pill, { backgroundColor: colors.secondary }]}>
+          <Text style={[onlineBtnStyles.label, { color: colors.primary }]}>
+            Go Online
+          </Text>
+        </View>
       </TouchableOpacity>
     </RNAnimated.View>
   );
 }
 
-const btnStyles = StyleSheet.create({
+// Go Online button styles (pill)
+const onlineBtnStyles = StyleSheet.create({
   pill: {
     paddingHorizontal: scale(36),
     paddingVertical: verticalScale(12),
@@ -75,6 +71,36 @@ const btnStyles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: fonts.bold,
     letterSpacing: 0.3,
+  },
+});
+
+// Go Offline button styles (red circle with hand)
+const offlineStyles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circle: {
+    width: scale(70),
+    height: scale(70),
+    borderRadius: scale(35),
+    backgroundColor: '#E53935',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: scale(4),
+    borderColor: '#FFCDD2',
+  },
+  handIcon: {
+    width: scale(32),
+    height: scale(32),
+    tintColor: '#FFFFFF',
+  },
+  text: {
+    marginTop: verticalScale(8),
+    fontSize: moderateScale(14),
+    fontFamily: fonts.bold,
+    color: '#333',
+    letterSpacing: 0.5,
   },
 });
 
@@ -159,17 +185,36 @@ export default function BottomSheetComponent({
   chevronRot,
   dotPulse,
   activeRide,
+  locationReady,
   children, // For custom content like stats
 }) {
+  // Track mount key to force re-render when location becomes ready
+  const [mountKey, setMountKey] = React.useState(0);
+  
+  React.useEffect(() => {
+    if (locationReady) {
+      // Force remount of bottom sheet by changing key
+      setMountKey(prev => prev + 1);
+    }
+  }, [locationReady]);
 
-
-  // ✅ REPLACE with this:
+  // Initial snap + re-snap when location permission granted
   useEffect(() => {
     const timer = setTimeout(() => {
       bottomSheetRef.current?.snapToIndex(0);
     }, 300);
     return () => clearTimeout(timer);
   }, []);
+
+  // Re-snap after remount when location becomes ready
+  useEffect(() => {
+    if (locationReady && mountKey > 0) {
+      const timer = setTimeout(() => {
+        bottomSheetRef.current?.snapToIndex(0);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [locationReady, mountKey, bottomSheetRef]);
 
   const handleChevron = () => {
     const next = sheetIndex === 0 ? 1 : 0;
@@ -188,6 +233,7 @@ export default function BottomSheetComponent({
 
   return (
     <BottomSheet
+      key={mountKey}
       ref={bottomSheetRef}
       index={0}
       snapPoints={snapPoints}
