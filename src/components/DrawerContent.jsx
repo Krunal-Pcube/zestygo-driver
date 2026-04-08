@@ -113,11 +113,11 @@ const DrawerContent = (props) => {
             onPress={() => navigation.closeDrawer()}
           >
             <BackArrow
-              width={scale(20)}
-              height={scale(18)}
+              width={scale(24)}
+              height={scale(24)}
               fill="#333"
             />
-          </TouchableOpacity>
+          </TouchableOpacity> 
           <Text style={styles.headerTitle}>Profile</Text>
         </View>
 
@@ -134,7 +134,7 @@ const DrawerContent = (props) => {
             <Text style={styles.profileName}>James Smith</Text>
             <Text style={styles.profilePhone}>+251 455 222 22</Text>
           </View>
-          <DrawerChevron width={scale(18)} height={scale(18)} fill="#fff" />
+          <DrawerChevron width={scale(16)} height={scale(16)} fill="#fff" />
         </TouchableOpacity>
 
         {/* Menu Items */}

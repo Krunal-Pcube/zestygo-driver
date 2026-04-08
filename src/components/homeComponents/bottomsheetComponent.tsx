@@ -68,6 +68,7 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
     <RNAnimated.View style={{ transform: [{ scale: pressScale }] }}>
       <TouchableOpacity activeOpacity={1} onPress={handlePress}>
         <View style={[onlineBtnStyles.pill, { backgroundColor: colors.secondary }]}>
+          <Image source={require('../../assets/homeIcons/car-handle.png')} style={onlineBtnStyles.icon} resizeMode="contain" />
           <Text style={[onlineBtnStyles.label, { color: colors.primary }]}>
             Go Online
           </Text>
@@ -80,11 +81,13 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
 // Go Online button styles (pill)
 const onlineBtnStyles = StyleSheet.create({
   pill: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: scale(8),
     paddingHorizontal: scale(36),
     paddingVertical: verticalScale(12),
     borderRadius: scale(32),
-    alignItems: 'center',
-    justifyContent: 'center',
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -95,6 +98,11 @@ const onlineBtnStyles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: fonts.bold,
     letterSpacing: 0.3,
+  },
+  icon: {
+    width: scale(18),
+    height: scale(18),
+    tintColor: colors.primary,
   },
 });
 
@@ -127,71 +135,235 @@ const offlineStyles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
-
+ 
 /* ════════════════════════════════════════════════════════════════
    Animated Online Strip
    ════════════════════════════════════════════════════════════════ */
+import LinearGradient from 'react-native-linear-gradient';
+
 const AnimatedOnlineStrip = () => {
   const translateX = React.useRef(new RNAnimated.Value(0)).current;
+  const glowOpacity = React.useRef(new RNAnimated.Value(0.7)).current;
   const [trackWidth, setTrackWidth] = React.useState(0);
-  const GLOW_WIDTH = scale(60);
+
+  const GLOW_WIDTH = scale(120);
 
   React.useEffect(() => {
     if (trackWidth === 0) return;
 
-    translateX.setValue(-GLOW_WIDTH); // start fully off left
+    const startX = -(GLOW_WIDTH / 2);
+    const endX = trackWidth - GLOW_WIDTH / 2;
 
-    const animate = () => {
+    translateX.setValue(startX);
+
+    // Ping-pong sweep
+    const sweep = () => {
       RNAnimated.sequence([
-        // ← left to right →
         RNAnimated.timing(translateX, {
-          toValue: trackWidth,      // sweep fully to right edge
-          duration: 900,
+          toValue: endX,
+          duration: 1200,
           useNativeDriver: true,
         }),
-        // → right to left ←
         RNAnimated.timing(translateX, {
-          toValue: -GLOW_WIDTH,     // sweep fully back to left edge
-          duration: 900,
+          toValue: startX,
+          duration: 1200,
           useNativeDriver: true,
         }),
-      ]).start(() => animate());    // ping-pong forever
+      ]).start(() => sweep());
     };
 
-    animate();
+    // Subtle pulse on the glow opacity
+    const pulse = () => {
+      RNAnimated.sequence([
+        RNAnimated.timing(glowOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        RNAnimated.timing(glowOpacity, {
+          toValue: 0.6,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]).start(() => pulse());
+    };
+
+    sweep();
+    pulse();
   }, [trackWidth]);
 
   return (
     <View
-      style={stripStyles.track}
+      style={stripStyles.wrapper}
       onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
     >
-      <RNAnimated.View
-        style={[stripStyles.glow, { transform: [{ translateX }] }]}
+      {/* ── Dark base track ── */}
+      <LinearGradient
+        colors={['#0a0a0a', '#111', '#0a0a0a']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={stripStyles.track}
+      >
+        {/* ── Static dim green tint across full track ── */}
+        <LinearGradient
+          colors={['transparent', 'rgba(0,230,118,0.08)', 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+
+        {/* ── Moving neon glow ── */}
+        <RNAnimated.View
+          style={[
+            stripStyles.glowWrapper,
+            {
+              width: GLOW_WIDTH,
+              opacity: glowOpacity,
+              transform: [{ translateX }],
+            },
+          ]}
+        >
+          {/* Outer wide bloom — feathered edges */}
+          <LinearGradient
+            colors={[
+              'transparent',
+              'rgba(0,230,118,0.15)',
+              'rgba(0,230,118,0.55)',
+              'rgba(0,255,140,0.85)',
+              'rgba(0,230,118,0.55)',
+              'rgba(0,230,118,0.15)',
+              'transparent',
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={stripStyles.glowOuter}
+          />
+
+          {/* Mid layer — tighter green core */}
+          <LinearGradient
+            colors={[
+              'transparent',
+              'rgba(0,255,140,0.4)',
+              'rgba(0,255,140,0.95)',
+              'rgba(0,255,140,0.4)',
+              'transparent',
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={stripStyles.glowMid}
+          />
+
+          {/* Inner white-hot core */}
+          <LinearGradient
+            colors={[
+              'transparent',
+              'rgba(255,255,255,0.6)',
+              'rgba(255,255,255,0.98)',
+              'rgba(255,255,255,0.6)',
+              'transparent',
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={stripStyles.glowCore}
+          />
+        </RNAnimated.View>
+      </LinearGradient>
+
+      {/* ── Top edge reflection line ── */}
+      <LinearGradient
+        colors={['transparent', 'rgba(0,255,140,0.25)', 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={stripStyles.topReflection}
+      />
+
+      {/* ── Bottom shadow bleed ── */}
+      <LinearGradient
+        colors={['rgba(0,230,118,0.12)', 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={stripStyles.bottomBleed}
       />
     </View>
   );
-}
+};
 
 const stripStyles = StyleSheet.create({
-  track: {
-    width: '100%',                  // full width of parent
-    height: verticalScale(2),
-    borderRadius: scale(4),
-    backgroundColor: colors.lightgrey,
-    overflow: 'hidden',
-    alignSelf: 'center',
-    marginTop: verticalScale(2),
+  wrapper: {
+    width: '100%',
+    marginTop: verticalScale(4),
+    marginBottom: verticalScale(2),
   },
-  glow: {
-    width: scale(100),               // short glow chip
+
+  // Main track
+  track: {
+    width: '100%',
+    height: verticalScale(3),
+    borderRadius: scale(3),
+    overflow: 'hidden',
+    // Neon ambient glow on track itself
+    shadowColor: '#00e676',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+
+  // Moving glow container
+  glowWrapper: {
+    position: 'absolute',
     height: '100%',
-    borderRadius: scale(4),
-    backgroundColor: colors.lightGreen,
+  },
+
+  // Wide soft bloom layer
+  glowOuter: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: scale(3),
+  },
+
+  // Tighter green mid layer
+  glowMid: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: '15%',
+    right: '15%',
+    borderRadius: scale(3),
+  },
+
+  // White hot core
+  glowCore: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: '30%',
+    right: '30%',
+    borderRadius: scale(3),
+  },
+
+  // Thin top-edge reflection
+  topReflection: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: verticalScale(1),
+    borderRadius: scale(3),
+    opacity: 0.8,
+  },
+
+  // Soft green bleed below track
+  bottomBleed: {
+    width: '80%',
+    alignSelf: 'center',
+    height: verticalScale(4),
+    borderBottomLeftRadius: scale(4),
+    borderBottomRightRadius: scale(4),
+    opacity: 0.6,
   },
 });
 
-
+ 
 
 /* ════════════════════════════════════════════════════════════════
    Bottom Sheet Component

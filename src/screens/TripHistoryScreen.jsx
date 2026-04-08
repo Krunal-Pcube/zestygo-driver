@@ -19,6 +19,9 @@ const tripsData = [
   { id: 6, date: 'Wed, 20 March', trips: 25, amount: 40 },
   { id: 7, date: 'Tue, 19 March', trips: 25, amount: 45 },
   { id: 8, date: 'Mon, 18 March', trips: 25, amount: 40 },
+  { id: 9, date: 'Sun, 17 March', trips: 28, amount: 40 },
+  { id: 10, date: 'Sat, 16 March', trips: 45, amount: 40 },
+  { id: 11, date: 'Fri, 15 March', trips: 225, amount: 40 },
 ];
 
 const TripHistoryScreen = ({ navigation }) => {

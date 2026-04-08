@@ -58,13 +58,13 @@ const notificationsData = [
 const getIcon = (type) => {
   switch (type) {
     case 'order':
-      return <Package size={20} color={colors.primary} />;
+      return <Package size={20} color={colors.white} />;
     case 'payment':
-      return <DollarSign size={20} color={colors.green} />;
+      return <DollarSign size={20} color={colors.white} />;
     case 'info':
     default:
-      return <Info size={20} color={colors.blue} />;
-  }
+      return <Info size={20} color={colors.white} />;
+  } 
 };
 
 const NotificationsScreen = ({ navigation }) => {
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     width: scale(40),
     height: scale(40),
     borderRadius: scale(20),
-    backgroundColor: colors.white,
+    backgroundColor: colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: scale(12),

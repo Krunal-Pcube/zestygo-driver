@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Animated,
   LayoutAnimation,
   Platform,
   UIManager,
@@ -22,48 +23,111 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 const faqData = [
   {
     id: 1,
-    question: 'I Forgot my password',
-    answer: 'You can reset your password by going to the login screen and clicking on "Forgot Password". Follow the instructions sent to your registered email or phone number to create a new password.',
+    category: 'Account',
+    question: 'I forgot my password',
+    answer:
+      'You can reset your password by going to the login screen and tapping "Forgot Password". Follow the instructions sent to your registered email or phone number to create a new password.',
   },
   {
     id: 2,
-    question: 'How to withdraw balance',
-    answer: 'To withdraw your balance, go to Wallet → Withdraw. Enter the amount you want to withdraw and select your bank account. The money will be transferred to your bank account within 1-3 business days.',
+    category: 'Account',
+    question: 'How do I verify my documents?',
+    answer:
+      'Navigate to Profile → Documents. Upload clear photos of your driving license, vehicle registration, and identity proof. Verification usually takes 24–48 hours. You will receive a notification once approved.',
   },
   {
     id: 3,
-    question: 'What is summary',
-    answer: 'The summary shows your complete earnings breakdown including base fare, distance fare, time fare, and any bonuses or incentives you have earned during a specific period.',
+    category: 'Earnings & Payments',
+    question: 'How do I withdraw my balance?',
+    answer:
+      'Go to Wallet → Withdraw. Enter the amount and select your linked bank account. Funds are transferred within 1–3 business days. Make sure your bank details are verified before requesting a withdrawal.',
   },
   {
     id: 4,
-    question: 'How to earn extra money',
-    answer: 'You can earn extra money by completing more trips during peak hours, accepting more delivery requests, maintaining high ratings, and participating in special promotions and bonus programs.',
+    category: 'Earnings & Payments',
+    question: 'How are my earnings calculated?',
+    answer:
+      'Your earnings include a base pickup fee, per-kilometre distance fare, and a time-based fare during active deliveries. Surge pricing applies during peak hours, bad weather, or high-demand zones and is shown before you accept an order.',
   },
   {
     id: 5,
-    question: "Don't charge rider",
-    answer: 'If you need to cancel a charge for a rider, please contact customer support immediately through the Help section. Provide the trip details and reason for not charging the rider.',
+    category: 'Earnings & Payments',
+    question: 'Why was my payment delayed?',
+    answer:
+      'Payments may be delayed due to bank processing times, public holidays, or a pending account review. If your payment is delayed by more than 5 business days, please contact support with your transaction ID.',
+  },
+  {
+    id: 6,
+    category: 'Orders & Deliveries',
+    question: 'What should I do if a restaurant is closed?',
+    answer:
+      'If you arrive and the restaurant is closed or not accepting orders, tap "Report Issue" on the order screen and select "Restaurant Closed". The order will be cancelled without affecting your completion rate.',
+  },
+  {
+    id: 7,
+    category: 'Orders & Deliveries',
+    question: 'What if a customer is not available at delivery?',
+    answer:
+      'Wait at least 5 minutes and attempt to call the customer. If there is no response, tap "Customer Unavailable", take a photo proof of the location, and follow the on-screen steps. Your earnings for the trip will still be processed.',
+  },
+  {
+    id: 8,
+    category: 'Orders & Deliveries',
+    question: 'Can I cancel an order after accepting it?',
+    answer:
+      'You can cancel before picking up the order, but frequent cancellations will negatively affect your acceptance rate and may result in fewer order requests. To cancel, tap the order and select "Cancel Order" with a reason.',
+  },
+  {
+    id: 9,
+    category: 'Ratings & Performance',
+    question: 'How is my rating calculated?',
+    answer:
+      'Your rating is an average of the last 100 customer reviews. Ratings below 4.2 may temporarily limit your access to high-value orders. Focus on timely deliveries, polite communication, and handling food carefully to maintain a high score.',
+  },
+  {
+    id: 10,
+    category: 'App & Technical',
+    question: 'The app is not showing orders near me',
+    answer:
+      'Ensure your location permissions are set to "Always Allow", your internet connection is stable, and you are marked as "Online". If the issue persists, force-close the app, clear the cache, and reopen it.',
   },
 ];
 
 const AccordionItem = ({ item, isExpanded, onToggle }) => {
+  const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
+
+  const handleToggle = () => {
+    Animated.timing(rotateAnim, {
+      toValue: isExpanded ? 0 : 1,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+    onToggle();
+  };
+
+  const rotateInterpolate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
   return (
     <View style={styles.accordionItem}>
       <TouchableOpacity
-        style={styles.questionRow}
-        onPress={onToggle}
+        style={[styles.questionRow, isExpanded && styles.questionRowExpanded]}
+        onPress={handleToggle}
         activeOpacity={0.7}
       >
-        <Text style={styles.questionText}>{item.question}</Text>
-        <ChevronDown
-          size={20}
-          color={colors.grey}
-          style={[styles.chevron, isExpanded && styles.chevronExpanded]}
-        />
+        <Text style={[styles.questionText, isExpanded && styles.questionTextExpanded]}>
+          {item.question}
+        </Text>
+        <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
+          <ChevronDown size={20} color={isExpanded ? colors.primary : colors.grey} />
+        </Animated.View>
       </TouchableOpacity>
+
       {isExpanded && (
         <View style={styles.answerContainer}>
+          <View style={styles.answerDivider} />
           <Text style={styles.answerText}>{item.answer}</Text>
         </View>
       )}
@@ -72,23 +136,28 @@ const AccordionItem = ({ item, isExpanded, onToggle }) => {
 };
 
 const HelpScreen = ({ navigation }) => {
-  const [expandedId, setExpandedId] = useState(null);
+  const [expandedIds, setExpandedIds] = useState([]);
 
   const toggleExpand = (id) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedId(expandedId === id ? null : id);
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((eid) => eid !== id) : [...prev, id]
+    );
   };
 
   return (
     <View style={styles.container}>
       <Header title="Help" showBack={true} />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+      >
         {faqData.map((item) => (
           <AccordionItem
             key={item.id}
             item={item}
-            isExpanded={expandedId === item.id}
+            isExpanded={expandedIds.includes(item.id)}
             onToggle={() => toggleExpand(item.id)}
           />
         ))}
@@ -102,6 +171,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.white,
   },
+  listContent: {
+    paddingBottom: scale(24),
+  },
   accordionItem: {
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
@@ -113,27 +185,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: scale(16),
     paddingVertical: scale(18),
   },
+  questionRowExpanded: {
+    paddingBottom: scale(14),
+    backgroundColor: colors.secondary,
+
+  },
   questionText: {
     fontSize: moderateScale(15),
     fontFamily: fonts.medium,
-    color: colors.darkText,
+    color: colors.darkText, 
     flex: 1,
+    marginRight: scale(8),
   },
-  chevron: {
-    transform: [{ rotate: '0deg' }],
-  },
-  chevronExpanded: {
-    transform: [{ rotate: '180deg' }],
+  questionTextExpanded: {
+    color: colors.primary,
   },
   answerContainer: {
     paddingHorizontal: scale(16),
     paddingBottom: scale(16),
-    paddingTop: 0,
+  },
+  answerDivider: {
+    height: 1,
+    backgroundColor: colors.divider,
+    marginBottom: scale(12),
   },
   answerText: {
     fontSize: moderateScale(14),
     color: colors.mediumGrey,
-    lineHeight: moderateScale(20),
+    lineHeight: moderateScale(22),
+    fontFamily: fonts.regular,
   },
 });
 

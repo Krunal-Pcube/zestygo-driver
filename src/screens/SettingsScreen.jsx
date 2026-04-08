@@ -7,31 +7,29 @@ import {
   ScrollView,
   Switch,
 } from 'react-native';
-import {
-  Volume2,
-  Navigation,
-  Accessibility,
-  Globe,
-  Moon,
-  MapPin,
-  Phone,
-  Gauge,
-  ChevronRight,
-} from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { colors } from '../utils/colors';
 import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
+// Settings screen SVG icons
+import SoundAndVoiceIcon from '../assets/settingsScreen/sound_and_voice.svg';
+import NavigationIcon from '../assets/settingsScreen/navigation.svg';
+import AccessibilityIcon from '../assets/settingsScreen/accessibility.svg';
+import DarkModeIcon from '../assets/settingsScreen/dark_mode.svg';
+import FollowMyRideIcon from '../assets/settingsScreen/follow_my_ride.svg';
+import EmergencyContactIcon from '../assets/settingsScreen/emergency_contact.svg';
+import SpeedLimitIcon from '../assets/settingsScreen/speed_limit.svg';
+
 const settingsData = [
-  { id: 1, title: 'Sound and Voice', icon: Volume2, type: 'toggle', value: true },
-  { id: 2, title: 'Navigation', icon: Navigation, type: 'link' },
-  { id: 3, title: 'Accessibility', icon: Accessibility, type: 'link' },
-  { id: 4, title: 'App Language', icon: Globe, type: 'link' },
-  { id: 5, title: 'Dark Mode', icon: Moon, type: 'toggle', value: false },
-  { id: 6, title: 'Follow my ride', icon: MapPin, type: 'link' },
-  { id: 7, title: 'Emergency Contact', icon: Phone, type: 'link' },
-  { id: 8, title: 'Speed Limit', icon: Gauge, type: 'link' },
+  { id: 1, title: 'Sound and Voice', icon: SoundAndVoiceIcon, type: 'toggle', value: true },
+  { id: 2, title: 'Navigation', icon: NavigationIcon, type: 'link' },
+  { id: 3, title: 'Accessibility', icon: AccessibilityIcon, type: 'link' },
+  { id: 5, title: 'Dark Mode', icon: DarkModeIcon, type: 'toggle', value: false },
+  { id: 6, title: 'Follow my ride', icon: FollowMyRideIcon, type: 'link' },
+  { id: 7, title: 'Emergency Contact', icon: EmergencyContactIcon, type: 'link' },
+  { id: 8, title: 'Speed Limit', icon: SpeedLimitIcon, type: 'link' },
 ];
 
 const SettingsScreen = ({ navigation }) => {
@@ -60,7 +58,7 @@ const SettingsScreen = ({ navigation }) => {
         }}
       >
         <View style={styles.settingLeft}>
-          <Icon size={22} color={colors.darkText} strokeWidth={1.5} />
+          <Icon width={scale(22)} height={scale(22)} fill={colors.darkText} />
           <Text style={styles.settingText}>{item.title}</Text>
         </View>
         {item.type === 'toggle' ? (
@@ -97,8 +95,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: scale(16),
-    paddingVertical: scale(16),
+    paddingHorizontal: scale(20),
+    paddingVertical: scale(20),
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
   },

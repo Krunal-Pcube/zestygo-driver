@@ -25,7 +25,11 @@ export default function HomeHeader({ navigation, earnings = 0 }) {
       </View>
 
       {/* Right: Notification */}
-      <TouchableOpacity style={styles.iconBtn}>
+      <TouchableOpacity 
+        style={styles.iconBtn} 
+        activeOpacity={0.7}
+        onPress={() => navigation?.navigate('Notifications')}
+      >
         <NotificationIcon width={moderateScale(24)} height={moderateScale(24)} fill={colors.secondary} />
       </TouchableOpacity>
     </View>
