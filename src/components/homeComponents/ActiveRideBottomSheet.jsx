@@ -29,7 +29,7 @@ const NavigationFAB = ({ onPress }) => {
   return (
     <TouchableOpacity style={styles.navFab} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.navFabInner}>
-        <Navigation size={moderateScale(18)} color={colors.blue} />
+        <Navigation size={moderateScale(18)} color={colors.white} />
         <Text style={styles.navFabText}>Navigation</Text>
 
       </View>
@@ -321,7 +321,7 @@ export default function ActiveRideBottomSheet({
 
   const chevronAngle = chevronRot.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
+    outputRange: ['180deg', '0deg'], // Flipped: collapsed=down, expanded=up
   });
 
   // Handle primary button press based on step
@@ -611,7 +611,7 @@ export default function ActiveRideBottomSheet({
               title={stepConfig.primaryButtonText}
               onPress={handlePrimaryAction}
               variant="secondary"
-              style={{ marginTop: verticalScale(20), marginBottom: verticalScale(10) }}
+              style={{ marginTop: verticalScale(20), marginBottom: verticalScale(2) }}
             />
 
           </BottomSheetScrollView>
@@ -709,13 +709,13 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   navFabInner: {
-    borderRadius: scale(8),
-    backgroundColor: colors.white,
+    borderRadius: scale(12),
+    backgroundColor: colors.secondary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: scale(12),
-    paddingVertical: verticalScale(8),
+    paddingVertical: verticalScale(10),
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
@@ -723,10 +723,10 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   navFabText: {
-    fontSize: moderateScale(11),
+    fontSize: moderateScale(13),
     fontFamily: fonts.semiBold,
     marginLeft: scale(4),
-    color: colors.secondary,
+    color: colors.white,
     overflow: 'hidden',
   },
 

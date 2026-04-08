@@ -10,18 +10,42 @@ import RatingIcon from '../../assets/homeIcons/rating.svg';
 import CancellationIcon from '../../assets/homeIcons/cancellation.svg';
 import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
+import Sound from 'react-native-sound';
 
 /* ════════════════════════════════════════════════════════════════
    Online Toggle Button
    ════════════════════════════════════════════════════════════════ */
+const playToggleSound = (isGoingOnline) => {
+  const soundFile = isGoingOnline ? 'go_online.mp3' : 'go_offline.mp3';
+  
+  const sound = new Sound(
+    soundFile,
+    Platform.OS === 'ios' ? Sound.MAIN_BUNDLE : '',
+    (error) => {
+      if (error) {
+        console.log(`Failed to load ${soundFile}`, error);
+        return;
+      }
+      sound.setVolume(1.0);
+      sound.play((success) => {
+        sound.release();
+      });
+    }
+  );
+};
+
 const OnlineToggleButton = ({ isOnline, onPress }) => {
   const pressScale = React.useRef(new RNAnimated.Value(1)).current;
 
   const handlePress = () => {
+    // Play sound immediately (don't wait for animation)
+    playToggleSound(!isOnline);
+    
     RNAnimated.sequence([
       RNAnimated.timing(pressScale, { toValue: 0.95, duration: 80, useNativeDriver: true }),
       RNAnimated.spring(pressScale, { toValue: 1, useNativeDriver: true, tension: 150, friction: 6 }),
     ]).start();
+    
     onPress();
   };
 
@@ -223,7 +247,7 @@ export default function BottomSheetComponent({
 
   const chevronAngle = chevronRot.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
+    outputRange: ['180deg', '0deg'], // Flipped: collapsed=down, expanded=up
   });
 
   const toggleOnlineStatus = () => {

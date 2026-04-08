@@ -11,15 +11,16 @@ import { navigationRef } from './src/utils/navigationRef';
 import Orientation from 'react-native-orientation-locker';
 import { checkInitialNotification, foregroundListener, getFCMToken, notificationOpenedListener, requestNotificationPermission } from './src/utils/pushNotification';
 import notifee from '@notifee/react-native';
+import SplashScreen from 'react-native-splash-screen';
  
 
 const App = () => {
 
   useEffect(() => {
     /* Splash screen */
-    // const splashTimeout = setTimeout(() => {
-    //   SplashScreen.hide();
-    // }, 2000);
+    const splashTimeout = setTimeout(() => {
+      SplashScreen.hide();
+    }, 1800);
 
     /* Lock orientation */
     Orientation.lockToPortrait();
@@ -44,7 +45,7 @@ const App = () => {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     return () => {
-      // clearTimeout(splashTimeout);
+      clearTimeout(splashTimeout);
       Orientation.unlockAllOrientations();
 
       unsubscribeForeground();

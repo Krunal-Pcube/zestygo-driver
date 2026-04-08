@@ -27,6 +27,8 @@ import HelpIcon from '../assets/drawerIcons/material-symbols_help.svg';
 import SettingsIcon from '../assets/drawerIcons/material-symbols-light_settings-rounded.svg';
 import LogoutIcon from '../assets/drawerIcons/majesticons_logout.svg';
 import DrawerChevron from '../assets/drawerIcons/drawerchevron.svg';
+import BackArrow from '../assets/drawerIcons/back_arrow.svg';
+
 
 const menuItems = [
   { name: 'Earnings', icon: EarningsIcon, label: 'Earnings' },
@@ -110,11 +112,10 @@ const DrawerContent = (props) => {
             style={styles.backButton}
             onPress={() => navigation.closeDrawer()}
           >
-            <DrawerChevron
+            <BackArrow
               width={scale(20)}
               height={scale(18)}
               fill="#333"
-              style={{ transform: [{ rotate: '180deg' }] }}
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
@@ -122,7 +123,7 @@ const DrawerContent = (props) => {
 
         {/* Profile Card */}
         <TouchableOpacity
-          activeOpacity={0.7}
+          activeOpacity={0.90}
           style={styles.profileCard}
           onPress={() => navigation.navigate('Profile')}
         >
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: scale(12),
+    paddingHorizontal: scale(20),
     paddingTop: verticalScale(12),
     paddingBottom: verticalScale(16),
   },
@@ -261,7 +262,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(18),
     fontFamily: fonts.semiBold,
     color: '#333',
-    marginLeft: scale(8),
   },
 
   // Profile Card
