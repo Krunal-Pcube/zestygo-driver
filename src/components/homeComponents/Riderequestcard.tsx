@@ -166,7 +166,7 @@ export default function RideRequestCard({
         intervalRef.current = null;
       }
     };
-  }, [visible, accepted]);
+  }, [visible, accepted, ride?.id]);
 
   /* ── Auto-dismiss when timer expires ─────────────────────── */
   useEffect(() => {
@@ -189,7 +189,7 @@ export default function RideRequestCard({
     setTimeout(() => onAccept?.(ride), 600);
   }, [ride]);
 
-  if (!visible && !ride) return null;
+  if (!visible) return null;
 
   return (
     <Animated.View style={[s.wrapper, { transform: [{ translateY: slideY }], opacity }]}>
