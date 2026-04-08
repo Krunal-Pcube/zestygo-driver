@@ -161,12 +161,13 @@ export default function BottomSheetComponent({
   activeRide,
   children, // For custom content like stats
 }) {
-  // Force bottom sheet to show at index 0 when it mounts
-  // This fixes the issue where sheet doesn't show after accepting permissions
+
+
+  // ✅ REPLACE with this:
   useEffect(() => {
     const timer = setTimeout(() => {
       bottomSheetRef.current?.snapToIndex(0);
-    }, 100);
+    }, 300);
     return () => clearTimeout(timer);
   }, []);
 
@@ -194,9 +195,14 @@ export default function BottomSheetComponent({
       onChange={handleSheetChange}
       handleComponent={null}
       backgroundStyle={styles.sheetBg}
-      animateOnMount
       enablePanDownToClose={false}
+      enableContentPanningGesture={true}
+      enableHandlePanningGesture={false}
+      enableOverDrag={false}
+      activeOffsetX={[-999, 999]}  // Disable horizontal pan
+      activeOffsetY={[-5, 5]}      // Only vertical pan 
     >
+
       <BottomSheetView style={styles.sheetBody}>
         {/* ── Drag handle bar ── */}
         <View style={styles.dragBar} />

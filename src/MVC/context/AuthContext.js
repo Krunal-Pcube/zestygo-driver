@@ -51,7 +51,6 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(async () => {
   try {
-    await AsyncStorage.multiRemove([STORAGE_KEYS.ADDRESS_CHECKED, STORAGE_KEYS.USER_LOCATION]);
     await clearAuthData();
     delete ApiHelper.defaults.headers.common.Authorization; 
     //  disconnectSocket(); // ← clean up socket

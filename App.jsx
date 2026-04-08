@@ -60,7 +60,6 @@ const App = () => {
         <AuthProvider>
           <RootNavigator />
         </AuthProvider>
-
       </NavigationContainer>
       <Toast config={toastConfig} />
     </SafeAreaView>

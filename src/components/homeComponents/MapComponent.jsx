@@ -91,7 +91,7 @@ const DriverMarker = ({ coordinate, heading, cameraHeading }) => {
       <Animated.View style={[markerStyles.wrapper, rotateStyle]}>
 
         {/* ── Outer transparent halo ── */}
-        <View style={markerStyles.halo} />
+        {/* <View style={markerStyles.halo} /> */}
 
         {/* ── Main dark circle ── */}
         <View style={markerStyles.outerCircle}>

@@ -30,7 +30,7 @@ const NavigationFAB = ({ onPress }) => {
     <TouchableOpacity style={styles.navFab} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.navFabInner}>
         <Navigation size={moderateScale(18)} color={colors.blue} />
-      <Text style={styles.navFabText}>Navigation</Text>
+        <Text style={styles.navFabText}>Navigation</Text>
 
       </View>
     </TouchableOpacity>
@@ -61,7 +61,7 @@ const DropoffDetailsView = ({ ride, onCall, onChat, onConfirmOrder, onCompleteDe
             <Home size={moderateScale(12)} color={colors.grey} />
             <Text style={styles.homeTagText}>Home</Text>
           </View>
-        </View> 
+        </View>
         <View style={styles.actionButtonsRow}>
           <TouchableOpacity style={styles.actionIconBtn} onPress={onChat} activeOpacity={0.7}>
             <View style={[styles.actionIconBgSmall, { backgroundColor: '#C8FF00' }]}>
@@ -124,12 +124,12 @@ const RatingView = ({ customerName, onSubmit }) => {
     <View style={styles.ratingContainer}>
       <Text style={styles.ratingTitle}>How was your trip?</Text>
       <Text style={styles.ratingCustomerName}>{customerName}</Text>
-      
+
       {/* Star Rating */}
       <View style={styles.starsRow}>
         {[1, 2, 3, 4, 5].map((star) => (
-          <TouchableOpacity 
-            key={star} 
+          <TouchableOpacity
+            key={star}
             onPress={() => setRating(star)}
             activeOpacity={0.7}
           >
@@ -159,7 +159,7 @@ const EarningsView = ({ tripId, amount, customerName, onDone }) => {
   return (
     <View style={styles.earningsContainer}>
       <Text style={styles.tripIdText}>Trip {tripId}</Text>
-      
+
       {/* Success Badge */}
       <View style={styles.successBadge}>
         <Text style={styles.checkMark}>✓</Text>
@@ -167,7 +167,7 @@ const EarningsView = ({ tripId, amount, customerName, onDone }) => {
 
       {/* Amount */}
       <Text style={styles.earningsAmount}>${amount}</Text>
-      
+
       {/* Collect cash text */}
       <Text style={styles.collectText}>Collect cash from {customerName}</Text>
 
@@ -477,6 +477,12 @@ export default function ActiveRideBottomSheet({
         backgroundStyle={styles.sheetBg}
         animateOnMount
         enablePanDownToClose={false}
+
+        enableContentPanningGesture={true}
+        enableHandlePanningGesture={false}
+        enableOverDrag={false}
+        activeOffsetX={[-999, 999]}  // Disable horizontal pan
+        activeOffsetY={[-5, 5]}      // Only vertical pan
       >
         {rideStep === RIDE_STEPS.ARRIVED_AT_PICKUP ? (
           <BottomSheetScrollView style={styles.arrivedScrollView} showsVerticalScrollIndicator={false}>
@@ -501,9 +507,9 @@ export default function ActiveRideBottomSheet({
             </View>
 
             {/* Scrollable content - ArrivedAtPickupView always */}
-            <ArrivedAtPickupView 
-              ride={ride} 
-              onCall={onCall} 
+            <ArrivedAtPickupView
+              ride={ride}
+              onCall={onCall}
               onShowConfirmation={handleShowConfirmation}
               onVerifyOrder={handleVerifyPress}
               isOrderVerified={isOrderVerified}
@@ -860,14 +866,14 @@ const styles = StyleSheet.create({
   },
   restaurantName: {
     fontSize: moderateScale(18),
-    fontFamily: fonts.bold,  
+    fontFamily: fonts.bold,
     color: colors.secondary,
     marginBottom: verticalScale(4),
   },
-  restaurantAddress: {                 
+  restaurantAddress: {
     fontSize: moderateScale(13),
 
-  
+
     color: colors.grey,
     lineHeight: moderateScale(18),
   },
@@ -1265,4 +1271,3 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
   },
 });
- 

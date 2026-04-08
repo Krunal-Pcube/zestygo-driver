@@ -148,7 +148,7 @@ export default function HomeScreen({ navigation }) {
   const dotPulse = useRef(new Animated.Value(1)).current;
   const watchIdRef = useRef(null);
 
-  const animatedPosition = useSharedValue(SCREEN_HEIGHT * 0.82);
+const animatedPosition = useSharedValue(SCREEN_HEIGHT * 0.85);
   const snapPoints = useMemo(() => ['15%'], []);
   const floatBtnOffset = verticalScale(72);
 

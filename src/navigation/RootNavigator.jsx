@@ -26,8 +26,9 @@ const RootNavigator = () => {
     ); 
   }
 
-  return (
 
+  return (
+    
     <Stack.Navigator
       key={auth?.token ? 'authenticated' : 'unauthenticated'}
       initialRouteName={auth?.token ? 'Drawer' : 'Login'}
