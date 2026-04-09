@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ScrollView, Image,
+  ScrollView, Image, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { ArrowLeft, Pencil, Save } from 'lucide-react-native';
+import { ArrowLeft, Pencil, X } from 'lucide-react-native';
+import ActionButton from '../components/common/ActionButton';
 import AcceptenceIcon from '../assets/homeIcons/acceptence.svg';
 import RatingIcon from '../assets/homeIcons/rating.svg';
 import CancellationIcon from '../assets/homeIcons/cancellation.svg';
-import { colors } from '../utils/colors';
+import { colors } from '../utils/colors'; 
 import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 
@@ -24,40 +25,100 @@ const profileData = {
   avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
 };
 
-const InfoRow = ({ label, value }) => (
-  <View style={styles.infoRow}>
-    <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={styles.infoValue}>{value}</Text>
-  </View>
-);
-
 const ProfileScreen = ({ navigation }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState({
+    firstName: profileData.firstName,
+    lastName: profileData.lastName,
+    phone: profileData.phone,
+    email: profileData.email,
+  });
+
+  const scrollViewRef = useRef(null);
+  const infoSectionRef = useRef(null);
+
+  const handleEditPress = () => {
+    setIsEditing(true);
+    // Measure infoSection position and scroll to it
+    setTimeout(() => {
+      infoSectionRef.current?.measureLayout(
+        scrollViewRef.current,
+        (x, y) => {
+          scrollViewRef.current?.scrollTo({ y: y - scale(16), animated: true });
+        },
+        () => {}
+      );
+    }, 100);
+  };
+
+  const handleSave = () => {
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setForm({
+      firstName: profileData.firstName,
+      lastName: profileData.lastName,
+      phone: profileData.phone,
+      email: profileData.email,
+    });
+    setIsEditing(false);
+  };
+
+  const InfoRow = ({ label, field, keyboardType = 'default' }) => (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      {isEditing ? (
+        <TextInput
+          style={styles.infoInput}
+          value={form[field]}
+          onChangeText={(text) => setForm((prev) => ({ ...prev, [field]: text }))}
+          keyboardType={keyboardType}
+          autoCapitalize="none"
+          placeholderTextColor={colors.mediumGrey}
+        />
+      ) : (
+        <Text style={styles.infoValue}>{form[field]}</Text>
+      )}
+    </View>
+  );
+
   return (
-    <View style={styles.container}>
-
-      {/* ── Dark Header Bar ── */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation?.goBack()}
-          style={styles.headerBtn}
-          activeOpacity={0.7}
-        >
-          <ArrowLeft size={22} color={colors.white} strokeWidth={2.5} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7}>
-          <Pencil size={20} color={colors.white} strokeWidth={2.5} />
-        </TouchableOpacity>
-      </View>
-
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : scale(20)}
+    >
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* ── Avatar Card (overlaps header) ── */}
-        <View style={styles.avatarCard}>
+        {/* ── Dark Header Bar ── */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation?.goBack()}
+            style={styles.headerBtn}
+            activeOpacity={0.7}
+          >
+            <ArrowLeft size={22} color={colors.white} strokeWidth={2.5} />
+          </TouchableOpacity>
 
-          {/* Avatar + rating badge */}
+          <TouchableOpacity
+            style={styles.headerBtn}
+            activeOpacity={0.7}
+            onPress={isEditing ? handleCancel : handleEditPress}
+          >
+            {isEditing
+              ? <X size={20} color={colors.white} strokeWidth={2.5} />
+              : <Pencil size={20} color={colors.white} strokeWidth={2.5} />
+            }
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Avatar Card ── */}
+        <View style={styles.avatarCard}>
           <View style={styles.avatarWrapper}>
             <Image source={{ uri: profileData.avatar }} style={styles.avatar} />
             <View style={styles.ratingBadge}>
@@ -67,10 +128,9 @@ const ProfileScreen = ({ navigation }) => {
           </View>
 
           <Text style={styles.name}>
-            {profileData.firstName} {profileData.lastName}
+            {form.firstName} {form.lastName}
           </Text>
 
-          {/* Stats row */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{profileData.trips}</Text>
@@ -83,7 +143,6 @@ const ProfileScreen = ({ navigation }) => {
             </View>
           </View>
 
-          {/* Additional Stats row - Acceptance, Rating, Cancellation */}
           <View style={[styles.statsRow, styles.secondaryStatsRow]}>
             <View style={styles.statItem}>
               <AcceptenceIcon width={moderateScale(20)} height={moderateScale(20)} fill={colors.dark} />
@@ -103,33 +162,42 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={styles.statLabel}>Cancellation</Text>
             </View>
           </View>
-
         </View>
 
         {/* ── Personal Info Section ── */}
-        <View style={styles.infoSection}>
+        <View
+          ref={infoSectionRef}
+          style={styles.infoSection}
+        >
           <Text style={styles.sectionTitle}>Personal Info :</Text>
-          <InfoRow label="First name :"     value={profileData.firstName} />
-          <InfoRow label="Last name :"      value={profileData.lastName} />
-          <InfoRow label="Phone number :"   value={profileData.phone} />
-          <InfoRow label="Email :"          value={profileData.email} />
+          <InfoRow label="First name :"   field="firstName" />
+          <InfoRow label="Last name :"    field="lastName" />
+          <InfoRow label="Phone number :" field="phone"     keyboardType="phone-pad" />
+          <InfoRow label="Email :"        field="email"     keyboardType="email-address" />
         </View>
 
         {/* ── Update Button ── */}
-        <View style={styles.updateWrapper}>
-          <TouchableOpacity style={styles.updateBtn} activeOpacity={0.85}>
-            <Save size={18} color={colors.secondary} strokeWidth={2.5} />
-            <Text style={styles.updateBtnText}>Update Profile</Text>
-          </TouchableOpacity>
-        </View>
+        {isEditing && (
+          <View style={styles.updateWrapper}>
+            <ActionButton
+              title="Update Profile"
+              onPress={handleSave}
+              variant="secondary"
+            />
+          </View>
+        )}
 
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
-}
+};
+
+// styles unchanged from before
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.white },
+
+  scrollContent: { paddingBottom: scale(40) },
 
   // ── Header ────────────────────────────────────────────────────────────────
   header: {
@@ -138,7 +206,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: scale(16),
     paddingTop: scale(20),
-    paddingBottom: scale(50),          // extra bottom so card overlaps nicely
+    paddingBottom: scale(50),
     backgroundColor: colors.secondary,
   },
   headerBtn: {
@@ -146,10 +214,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center', justifyContent: 'center',
   },
-
-  // ── Scroll ────────────────────────────────────────────────────────────────
-  scrollView: { flex: 1, marginTop: -scale(36) },
-  scrollContent: { paddingBottom: scale(40) },
 
   // ── Avatar Card ───────────────────────────────────────────────────────────
   avatarCard: {
@@ -164,9 +228,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 4,
+    marginTop: -scale(36),
     marginBottom: scale(24),
   },
-
   avatarWrapper: {
     position: 'relative',
     marginBottom: scale(10),
@@ -197,7 +261,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(11),
     fontFamily: fonts.bold,
   },
-
   name: {
     fontSize: moderateScale(19),
     fontFamily: fonts.bold,
@@ -261,31 +324,20 @@ const styles = StyleSheet.create({
     color: colors.dark,
     fontFamily: fonts.medium,
   },
+  infoInput: {
+    fontSize: moderateScale(15),
+    color: colors.dark,
+    fontFamily: fonts.medium,
+    borderBottomWidth: 1.5,
+    borderBottomColor: colors.primary,
+    paddingVertical: scale(2),
+    paddingHorizontal: 0,
+  },
 
   // ── Update Button ─────────────────────────────────────────────────────────
   updateWrapper: {
     paddingHorizontal: scale(20),
     marginTop: scale(16),
-  },
-  updateBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingVertical: scale(16),
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 14,
-    elevation: 7,
-  },
-  updateBtnText: {
-    color: colors.secondary,
-    fontSize: moderateScale(15),
-    fontFamily: fonts.bold,
-    letterSpacing: 0.4,
   },
 });
 

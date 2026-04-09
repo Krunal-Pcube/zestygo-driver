@@ -11,6 +11,7 @@ import CancellationIcon from '../../assets/homeIcons/cancellation.svg';
 import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
 import Sound from 'react-native-sound';
+import LinearGradient from 'react-native-linear-gradient';
 
 /* ════════════════════════════════════════════════════════════════
    Online Toggle Button
@@ -139,8 +140,6 @@ const offlineStyles = StyleSheet.create({
 /* ════════════════════════════════════════════════════════════════
    Animated Online Strip
    ════════════════════════════════════════════════════════════════ */
-import LinearGradient from 'react-native-linear-gradient';
-
 const AnimatedOnlineStrip = () => {
   const translateX = React.useRef(new RNAnimated.Value(0)).current;
   const glowOpacity = React.useRef(new RNAnimated.Value(0.7)).current;
@@ -156,23 +155,21 @@ const AnimatedOnlineStrip = () => {
 
     translateX.setValue(startX);
 
-    // Ping-pong sweep
     const sweep = () => {
       RNAnimated.sequence([
         RNAnimated.timing(translateX, {
           toValue: endX,
-          duration: 1200,
+          duration: 800,
           useNativeDriver: true,
         }),
         RNAnimated.timing(translateX, {
           toValue: startX,
-          duration: 1200,
+          duration: 800,
           useNativeDriver: true,
         }),
       ]).start(() => sweep());
     };
 
-    // Subtle pulse on the glow opacity
     const pulse = () => {
       RNAnimated.sequence([
         RNAnimated.timing(glowOpacity, {
@@ -204,9 +201,9 @@ const AnimatedOnlineStrip = () => {
         end={{ x: 1, y: 0 }}
         style={stripStyles.track}
       >
-        {/* ── Static dim green tint across full track ── */}
+        {/* ── Static dim tint across full track ── */}
         <LinearGradient
-          colors={['transparent', 'rgba(0,230,118,0.08)', 'transparent']}
+          colors={['transparent', 'rgba(207,255,4,0.08)', 'transparent']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFill}
@@ -227,11 +224,11 @@ const AnimatedOnlineStrip = () => {
           <LinearGradient
             colors={[
               'transparent',
-              'rgba(0,230,118,0.15)',
-              'rgba(0,230,118,0.55)',
-              'rgba(0,255,140,0.85)',
-              'rgba(0,230,118,0.55)',
-              'rgba(0,230,118,0.15)',
+              'rgba(207,255,4,0.15)',
+              'rgba(207,255,4,0.55)',
+              'rgba(207,255,4,0.85)',
+              'rgba(207,255,4,0.55)',
+              'rgba(207,255,4,0.15)',
               'transparent',
             ]}
             start={{ x: 0, y: 0 }}
@@ -239,13 +236,13 @@ const AnimatedOnlineStrip = () => {
             style={stripStyles.glowOuter}
           />
 
-          {/* Mid layer — tighter green core */}
+          {/* Mid layer — tighter core */}
           <LinearGradient
             colors={[
               'transparent',
-              'rgba(0,255,140,0.4)',
-              'rgba(0,255,140,0.95)',
-              'rgba(0,255,140,0.4)',
+              'rgba(207,255,4,0.4)',
+              'rgba(207,255,4,0.95)',
+              'rgba(207,255,4,0.4)',
               'transparent',
             ]}
             start={{ x: 0, y: 0 }}
@@ -271,7 +268,7 @@ const AnimatedOnlineStrip = () => {
 
       {/* ── Top edge reflection line ── */}
       <LinearGradient
-        colors={['transparent', 'rgba(0,255,140,0.25)', 'transparent']}
+        colors={['transparent', 'rgba(207,255,4,0.25)', 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={stripStyles.topReflection}
@@ -279,7 +276,7 @@ const AnimatedOnlineStrip = () => {
 
       {/* ── Bottom shadow bleed ── */}
       <LinearGradient
-        colors={['rgba(0,230,118,0.12)', 'transparent']}
+        colors={['rgba(207,255,4,0.12)', 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={stripStyles.bottomBleed}
@@ -294,34 +291,25 @@ const stripStyles = StyleSheet.create({
     marginTop: verticalScale(4),
     marginBottom: verticalScale(2),
   },
-
-  // Main track
   track: {
     width: '100%',
     height: verticalScale(3),
     borderRadius: scale(3),
     overflow: 'hidden',
-    // Neon ambient glow on track itself
-    shadowColor: '#00e676',
+    shadowColor: '#CFFF04',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 6,
     elevation: 6,
   },
-
-  // Moving glow container
   glowWrapper: {
     position: 'absolute',
     height: '100%',
   },
-
-  // Wide soft bloom layer
   glowOuter: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: scale(3),
   },
-
-  // Tighter green mid layer
   glowMid: {
     position: 'absolute',
     top: 0,
@@ -330,8 +318,6 @@ const stripStyles = StyleSheet.create({
     right: '15%',
     borderRadius: scale(3),
   },
-
-  // White hot core
   glowCore: {
     position: 'absolute',
     top: 0,
@@ -340,8 +326,6 @@ const stripStyles = StyleSheet.create({
     right: '30%',
     borderRadius: scale(3),
   },
-
-  // Thin top-edge reflection
   topReflection: {
     position: 'absolute',
     top: 0,
@@ -351,8 +335,6 @@ const stripStyles = StyleSheet.create({
     borderRadius: scale(3),
     opacity: 0.8,
   },
-
-  // Soft green bleed below track
   bottomBleed: {
     width: '80%',
     alignSelf: 'center',
