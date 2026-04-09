@@ -1,13 +1,20 @@
+
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated as RNAnimated, Image } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  Animated as RNAnimated,
+  Image,
+  Easing,
+} from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { Car, DollarSign } from 'lucide-react-native';
 import ChevronIcon from '../../assets/homeIcons/chevron.svg';
 import VectorIcon from '../../assets/homeIcons/Vector.svg';
-import AcceptenceIcon from '../../assets/homeIcons/acceptence.svg';
-import RatingIcon from '../../assets/homeIcons/rating.svg';
-import CancellationIcon from '../../assets/homeIcons/cancellation.svg';
 import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
 import Sound from 'react-native-sound';
@@ -18,7 +25,7 @@ import LinearGradient from 'react-native-linear-gradient';
    ════════════════════════════════════════════════════════════════ */
 const playToggleSound = (isGoingOnline) => {
   const soundFile = isGoingOnline ? 'go_online.mp3' : 'go_offline.mp3';
-  
+
   const sound = new Sound(
     soundFile,
     Platform.OS === 'ios' ? Sound.MAIN_BUNDLE : '',
@@ -28,7 +35,7 @@ const playToggleSound = (isGoingOnline) => {
         return;
       }
       sound.setVolume(1.0);
-      sound.play((success) => {
+      sound.play(() => {
         sound.release();
       });
     }
@@ -38,38 +45,139 @@ const playToggleSound = (isGoingOnline) => {
 const OnlineToggleButton = ({ isOnline, onPress }) => {
   const pressScale = React.useRef(new RNAnimated.Value(1)).current;
 
+  // Idle: gentle steering wheel wobble rotation
+  const steerRot = React.useRef(new RNAnimated.Value(0)).current;
+
+  // On-press: full spin (2 rotations)
+  const spinRot = React.useRef(new RNAnimated.Value(0)).current;
+
+  // Guard to prevent double-tap during spin
+  const isSpinning = React.useRef(false);
+
+  // Start wobble loop when in "Go Online" (offline) state
+  React.useEffect(() => {
+    if (isOnline) return;
+
+    const wobbleLoop = RNAnimated.loop(
+      RNAnimated.sequence([
+        RNAnimated.timing(steerRot, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin),
+        }),
+        RNAnimated.timing(steerRot, {
+          toValue: -1,
+          duration: 900,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin),
+        }),
+        RNAnimated.timing(steerRot, {
+          toValue: 0,
+          duration: 900,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin),
+        }),
+      ])
+    );
+
+    wobbleLoop.start();
+    return () => wobbleLoop.stop();
+  }, [isOnline]);
+
   const handlePress = () => {
-    // Play sound immediately (don't wait for animation)
+    if (isSpinning.current) return;
+    isSpinning.current = true;
+
+    // Play sound immediately
     playToggleSound(!isOnline);
-    
+
+    // Stop wobble and reset
+    steerRot.stopAnimation(() => {
+      steerRot.setValue(0);
+    });
+
+    // Button press-scale bounce (runs in parallel with spin)
     RNAnimated.sequence([
-      RNAnimated.timing(pressScale, { toValue: 0.95, duration: 80, useNativeDriver: true }),
-      RNAnimated.spring(pressScale, { toValue: 1, useNativeDriver: true, tension: 150, friction: 6 }),
+      RNAnimated.timing(pressScale, {
+        toValue: 0.95,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      RNAnimated.spring(pressScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 150,
+        friction: 6,
+      }),
     ]).start();
-    
-    onPress();
+
+    // Full spin → then trigger onPress after animation completes
+    spinRot.setValue(0);
+    RNAnimated.timing(spinRot, {
+      toValue: 1,
+      duration: 550,
+      useNativeDriver: true,
+      easing: Easing.out(Easing.cubic),
+    }).start(() => {
+      isSpinning.current = false;
+      spinRot.setValue(0);
+      onPress();
+    });
   };
 
-  // Go Offline UI - Red circle with hand icon and text below
+  // Wobble: −14° ↔ +14°
+  const wobbleAngle = steerRot.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: ['-14deg', '0deg', '14deg'],
+  });
+
+  // Spin: 0° → 720° (two full rotations)
+  const spinAngle = spinRot.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  // ── Go Offline UI ── red circle + hand icon
   if (isOnline) {
     return (
       <RNAnimated.View style={{ transform: [{ scale: pressScale }] }}>
-        <TouchableOpacity activeOpacity={1} onPress={handlePress} style={offlineStyles.container}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={handlePress}
+          style={offlineStyles.container}
+        >
           <View style={offlineStyles.circle}>
-            <Image source={require('../../assets/homeIcons/hand.png')} style={offlineStyles.handIcon} resizeMode="contain" />
-          </View> 
+            <Image
+              source={require('../../assets/homeIcons/hand.png')}
+              style={offlineStyles.handIcon}
+              resizeMode="contain"
+            />
+          </View>
           <Text style={offlineStyles.text}>GO OFFLINE</Text>
         </TouchableOpacity>
       </RNAnimated.View>
     );
   }
 
-  // Go Online UI - Green pill button
+  // ── Go Online UI ── green pill with animated steering wheel
   return (
     <RNAnimated.View style={{ transform: [{ scale: pressScale }] }}>
       <TouchableOpacity activeOpacity={1} onPress={handlePress}>
         <View style={[onlineBtnStyles.pill, { backgroundColor: colors.secondary }]}>
-          <Image source={require('../../assets/homeIcons/car-handle.png')} style={onlineBtnStyles.icon} resizeMode="contain" />
+
+          {/*
+            Wobble wraps Spin so both transforms compose cleanly.
+            Wobble animates during idle; Spin fires on press.
+          */}
+          <RNAnimated.View style={{ transform: [{ rotate: wobbleAngle }] }}>
+            <RNAnimated.Image
+              source={require('../../assets/homeIcons/car-handle.png')}
+              style={[onlineBtnStyles.icon, { transform: [{ rotate: spinAngle }] }]}
+              resizeMode="contain"
+            />
+          </RNAnimated.View>
+
           <Text style={[onlineBtnStyles.label, { color: colors.primary }]}>
             Go Online
           </Text>
@@ -77,7 +185,7 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
       </TouchableOpacity>
     </RNAnimated.View>
   );
-}
+};
 
 // Go Online button styles (pill)
 const onlineBtnStyles = StyleSheet.create({
@@ -101,8 +209,8 @@ const onlineBtnStyles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   icon: {
-    width: scale(18),
-    height: scale(18),
+    width: scale(22),
+    height: scale(22),
     tintColor: colors.primary,
   },
 });
@@ -136,7 +244,7 @@ const offlineStyles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
- 
+
 /* ════════════════════════════════════════════════════════════════
    Animated Online Strip
    ════════════════════════════════════════════════════════════════ */
@@ -345,8 +453,6 @@ const stripStyles = StyleSheet.create({
   },
 });
 
- 
-
 /* ════════════════════════════════════════════════════════════════
    Bottom Sheet Component
    ════════════════════════════════════════════════════════════════ */
@@ -364,19 +470,16 @@ export default function BottomSheetComponent({
   dotPulse,
   activeRide,
   locationReady,
-  children, // For custom content like stats
+  children,
 }) {
-  // Track mount key to force re-render when location becomes ready
   const [mountKey, setMountKey] = React.useState(0);
-  
+
   React.useEffect(() => {
     if (locationReady) {
-      // Force remount of bottom sheet by changing key
       setMountKey(prev => prev + 1);
     }
   }, [locationReady]);
 
-  // Initial snap + re-snap when location permission granted
   useEffect(() => {
     const timer = setTimeout(() => {
       bottomSheetRef.current?.snapToIndex(0);
@@ -384,7 +487,6 @@ export default function BottomSheetComponent({
     return () => clearTimeout(timer);
   }, []);
 
-  // Re-snap after remount when location becomes ready
   useEffect(() => {
     if (locationReady && mountKey > 0) {
       const timer = setTimeout(() => {
@@ -401,7 +503,7 @@ export default function BottomSheetComponent({
 
   const chevronAngle = chevronRot.interpolate({
     inputRange: [0, 1],
-    outputRange: ['180deg', '0deg'], // Flipped: collapsed=down, expanded=up
+    outputRange: ['180deg', '0deg'],
   });
 
   const toggleOnlineStatus = () => {
@@ -423,10 +525,9 @@ export default function BottomSheetComponent({
       enableContentPanningGesture={true}
       enableHandlePanningGesture={false}
       enableOverDrag={false}
-      activeOffsetX={[-999, 999]}  // Disable horizontal pan
-      activeOffsetY={[-5, 5]}      // Only vertical pan 
+      activeOffsetX={[-999, 999]}
+      activeOffsetY={[-5, 5]}
     >
-
       <BottomSheetView style={styles.sheetBody}>
         {/* ── Drag handle bar ── */}
         <View style={styles.dragBar} />
@@ -434,18 +535,24 @@ export default function BottomSheetComponent({
         {/* ── Main row: Chevron | Center Content | Menu ── */}
         <View style={styles.actionRow}>
           {/* Left: Chevron */}
-          <TouchableOpacity onPress={handleChevron} style={styles.sideBtn} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={handleChevron}
+            style={styles.sideBtn}
+            activeOpacity={0.7}
+          >
             <RNAnimated.View style={{ transform: [{ rotate: chevronAngle }] }}>
-              <ChevronIcon width={moderateScale(16)} height={moderateScale(16)} fill={colors.mediumGrey} />
+              <ChevronIcon
+                width={moderateScale(16)}
+                height={moderateScale(16)}
+                fill={colors.mediumGrey}
+              />
             </RNAnimated.View>
           </TouchableOpacity>
 
-          {/* Center: "Go Online" pill when offline — "You're Online" badge when online */}
+          {/* Center */}
           {isOnline ? (
             <View style={styles.onlineBadge}>
-
               <Text style={styles.onlineBadgeText}>You're Online</Text>
-
             </View>
           ) : (
             <OnlineToggleButton isOnline={isOnline} onPress={toggleOnlineStatus} />
@@ -453,7 +560,11 @@ export default function BottomSheetComponent({
 
           {/* Right: Vector icon */}
           <TouchableOpacity style={styles.sideBtn} activeOpacity={0.7}>
-            <VectorIcon width={moderateScale(18)} height={moderateScale(18)} fill={colors.mediumGrey} />
+            <VectorIcon
+              width={moderateScale(18)}
+              height={moderateScale(18)}
+              fill={colors.mediumGrey}
+            />
           </TouchableOpacity>
         </View>
 
@@ -462,7 +573,7 @@ export default function BottomSheetComponent({
         <View style={{ height: scale(40) }} />
         {children}
 
-        {/* Active Ride Info in Bottom Sheet */}
+        {/* Active Ride Info */}
         {activeRide && (
           <View style={styles.activeRideSheetCard}>
             <View style={styles.activeRideSheetHeader}>
@@ -481,7 +592,7 @@ export default function BottomSheetComponent({
           </View>
         )}
 
-        {/* ── Go Offline button — only visible when online, sits below stats ── */}
+        {/* Go Offline button — only visible when online */}
         {isOnline && (
           <View style={styles.goOfflineWrapper}>
             <OnlineToggleButton isOnline={isOnline} onPress={toggleOnlineStatus} />
@@ -493,7 +604,6 @@ export default function BottomSheetComponent({
 }
 
 const styles = StyleSheet.create({
-  /* Bottom Sheet */
   sheetBg: {
     borderTopLeftRadius: moderateScale(22),
     borderTopRightRadius: moderateScale(22),
@@ -504,8 +614,6 @@ const styles = StyleSheet.create({
     paddingTop: scale(6),
     paddingBottom: Platform.OS === 'ios' ? verticalScale(34) : verticalScale(20),
   },
-
-  /* Custom drag handle bar */
   dragBar: {
     alignSelf: 'center',
     width: scale(36),
@@ -514,15 +622,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.veryLightGrey,
     marginBottom: verticalScale(6),
   },
-
-  /* Main action row inside sheet */
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: verticalScale(5),
-    marginBottom: scale(0)
-
+    marginBottom: scale(0),
   },
   sideBtn: {
     width: scale(44),
@@ -530,8 +635,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  /* "You're Online" badge shown in actionRow center */
   onlineBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -544,16 +647,13 @@ const styles = StyleSheet.create({
   onlineBadgeText: {
     fontSize: moderateScale(16),
     fontFamily: fonts.bold,
-    color: colors.black
-    ,
+    color: colors.black,
   },
   statusDot: {
     width: scale(10),
     height: scale(10),
     borderRadius: scale(5),
   },
-
-  /* Active ride in bottom sheet */
   activeRideSheetCard: {
     backgroundColor: colors.background,
     borderRadius: moderateScale(12),
@@ -595,8 +695,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
     color: colors.grey,
   },
-
-  /* Go Offline button wrapper below stats */
   goOfflineWrapper: {
     alignItems: 'center',
     paddingTop: verticalScale(10),

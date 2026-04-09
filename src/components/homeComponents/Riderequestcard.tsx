@@ -9,7 +9,9 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import { UtensilsCrossed, Zap, X, MapPin, Navigation } from 'lucide-react-native';
+import { Zap, X, Navigation } from 'lucide-react-native';
+import DeliveryIcon from '../../assets/ridecardIcons/delivery_icon.svg';
+import LocationFilledIcon from '../../assets/ridecardIcons/location_filled.svg';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
@@ -20,7 +22,7 @@ import LinearGradient from 'react-native-linear-gradient';
 const BadgeRow = ({ type, onClose }) => (
   <View style={s.badgeRow}>
     <View style={s.badgeDelivery}>
-      <UtensilsCrossed size={scale(11)} color={colors.primary} strokeWidth={2.5} />
+      <DeliveryIcon width={scale(12)} height={scale(12)} fill={colors.primary} />
       <Text style={s.badgeDeliveryText}>
         Delivery
       </Text>
@@ -41,10 +43,9 @@ const BadgeRow = ({ type, onClose }) => (
 const RouteRow = ({ dotColor, time, name, isLast, isPickup }) => (
   <View style={[s.routeRow, !isLast && s.routeRowBorder]}>
     <View style={[s.dotIconWrap, { backgroundColor: dotColor + '15', borderColor: dotColor + '40' }]}>
-      {isPickup
-        ? <MapPin     size={scale(11)} color={dotColor} strokeWidth={2.5} />
-        : <Navigation size={scale(11)} color={dotColor} strokeWidth={2.5} />
-      }
+
+      <LocationFilledIcon width={scale(11)} height={scale(11)} fill={dotColor} />
+
     </View>
 
     <View style={s.routeText}>
@@ -96,7 +97,7 @@ export default function RideRequestCard({
   const [remaining, setRemaining] = useState(duration);
   const [accepted, setAccepted] = useState(false);
   const intervalRef = useRef(null);
-  const slideY  = useRef(new Animated.Value(100)).current;
+  const slideY = useRef(new Animated.Value(100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const soundRef = useRef(null);
 
@@ -148,13 +149,13 @@ export default function RideRequestCard({
       setRemaining(duration);
       setAccepted(false);
       Animated.parallel([
-        Animated.spring(slideY,  { toValue: 0, useNativeDriver: true, tension: 80, friction: 12 }),
-        Animated.timing(opacity, { toValue: 1, duration: 250,         useNativeDriver: true }),
+        Animated.spring(slideY, { toValue: 0, useNativeDriver: true, tension: 80, friction: 12 }),
+        Animated.timing(opacity, { toValue: 1, duration: 250, useNativeDriver: true }),
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(slideY,  { toValue: 100, duration: 300, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0,   duration: 200, useNativeDriver: true }),
+        Animated.timing(slideY, { toValue: 100, duration: 300, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }),
       ]).start();
     }
   }, [visible]);

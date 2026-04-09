@@ -341,7 +341,6 @@ const styles = StyleSheet.create({
   /* Arrived ScrollView */
   arrivedScrollView: {
     flex: 1,
-    paddingHorizontal: scale(16),
     paddingTop: scale(8),
     paddingBottom: verticalScale(20),
   },

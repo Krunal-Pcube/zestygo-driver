@@ -6,8 +6,8 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
-    "start": "react-native start --port=8082",
-    "test": "jest",
+    "start": "react-native start --port=8081",
+    "test": "jest", 
     "rev": "adb reverse tcp:8081 tcp:8081"
   },
   "dependencies": {

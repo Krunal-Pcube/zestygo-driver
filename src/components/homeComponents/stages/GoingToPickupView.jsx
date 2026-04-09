@@ -102,7 +102,6 @@ export default function GoingToPickupView({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: scale(16),
     paddingTop: scale(8),
     paddingBottom: verticalScale(20),
   },
