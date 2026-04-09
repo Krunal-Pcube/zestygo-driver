@@ -20,6 +20,7 @@ import fonts from '../../utils/fonts/fontsList';
 import ChevronIcon from '../../assets/homeIcons/chevron.svg';
 import VectorIcon from '../../assets/homeIcons/Vector.svg';
 import ActionButton from '../../components/common/ActionButton';
+import SwipeToConfirm from '../../components/common/SwipeToConfirm';
 import { CancelConfirmationModal, CancelReasonModal, VerifyOrderModal, DropOffOrderModal, TakePhotoModal, DeliveryInfoModal, PickupConfirmationModal } from './TripCompletionModals';
 
 /* ════════════════════════════════════════════════════════════════
@@ -606,13 +607,15 @@ export default function ActiveRideBottomSheet({
               )}
             </View>
 
-            {/* Primary Action Button */}
-            <ActionButton
-              title={stepConfig.primaryButtonText}
-              onPress={handlePrimaryAction}
-              variant="secondary"
-              style={{ marginTop: verticalScale(20), marginBottom: verticalScale(2) }}
-            />
+            {/* Primary Action Slider */}
+            <View style={{ marginTop: verticalScale(20), marginBottom: verticalScale(20), alignItems: 'center' }}>
+              <SwipeToConfirm
+                title={`Swipe to ${stepConfig.primaryButtonText}`}
+                onConfirm={handlePrimaryAction}
+                backgroundColor={colors.secondary}
+                textColor={colors.white}
+              />
+            </View>
 
           </BottomSheetScrollView>
         )}

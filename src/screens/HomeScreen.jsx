@@ -330,28 +330,14 @@ export default function HomeScreen({ navigation }) {
     console.log('[RIDE] Driver arrived at pickup location');
   };
 
-  const handleCompletePickup = () => {
-    // Handle pickup completion - transition to delivery/dropoff phase
-    console.log('[RIDE] Pickup completed');
-    setHasArrived(false);
-    // Could transition to showing dropoff/delivery screen here
-  };
+
 
   const handleCancelRide = (reason) => {
     console.log('[RIDE] Cancel reason:', reason);
     cancelRide();
   };
 
-  const toggleOnline = useCallback(() => {
-    setIsOnline(prev => {
-      if (prev) {
-        setRideRequests([]);
-        setHasArrived(false);
-      }
-      return !prev;
-    });
-    bottomSheetRef.current?.snapToIndex(0);
-  }, []);
+
 
   const animateChevron = useCallback((toIndex) => setSheetIndex(toIndex), []);
   const handleSheetChange = useCallback((index) => setSheetIndex(index), []);
@@ -492,7 +478,7 @@ export default function HomeScreen({ navigation }) {
         onViewDetails={handleViewTripDetails}
       />
 
-      {!isActive && (
+      {!isActive && !showRideRequests && (
         <BottomSheetComponent
           bottomSheetRef={bottomSheetRef}
           snapPoints={snapPoints}
@@ -514,6 +500,7 @@ export default function HomeScreen({ navigation }) {
 
     </View>
   );
+
 }
 
 /* ─────────────────────────────────────────────────────────────────

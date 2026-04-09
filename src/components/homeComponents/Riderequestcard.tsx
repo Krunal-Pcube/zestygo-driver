@@ -1,15 +1,3 @@
-/**
- * RideRequestCard.jsx
- * Uber Eats-style ride request card with 14-second countdown.
- * Auto-dismisses when timer hits 0.
- *
- * Props:
- *   ride        – ride object (see shape below)
- *   onAccept    – (ride) => void
- *   onDecline   – () => void
- *   visible     – boolean
- *   duration    – countdown seconds (default 14)
- */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
@@ -21,61 +9,50 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
+import { UtensilsCrossed, Zap, X, MapPin, Navigation } from 'lucide-react-native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
 import Sound from 'react-native-sound';
-
-const SCREEN_W = Dimensions.get('window').width;
-const CARD_W = SCREEN_W - scale(32);
-
-/* ─── Fork / cutlery icon (simple SVG-free version using View) ─── */
-const ForkIcon = () => {
-  return (
-    <View style={icon.wrap}>
-      <View style={icon.tine} />
-      <View style={icon.tine} />
-      <View style={icon.tine} />
-    </View>
-  );
-}
-const icon = StyleSheet.create({
-  wrap: { flexDirection: 'row', gap: 2, height: 12, alignItems: 'flex-end' },
-  tine: { width: 2, height: 10, backgroundColor: colors.primary, borderRadius: 1 },
-});
+import LinearGradient from 'react-native-linear-gradient';
 
 /* ─── Badge row ─────────────────────────────────────────────────── */
-const BadgeRow = ({ type, onClose }) => {
-  return (
-    <View style={s.badgeRow}>
-      <View style={s.badgeDelivery}>
-        <ForkIcon />
-        <Text style={s.badgeDeliveryText}>
-          {type === 'delivery' ? 'Delivery' : 'Ride'}
-        </Text>
-      </View>
-      <View style={s.badgeExclusive}>
-        <Text style={s.badgeExclusiveText}>Exclusive</Text>
-      </View>
-      <TouchableOpacity style={s.closeBtn} onPress={onClose} activeOpacity={0.7}>
-        <Text style={s.closeBtnText}>✕</Text>
-      </TouchableOpacity>
+const BadgeRow = ({ type, onClose }) => (
+  <View style={s.badgeRow}>
+    <View style={s.badgeDelivery}>
+      <UtensilsCrossed size={scale(11)} color={colors.primary} strokeWidth={2.5} />
+      <Text style={s.badgeDeliveryText}>
+        {type === 'delivery' ? 'Delivery' : 'Ride'}
+      </Text>
     </View>
-  );
-}
+
+    <View style={s.badgeExclusive}>
+      <Zap size={scale(10)} color="#555555" strokeWidth={2.5} />
+      <Text style={s.badgeExclusiveText}>Exclusive</Text>
+    </View>
+
+    <TouchableOpacity style={s.closeBtn} onPress={onClose} activeOpacity={0.7}>
+      <X size={scale(13)} color="#555555" strokeWidth={2.5} />
+    </TouchableOpacity>
+  </View>
+);
 
 /* ─── Route row ──────────────────────────────────────────────────── */
-const RouteRow = ({ dotColor, time, name, isLast }) => {
-  return (
-    <View style={[s.routeRow, !isLast && s.routeRowBorder]}>
-      <View style={[s.dot, { backgroundColor: dotColor }]} />
-      <View style={s.routeText}>
-        <Text style={s.routeTime}>{time}</Text>
-        <Text style={s.routeName} numberOfLines={2}>{name}</Text>
-      </View>
+const RouteRow = ({ dotColor, time, name, isLast, isPickup }) => (
+  <View style={[s.routeRow, !isLast && s.routeRowBorder]}>
+    <View style={[s.dotIconWrap, { backgroundColor: dotColor + '15', borderColor: dotColor + '40' }]}>
+      {isPickup
+        ? <MapPin     size={scale(11)} color={dotColor} strokeWidth={2.5} />
+        : <Navigation size={scale(11)} color={dotColor} strokeWidth={2.5} />
+      }
     </View>
-  );
-}
+
+    <View style={s.routeText}>
+      <Text style={s.routeTime}>{time}</Text>
+      <Text style={s.routeName} numberOfLines={2}>{name}</Text>
+    </View>
+  </View>
+);
 
 /* ─── Countdown button ───────────────────────────────────────────── */
 const CountdownButton = ({ remaining, total, onPress, accepted }) => {
@@ -101,14 +78,12 @@ const CountdownButton = ({ remaining, total, onPress, accepted }) => {
       activeOpacity={0.85}
     >
       <Text style={s.acceptBtnText}>
-        {accepted
-          ? 'Accepted!'
-          : `Tap to Accept (${remaining}s)`}
+        {accepted ? 'Accepted!' : `Tap to Accept (${remaining}s)`}
       </Text>
       <Animated.View style={[s.progressBar, { width: barWidth }]} />
     </TouchableOpacity>
   );
-}
+};
 
 /* ─── Main component ─────────────────────────────────────────────── */
 export default function RideRequestCard({
@@ -121,129 +96,96 @@ export default function RideRequestCard({
   const [remaining, setRemaining] = useState(duration);
   const [accepted, setAccepted] = useState(false);
   const intervalRef = useRef(null);
-  const slideY = useRef(new Animated.Value(100)).current;
+  const slideY  = useRef(new Animated.Value(100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const soundRef = useRef(null);
 
-  // Initialize and play sound when ride arrives
+  /* ── Sound ──────────────────────────────────────────────────────
+     A single effect handles both play and cleanup.
+     The `cancelled` flag prevents a late async callback from
+     calling play() after the effect has already been torn down
+     (new ride arrived, card hidden, or user accepted mid-load).
+  ─────────────────────────────────────────────────────────────── */
   useEffect(() => {
-    if (visible && !accepted) {
-      // Initialize sound
-      const sound = new Sound(
-        'ride_arriving.mp3',
-        Platform.OS === 'ios' ? Sound.MAIN_BUNDLE : '',
-        (error) => {
-          if (error) {
-            console.log('Failed to load sound', error);
-            return;
-          }
-          sound.setNumberOfLoops(-1); // Loop indefinitely
-          sound.setVolume(1.0);
-          sound.play((success) => {
-            if (!success) {
-              console.log('Sound playback failed');
-            }
-          });
-        }
-      );
-      soundRef.current = sound;
-    }
+    if (!visible || accepted) return;
 
-    // Cleanup: stop sound when component unmounts or ride is no longer visible
-    return () => {
-      if (soundRef.current) {
-        const sound = soundRef.current;
-        sound.stop(() => {
+    let cancelled = false;
+
+    const sound = new Sound(
+      'ride_arriving.mp3',
+      Platform.OS === 'ios' ? Sound.MAIN_BUNDLE : '',
+      (error) => {
+        if (cancelled) {
+          // Effect already cleaned up — free memory and do NOT play
           sound.release();
-        });
-        soundRef.current = null;
-      }
-    };
-  }, [visible, ride?.id]);
-
-  // Stop sound when ride is accepted or times out
-  useEffect(() => {
-    if ((accepted || remaining === 0) && soundRef.current) {
-      const sound = soundRef.current;
-      sound.stop(() => {
-        sound.release();
-        soundRef.current = null;
-      });
-    }
-  }, [accepted, remaining]);
-
-  /* ── Slide in when visible ───────────────────────────────── */
-  useEffect(() => {
-    if (visible) {
-      setRemaining(duration);
-      setAccepted(false);
-      Animated.parallel([
-        Animated.spring(slideY, { toValue: 0, useNativeDriver: true, tension: 80, friction: 12 }),
-        Animated.timing(opacity, { toValue: 1, duration: 250, useNativeDriver: true }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(slideY, { toValue: 100, duration: 300, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }),
-      ]).start();
-    }
-  }, [visible]);
-
-  /* ── Countdown tick ──────────────────────────────────────── */
-  useEffect(() => {
-    if (!visible || accepted) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      return;
-    }
-
-    intervalRef.current = setInterval(() => {
-      setRemaining(prev => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-          return 0;
+          return;
         }
-        return prev - 1;
-      });
-    }, 1000);
+        if (error) {
+          console.log('Failed to load sound', error);
+          return;
+        }
+        soundRef.current = sound;
+        sound.setNumberOfLoops(-1);
+        sound.setVolume(1.0);
+        sound.play((success) => {
+          if (!success) console.log('Sound playback failed');
+        });
+      },
+    );
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      cancelled = true; // stop async callback from playing a stale sound
+      if (soundRef.current) {
+        soundRef.current.stop(() => soundRef.current?.release());
+        soundRef.current = null;
       }
     };
   }, [visible, accepted, ride?.id]);
 
-  /* ── Auto-dismiss when timer expires ─────────────────────── */
-  useEffect(() => {
-    if (remaining === 0 && visible && !accepted) {
-      onDecline?.();
-    }
-  }, [remaining, visible, accepted, onDecline]);
-
-  /* ── Reset timer when new ride appears ──────────────────── */
+  /* ── Slide in/out ───────────────────────────────────── */
   useEffect(() => {
     if (visible) {
       setRemaining(duration);
       setAccepted(false);
+      Animated.parallel([
+        Animated.spring(slideY,  { toValue: 0, useNativeDriver: true, tension: 80, friction: 12 }),
+        Animated.timing(opacity, { toValue: 1, duration: 250,         useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(slideY,  { toValue: 100, duration: 300, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0,   duration: 200, useNativeDriver: true }),
+      ]).start();
     }
+  }, [visible]);
+
+  /* ── Countdown tick ─────────────────────────────────── */
+  useEffect(() => {
+    if (!visible || accepted) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      return;
+    }
+    intervalRef.current = setInterval(() => {
+      setRemaining(prev => {
+        if (prev <= 1) { clearInterval(intervalRef.current); intervalRef.current = null; return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => { clearInterval(intervalRef.current); intervalRef.current = null; };
+  }, [visible, accepted, ride?.id]);
+
+  useEffect(() => {
+    if (remaining === 0 && visible && !accepted) onDecline?.();
+  }, [remaining, visible, accepted, onDecline]);
+
+  useEffect(() => {
+    if (visible) { setRemaining(duration); setAccepted(false); }
   }, [visible, ride?.id, duration]);
 
   const handleAccept = useCallback(() => {
     clearInterval(intervalRef.current);
     setAccepted(true);
-    // Stop sound immediately on accept
-    if (soundRef.current) {
-      const sound = soundRef.current;
-      sound.stop(() => {
-        sound.release();
-        soundRef.current = null;
-      });
-    }
     setTimeout(() => onAccept?.(ride), 600);
   }, [ride]);
 
@@ -266,11 +208,12 @@ export default function RideRequestCard({
         <View style={s.routeBox}>
           <RouteRow
             dotColor="#1A1A1A"
+            isPickup
             time={`${ride?.pickup?.eta ?? 0} min (${ride?.pickup?.distance ?? 0} km)`}
             name={ride?.pickup?.address ?? ''}
           />
           <RouteRow
-            dotColor="#CCCCCC"
+            dotColor="#AAAAAA"
             time={`${ride?.duration ?? 0} min (${ride?.dropoff?.distance ?? 0} km)`}
             name={ride?.dropoff?.address ?? ''}
             isLast
@@ -303,13 +246,16 @@ const s = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: moderateScale(20),
     padding: scale(18),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
-    elevation: 14,
-    borderWidth: 0.5,
-    borderColor: '#E8E8E8',
+    borderWidth: 2,
+    borderColor: colors.secondary,
+    overflow: 'hidden',
+  },
+
+  // Top gradient accent line
+  topAccent: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    height: verticalScale(3),
   },
 
   /* Badge row */
@@ -318,6 +264,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: scale(8),
     marginBottom: verticalScale(14),
+    marginTop: verticalScale(6),
   },
   badgeDelivery: {
     flexDirection: 'row',
@@ -335,6 +282,9 @@ const s = StyleSheet.create({
     letterSpacing: 0.2,
   },
   badgeExclusive: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(4),
     backgroundColor: '#F2F2F2',
     paddingHorizontal: scale(10),
     paddingVertical: verticalScale(5),
@@ -353,10 +303,6 @@ const s = StyleSheet.create({
     backgroundColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  closeBtnText: {
-    fontSize: moderateScale(14),
-    color: '#555555',
   },
 
   /* Price */
@@ -396,11 +342,14 @@ const s = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
     borderStyle: 'dashed',
   },
-  dot: {
-    width: scale(10),
-    height: scale(10),
-    borderRadius: scale(5),
-    marginTop: scale(3),
+  dotIconWrap: {
+    width: scale(24),
+    height: scale(24),
+    borderRadius: scale(12),
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: scale(1),
     flexShrink: 0,
   },
   routeText: { flex: 1 },
@@ -441,4 +390,4 @@ const s = StyleSheet.create({
     opacity: 0.5,
     borderBottomLeftRadius: moderateScale(14),
   },
-});
+}); 

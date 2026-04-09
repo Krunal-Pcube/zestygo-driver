@@ -471,11 +471,7 @@ export default function MapComponent({
         pointerEvents="box-none"
       >
         <View style={styles.floatLeft}>
-          {!hasActiveRide && isOnline && (
-            <TouchableOpacity activeOpacity={0.7} style={styles.mapBtn}>
-              <PersonStanding size={moderateScale(22)} color={colors.grey} />
-            </TouchableOpacity>
-          )}
+       
         </View>
         <View style={styles.floatRight}>
           {!hasActiveRide && (

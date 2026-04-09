@@ -8,6 +8,7 @@ import {
   ScrollView,
   Modal,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
 import fonts from '../utils/fonts/fontsList';
@@ -16,7 +17,6 @@ import { logoutAllDevices, logoutCurrentDevice } from '../MVC/Model/authApi';
 import { getDeviceInfo } from '../utils/deviceInfo';
 import Toast from 'react-native-toast-message';
 import { colors } from '../utils/colors';
-import { User } from 'lucide-react-native';
 
 // Custom drawer icons
 import EarningsIcon from '../assets/drawerIcons/earnings.svg';
@@ -127,9 +127,10 @@ const DrawerContent = (props) => {
           style={styles.profileCard}
           onPress={() => navigation.navigate('Profile')}
         >
-          <View style={styles.avatarContainer}>
-            <User size={40} color="#666" />
-          </View>
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face' }}
+            style={styles.avatarImage}
+          />
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>James Smith</Text>
             <Text style={styles.profilePhone}>+251 455 222 22</Text>
@@ -273,13 +274,10 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(20),
     marginBottom: verticalScale(20),
   },
-  avatarContainer: {
+  avatarImage: {
     width: scale(52),
     height: scale(52),
     borderRadius: scale(26),
-    backgroundColor: '#ddd',
-    alignItems: 'center',
-    justifyContent: 'center',
     marginRight: scale(16),
   },
   profileInfo: {

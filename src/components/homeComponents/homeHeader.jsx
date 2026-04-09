@@ -20,9 +20,13 @@ export default function HomeHeader({ navigation, earnings = 0 }) {
       </TouchableOpacity>
 
       {/* Center: Earnings Pill */}
-      <View style={styles.earPill}>
+      <TouchableOpacity
+        style={styles.earPill}
+        activeOpacity={0.8}
+        onPress={() => navigation?.navigate('Earnings')}
+      >
         <Text style={styles.earVal}>$ {earnings.toFixed(2)}</Text>
-      </View>
+      </TouchableOpacity>
 
       {/* Right: Notification */}
       <TouchableOpacity 
