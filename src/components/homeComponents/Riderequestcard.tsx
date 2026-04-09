@@ -22,7 +22,7 @@ const BadgeRow = ({ type, onClose }) => (
     <View style={s.badgeDelivery}>
       <UtensilsCrossed size={scale(11)} color={colors.primary} strokeWidth={2.5} />
       <Text style={s.badgeDeliveryText}>
-        {type === 'delivery' ? 'Delivery' : 'Ride'}
+        Delivery
       </Text>
     </View>
 
