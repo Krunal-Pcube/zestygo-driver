@@ -11,12 +11,15 @@ import {
   StyleSheet,
   Animated as RNAnimated,
 } from 'react-native';
-import { MapPin, Phone, MessageSquare, X } from 'lucide-react-native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../../../utils/colors';
 import fonts from '../../../utils/fonts/fontsList';
 import ChevronIcon from '../../../assets/homeIcons/chevron.svg';
 import VectorIcon from '../../../assets/homeIcons/Vector.svg';
+import LocationFilledIcon from '../../../assets/ridecardIcons/location_filled.svg';
+import CallButtonIcon from '../../../assets/ridecardIcons/Call_Button-o.svg';
+import ChatRestaurantIcon from '../../../assets/ridecardIcons/chat_restaurant.svg';
+import CancelRideIcon from '../../../assets/ridecardIcons/cancel_ride.svg';
 import SwipeToConfirm from '../../../components/common/SwipeToConfirm';
 
 export default function GoingToPickupView({
@@ -42,8 +45,7 @@ export default function GoingToPickupView({
 
         <View style={styles.etaRowCentered}>
           <Text style={styles.etaText}>{eta} min</Text>
-          <View style={styles.dot} />
-          <MapPin size={moderateScale(14)} color={colors.secondary} />
+          <LocationFilledIcon width={moderateScale(14)} height={moderateScale(14)} />
           <Text style={styles.distanceText}>{distance} km</Text>
         </View>
 
@@ -62,7 +64,7 @@ export default function GoingToPickupView({
         {stepConfig.actions.includes('call') && (
           <TouchableOpacity style={styles.actionBtn} onPress={onCall} activeOpacity={0.7}>
             <View style={styles.actionIconBg}>
-              <Phone size={moderateScale(22)} color={colors.secondary} />
+              <CallButtonIcon width={moderateScale(20)} height={moderateScale(20)} />
             </View>
             <Text style={styles.actionText}>Call</Text>
           </TouchableOpacity>
@@ -71,7 +73,7 @@ export default function GoingToPickupView({
         {stepConfig.actions.includes('chat') && (
           <TouchableOpacity style={styles.actionBtn} onPress={onChat} activeOpacity={0.7}>
             <View style={styles.actionIconBg}>
-              <MessageSquare size={moderateScale(22)} color={colors.secondary} />
+              <ChatRestaurantIcon width={moderateScale(22)} height={moderateScale(22)} />
             </View>
             <Text style={styles.actionText}>Chat</Text>
           </TouchableOpacity>
@@ -80,7 +82,7 @@ export default function GoingToPickupView({
         {stepConfig.actions.includes('cancel') && (
           <TouchableOpacity style={styles.actionBtn} onPress={onCancel} activeOpacity={0.7}>
             <View style={styles.actionIconBg}>
-              <X size={moderateScale(22)} color={colors.secondary} />
+              <CancelRideIcon width={moderateScale(18)} height={moderateScale(18)} />
             </View>
             <Text style={styles.actionText}>Cancel Trip</Text>
           </TouchableOpacity>

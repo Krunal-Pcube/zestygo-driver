@@ -11,7 +11,7 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity, 
+  TouchableOpacity,
   Platform,
   Animated,
   Easing,
@@ -20,6 +20,7 @@ import {
   ScrollView,
   PermissionsAndroid,
   Alert,
+  Linking,
 } from 'react-native';
 import { Marker } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
@@ -38,7 +39,7 @@ import HomeHeader from '../components/homeComponents/homeHeader';
 import MapComponent from '../components/homeComponents/MapComponent';
 import BottomSheetComponent from '../components/homeComponents/bottomsheetComponent';
 import ActiveRideBottomSheet from '../components/homeComponents/ActiveRideBottomSheet';
-import { RatingModal, EarningsModal } from '../components/homeComponents/TripCompletionModals';
+import { RatingModal, EarningsModal, ChatModal } from '../components/homeComponents/TripCompletionModals';
 import useRideState from '../hooks/useRideState';
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -138,6 +139,7 @@ export default function HomeScreen({ navigation }) {
   const [sheetIndex, setSheetIndex] = useState(0);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showEarningsModal, setShowEarningsModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
   const [location, setLocation] = useState(null);
   const [heading, setHeading] = useState(0);
   const [locationReady, setLocationReady] = useState(false);
@@ -249,20 +251,7 @@ export default function HomeScreen({ navigation }) {
     return () => clearInterval(interval);
   }, [isOnline, rideData]);
 
-  /* ── Pulse online dot ─────────────────────────────────────────── */
-  useEffect(() => {
-    if (isOnline) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(dotPulse, { toValue: 1.5, duration: 700, useNativeDriver: true }),
-          Animated.timing(dotPulse, { toValue: 1, duration: 700, useNativeDriver: true }),
-        ]),
-      ).start();
-    } else {
-      dotPulse.stopAnimation();
-      dotPulse.setValue(1);
-    }
-  }, [isOnline]);
+
 
   /* ── Chevron follows sheet index ─────────────────────────────── */
   useEffect(() => {
@@ -279,11 +268,13 @@ export default function HomeScreen({ navigation }) {
     const streets = ['Main St', 'Oak Ave', 'Park Rd', 'Elm St'];
     const avenues = ['Broadway', '5th Ave', 'Market St', 'Beach Rd'];
     const names = ['John', 'Sarah', 'Mike', 'Emma', 'David'];
+    const phoneNumbers = ['+1234567890', '+1987654321', '+1555123456', '+1444555666', '+1777888999'];
 
     const newRide = {
       id: Date.now(),
       type: Math.random() > 0.5 ? 'match' : 'accept',
       passengerName: names[Math.floor(Math.random() * names.length)],
+      phoneNumber: phoneNumbers[Math.floor(Math.random() * phoneNumbers.length)],
       rating: (Math.random() * 1.5 + 3.5).toFixed(1),
       fare: Math.floor(Math.random() * 25 + 12),
       duration: Math.floor(Math.random() * 20 + 10),
@@ -337,7 +328,21 @@ export default function HomeScreen({ navigation }) {
     cancelRide();
   };
 
+  const handleCallCustomer = useCallback(async () => {
+    const phoneNumber = rideData?.phoneNumber;
+    if (!phoneNumber) {
+      Alert.alert('Error', 'Phone number not available');
+      return;
+    }
 
+    try {
+      await Linking.openURL(`tel:${phoneNumber}`);
+      console.log('[CALL] Calling customer:', phoneNumber);
+    } catch (error) {
+      console.error('[CALL] Error making phone call:', error);
+      Alert.alert('Error', 'Failed to make phone call');
+    }
+  }, [rideData]);
 
   const animateChevron = useCallback((toIndex) => setSheetIndex(toIndex), []);
   const handleSheetChange = useCallback((index) => setSheetIndex(index), []);
@@ -382,11 +387,20 @@ export default function HomeScreen({ navigation }) {
     setShowEarningsModal(true);
   }, []);
 
+  const handleOpenChat = useCallback(() => {
+    setShowChatModal(true);
+  }, []);
+
+  const handleCloseChat = useCallback(() => {
+    setShowChatModal(false);
+  }, []);
+
   const handleEarningsDone = useCallback(() => {
     setShowEarningsModal(false);
     completeRide();
   }, [completeRide]);
 
+// ... (rest of the code remains the same)
   const handleViewTripDetails = useCallback(() => {
     setShowEarningsModal(false);
     // Complete the ride so bottom sheet doesn't show when returning
@@ -452,8 +466,8 @@ export default function HomeScreen({ navigation }) {
         isVisible={isActive && !showRatingModal && !showEarningsModal}
         onArrived={handleArrived}
         onNavigate={() => console.log('[NAV] Starting navigation')}
-        onCall={() => console.log('[CALL] Calling customer')}
-        onChat={() => console.log('[CHAT] Opening chat')}
+        onCall={() => handleCallCustomer()}
+        onChat={handleOpenChat}
         onCancel={handleCancelRide}
         onStartDropoff={startDropoff}
         onCompleteRide={completeRide}
@@ -476,6 +490,13 @@ export default function HomeScreen({ navigation }) {
         customerName={rideData?.passengerName || 'Kelsey'}
         onDone={handleEarningsDone}
         onViewDetails={handleViewTripDetails}
+      />
+
+      {/* Chat Modal */}
+      <ChatModal
+        visible={showChatModal}
+        customerName={rideData?.passengerName || 'Customer'}
+        onClose={handleCloseChat}
       />
 
       {!isActive && !showRideRequests && (

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
@@ -6,26 +5,22 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
-  Dimensions,
   Platform,
 } from 'react-native';
-import { Zap, X, Navigation } from 'lucide-react-native';
+import { Zap, X } from 'lucide-react-native';
 import DeliveryIcon from '../../assets/ridecardIcons/delivery_icon.svg';
 import LocationFilledIcon from '../../assets/ridecardIcons/location_filled.svg';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
 import Sound from 'react-native-sound';
-import LinearGradient from 'react-native-linear-gradient';
 
 /* ─── Badge row ─────────────────────────────────────────────────── */
-const BadgeRow = ({ type, onClose }) => (
+const BadgeRow = ({ onClose }) => (
   <View style={s.badgeRow}>
     <View style={s.badgeDelivery}>
       <DeliveryIcon width={scale(12)} height={scale(12)} fill={colors.primary} />
-      <Text style={s.badgeDeliveryText}>
-        Delivery
-      </Text>
+      <Text style={s.badgeDeliveryText}>Delivery</Text>
     </View>
 
     <View style={s.badgeExclusive}>
@@ -34,24 +29,8 @@ const BadgeRow = ({ type, onClose }) => (
     </View>
 
     <TouchableOpacity style={s.closeBtn} onPress={onClose} activeOpacity={0.7}>
-      <X size={scale(13)} color="#555555" strokeWidth={2.5} />
+      <X size={scale(24)} color="#555555" strokeWidth={2.5} />
     </TouchableOpacity>
-  </View>
-);
-
-/* ─── Route row ──────────────────────────────────────────────────── */
-const RouteRow = ({ dotColor, time, name, isLast, isPickup }) => (
-  <View style={[s.routeRow, !isLast && s.routeRowBorder]}>
-    <View style={[s.dotIconWrap, { backgroundColor: dotColor + '15', borderColor: dotColor + '40' }]}>
-
-      <LocationFilledIcon width={scale(11)} height={scale(11)} fill={dotColor} />
-
-    </View>
-
-    <View style={s.routeText}>
-      <Text style={s.routeTime}>{time}</Text>
-      <Text style={s.routeName} numberOfLines={2}>{name}</Text>
-    </View>
   </View>
 );
 
@@ -73,11 +52,7 @@ const CountdownButton = ({ remaining, total, onPress, accepted }) => {
   });
 
   return (
-    <TouchableOpacity
-      style={s.acceptBtn}
-      onPress={onPress}
-      activeOpacity={0.85}
-    >
+    <TouchableOpacity style={s.acceptBtn} onPress={onPress} activeOpacity={0.85}>
       <Text style={s.acceptBtnText}>
         {accepted ? 'Accepted!' : `Tap to Accept (${remaining}s)`}
       </Text>
@@ -101,12 +76,7 @@ export default function RideRequestCard({
   const opacity = useRef(new Animated.Value(0)).current;
   const soundRef = useRef(null);
 
-  /* ── Sound ──────────────────────────────────────────────────────
-     A single effect handles both play and cleanup.
-     The `cancelled` flag prevents a late async callback from
-     calling play() after the effect has already been torn down
-     (new ride arrived, card hidden, or user accepted mid-load).
-  ─────────────────────────────────────────────────────────────── */
+  /* ── Sound ────────────────────────────────────────────────────── */
   useEffect(() => {
     if (!visible || accepted) return;
 
@@ -116,15 +86,8 @@ export default function RideRequestCard({
       'ride_arriving.mp3',
       Platform.OS === 'ios' ? Sound.MAIN_BUNDLE : '',
       (error) => {
-        if (cancelled) {
-          // Effect already cleaned up — free memory and do NOT play
-          sound.release();
-          return;
-        }
-        if (error) {
-          console.log('Failed to load sound', error);
-          return;
-        }
+        if (cancelled) { sound.release(); return; }
+        if (error) { console.log('Failed to load sound', error); return; }
         soundRef.current = sound;
         sound.setNumberOfLoops(-1);
         sound.setVolume(1.0);
@@ -135,7 +98,7 @@ export default function RideRequestCard({
     );
 
     return () => {
-      cancelled = true; // stop async callback from playing a stale sound
+      cancelled = true;
       if (soundRef.current) {
         soundRef.current.stop(() => soundRef.current?.release());
         soundRef.current = null;
@@ -169,7 +132,11 @@ export default function RideRequestCard({
     }
     intervalRef.current = setInterval(() => {
       setRemaining(prev => {
-        if (prev <= 1) { clearInterval(intervalRef.current); intervalRef.current = null; return 0; }
+        if (prev <= 1) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          return 0;
+        }
         return prev - 1;
       });
     }, 1000);
@@ -197,7 +164,7 @@ export default function RideRequestCard({
       <View style={s.card}>
 
         {/* Badge row */}
-        <BadgeRow type={ride?.type} onClose={onDecline} />
+        <BadgeRow onClose={onDecline} />
 
         {/* Price */}
         <Text style={s.price}>${ride?.fare?.toFixed(2) ?? '0.00'}</Text>
@@ -207,18 +174,46 @@ export default function RideRequestCard({
 
         {/* Route */}
         <View style={s.routeBox}>
-          <RouteRow
-            dotColor="#1A1A1A"
-            isPickup
-            time={`${ride?.pickup?.eta ?? 0} min (${ride?.pickup?.distance ?? 0} km)`}
-            name={ride?.pickup?.address ?? ''}
-          />
-          <RouteRow
-            dotColor="#AAAAAA"
-            time={`${ride?.duration ?? 0} min (${ride?.dropoff?.distance ?? 0} km)`}
-            name={ride?.dropoff?.address ?? ''}
-            isLast
-          />
+
+          {/* ── Pickup row ── */}
+          <View style={s.routeRow}>
+            <View style={[s.dotIconWrap, { backgroundColor: '#1A1A1A15', borderColor: '#1A1A1A40' }]}>
+              <LocationFilledIcon width={scale(14)} height={scale(14)} fill="#1A1A1A" />
+            </View>
+            <View style={s.routeTextItem}>
+              <Text style={s.routeTime}>
+                {`${ride?.pickup?.eta ?? 0} min (${ride?.pickup?.distance ?? 0} km)`}
+              </Text>
+              <Text style={s.routeName} numberOfLines={2}>
+                {ride?.pickup?.address ?? ''}
+              </Text>
+            </View>
+          </View>
+
+          {/* ── Dotted connector ──
+               width === dotIconWrap width so the dots sit perfectly
+               centred under both icons regardless of text height       */}
+          <View style={s.connectorWrap}>
+            {[...Array(5)].map((_, i) => (
+              <View key={i} style={s.lineDot} />
+            ))}
+          </View>
+
+          {/* ── Dropoff row ── */}
+          <View style={s.routeRow}>
+            <View style={[s.dotIconWrap, { backgroundColor: '#AAAAAA15', borderColor: '#AAAAAA40' }]}>
+              <LocationFilledIcon width={scale(14)} height={scale(14)} fill="#AAAAAA" />
+            </View>
+            <View style={s.routeTextItem}>
+              <Text style={s.routeTime}>
+                {`${ride?.duration ?? 0} min (${ride?.dropoff?.distance ?? 0} km)`}
+              </Text>
+              <Text style={s.routeName} numberOfLines={2}>
+                {ride?.dropoff?.address ?? ''}
+              </Text>
+            </View>
+          </View>
+
         </View>
 
         {/* Countdown button */}
@@ -250,13 +245,6 @@ const s = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.secondary,
     overflow: 'hidden',
-  },
-
-  // Top gradient accent line
-  topAccent: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0,
-    height: verticalScale(3),
   },
 
   /* Badge row */
@@ -298,8 +286,8 @@ const s = StyleSheet.create({
   },
   closeBtn: {
     marginLeft: 'auto',
-    width: scale(30),
-    height: scale(30),
+    width: scale(40),
+    height: scale(40),
     borderRadius: scale(15),
     backgroundColor: '#F2F2F2',
     alignItems: 'center',
@@ -332,28 +320,31 @@ const s = StyleSheet.create({
   routeBox: {
     marginBottom: verticalScale(18),
   },
+
+  // Each location is its own row — icon is always in the same
+  // flex row as its text so alignment is guaranteed
   routeRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: verticalScale(10),
+    alignItems: 'center',
     gap: scale(12),
   },
-  routeRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    borderStyle: 'dashed',
-  },
+
+  // Icon circle
   dotIconWrap: {
-    width: scale(24),
-    height: scale(24),
-    borderRadius: scale(12),
+    width: scale(26),
+    height: scale(26),
+    borderRadius: scale(30),
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: scale(1),
     flexShrink: 0,
   },
-  routeText: { flex: 1 },
+
+  // Text block — flex:1 so it fills the row beside the icon
+  routeTextItem: {
+    flex: 1,
+    paddingVertical: verticalScale(4),
+  },
   routeTime: {
     fontSize: moderateScale(15),
     fontFamily: fonts.bold,
@@ -364,6 +355,21 @@ const s = StyleSheet.create({
     color: '#888888',
     marginTop: verticalScale(2),
     lineHeight: moderateScale(18),
+  },
+
+  // Connector: same width as dotIconWrap so dots sit centred
+  // under both icons. No gap prop needed — marginVertical on
+  // lineDot handles spacing and works on all RN versions.
+  connectorWrap: {
+    width: scale(24),
+    alignItems: 'center',
+  },
+  lineDot: {
+    width: scale(2.5),
+    height: scale(2.5),
+    borderRadius: scale(1.5),
+    backgroundColor: '#CCCCCC',
+    marginVertical: verticalScale(1.5),
   },
 
   /* Button */
@@ -391,4 +397,4 @@ const s = StyleSheet.create({
     opacity: 0.5,
     borderBottomLeftRadius: moderateScale(14),
   },
-}); 
+});

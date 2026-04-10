@@ -11,10 +11,12 @@ import {
   StyleSheet,
   Animated as RNAnimated,
 } from 'react-native';
-import { MapPin, Phone, ChevronRight } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import ChevronIcon from '../../../assets/homeIcons/chevron.svg';
 import VectorIcon from '../../../assets/homeIcons/Vector.svg';
+import LocationFilledIcon from '../../../assets/ridecardIcons/location_filled.svg';
+import CallIcon from '../../../assets/ridecardIcons/call_icon.svg';
 import { colors } from '../../../utils/colors';
 import ActionButton from '../../../components/common/ActionButton';
 import fonts from '../../../utils/fonts/fontsList'; 
@@ -51,8 +53,7 @@ export default function ArrivedAtPickupView({
 
         <View style={styles.etaRowCentered}>
           <Text style={styles.etaText}>{eta} min</Text>
-          <View style={styles.dot} />
-          <MapPin size={moderateScale(14)} color={colors.secondary} />
+          <LocationFilledIcon width={moderateScale(14)} height={moderateScale(14)} />
           <Text style={styles.distanceText}>{distance} km</Text>
         </View>
 
@@ -70,7 +71,7 @@ export default function ArrivedAtPickupView({
           </View>
           <TouchableOpacity style={styles.phoneBtn} onPress={onCall} activeOpacity={0.7}>
             <View style={styles.phoneIconBg}>
-              <Phone size={moderateScale(18)} color={colors.white} />
+              <CallIcon width={moderateScale(18)} height={moderateScale(18)} />
             </View>
           </TouchableOpacity>
         </View>

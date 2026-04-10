@@ -11,12 +11,16 @@ import {
   StyleSheet,
   Animated as RNAnimated,
 } from 'react-native';
-import { MapPin, Phone, MessageSquare, ChevronRight, Home } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../../../utils/colors';
 import fonts from '../../../utils/fonts/fontsList';
 import ChevronIcon from '../../../assets/homeIcons/chevron.svg';
 import VectorIcon from '../../../assets/homeIcons/Vector.svg';
+import LocationFilledIcon from '../../../assets/ridecardIcons/location_filled.svg';
+import CallIcon from '../../../assets/ridecardIcons/call_icon.svg';
+import ChatRestaurantIcon from '../../../assets/ridecardIcons/chat_restaurant.svg';
+import HomeIcon from '../../../assets/ridecardIcons/home_icon.svg';
 import ActionButton from '../../../components/common/ActionButton';
  
 export default function DropoffDetailsView({
@@ -50,8 +54,8 @@ export default function DropoffDetailsView({
 
         <View style={styles.etaRowCentered}>
           <Text style={styles.etaText}>{eta} min</Text>
-          <View style={styles.dot} />
-          <MapPin size={moderateScale(14)} color={colors.secondary} />
+         
+          <LocationFilledIcon width={moderateScale(14)} height={moderateScale(14)} />
           <Text style={styles.distanceText}>{distance} km</Text>
         </View>
 
@@ -69,19 +73,19 @@ export default function DropoffDetailsView({
           <Text style={styles.dropoffCustomerName}>{customerName}</Text>
           <Text style={styles.dropoffAddress}>{address}</Text>
           <View style={styles.homeTag}>
-            <Home size={moderateScale(12)} color={colors.grey} />
+            <HomeIcon width={moderateScale(12)} height={moderateScale(12)} />
             <Text style={styles.homeTagText}>Home</Text>
           </View>
         </View>
         <View style={styles.actionButtonsRow}>
           <TouchableOpacity style={styles.actionIconBtn} onPress={onChat} activeOpacity={0.7}>
             <View style={[styles.actionIconBgSmall, { backgroundColor: '#C8FF00' }]}>
-              <MessageSquare size={moderateScale(16)} color={colors.secondary} />
+              <ChatRestaurantIcon width={moderateScale(16)} height={moderateScale(16)} />
             </View>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionIconBtn} onPress={onCall} activeOpacity={0.7}>
             <View style={styles.actionIconBgSmall}>
-              <Phone size={moderateScale(16)} color={colors.white} />
+              <CallIcon width={moderateScale(16)} height={moderateScale(16)} />
             </View>
           </TouchableOpacity>
         </View>

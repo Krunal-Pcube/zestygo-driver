@@ -14,10 +14,17 @@ import {
   TextInput,
   Image,
   Alert,
+  PanResponder,
 } from 'react-native';
+import { Camera as CameraIcon, Trash2, Check, Image as ImageIcon, Star } from 'lucide-react-native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
+import NotReadyIcon from '../../assets/ridecardIcons/not_ready.svg';
+import ReportIssueIcon from '../../assets/ridecardIcons/report_issue.svg';
+import PersonIcon from '../../assets/ridecardIcons/person_icon.svg';
+import ConfirmCollectedIcon from '../../assets/ridecardIcons/confirm_collected.svg';
+import TripFareCheckedIcon from '../../assets/ridecardIcons/trip_fare_checked.svg';
 
 /* ════════════════════════════════════════════════════════════════
    Rating Modal - Centered modal with backdrop
@@ -30,12 +37,7 @@ export function RatingModal({ visible, customerName, onSubmit, onClose }) {
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.backdrop}>
           <TouchableWithoutFeedback>
@@ -43,29 +45,28 @@ export function RatingModal({ visible, customerName, onSubmit, onClose }) {
               <Text style={styles.ratingTitle}>How was your trip?</Text>
               <Text style={styles.ratingCustomerName}>{customerName}</Text>
 
-              {/* Star Rating */}
+              {/* Star Rating - Simple tap only for reliability */}
               <View style={styles.starsRow}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <TouchableOpacity
                     key={star}
                     onPress={() => setRating(star)}
                     activeOpacity={0.7}
+                    style={styles.starTouchArea}
                   >
-                    <Text style={styles.star}>
-                      {star <= rating ? '★' : '☆'}
-                    </Text>
+                    <Star
+                      size={moderateScale(36)}
+                      color="#FFD700"
+                      fill={star <= rating ? "#FFD700" : "transparent"}
+                      strokeWidth={star <= rating ? 0 : 2}
+                    />
                   </TouchableOpacity>
                 ))}
               </View>
 
               <View style={styles.ratingDivider} />
 
-              {/* Submit Button */}
-              <TouchableOpacity
-                style={styles.submitBtn}
-                onPress={handleSubmit}
-                activeOpacity={0.8}
-              >
+              <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} activeOpacity={0.8}>
                 <Text style={styles.submitBtnText}>Submit</Text>
               </TouchableOpacity>
             </View>
@@ -94,9 +95,10 @@ export function EarningsModal({ visible, tripId, amount, customerName, onDone, o
               <Text style={styles.tripIdText}>Trip {tripId}</Text>
 
               {/* Success Badge */}
-              <View style={styles.successBadge}>
-                <Text style={styles.checkMark}>✓</Text>
-              </View>
+                <View style={{marginBottom: scale(20)}}>
+                <TripFareCheckedIcon width={moderateScale(60)} height={moderateScale(60)} />
+                </View>
+            
 
               {/* Amount */}
               <Text style={styles.earningsAmount}>${amount}</Text>
@@ -255,6 +257,105 @@ export function CancelReasonModal({ visible, onSelectReason, onClose }) {
     </Modal>
   );
 }
+
+/* ════════════════════════════════════════════════════════════════
+   Chat Modal - Chat interface for driver-customer communication
+   ════════════════════════════════════════════════════════════════ */
+export function ChatModal({ visible, customerName, onClose }) {
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([
+    { id: 1, text: 'Hi! I\'m on my way to pick up your order.', sender: 'driver', time: '10:30 AM' },
+    { id: 2, text: 'Great! Thanks for letting me know.', sender: 'customer', time: '10:31 AM' },
+  ]);
+
+  const handleSend = () => {
+    if (message.trim()) {
+      const newMessage = {
+        id: Date.now(),
+        text: message.trim(),
+        sender: 'driver',
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages(prev => [...prev, newMessage]);
+      setMessage('');
+    }
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.chatBackdrop}>
+          <TouchableWithoutFeedback>
+            <View style={styles.chatContainer}>
+          {/* Header */}
+          <View style={styles.chatHeader}>
+            <View style={styles.chatHeaderInfo}>
+              <Text style={styles.chatHeaderName}>{customerName || 'Customer'}</Text>
+              <Text style={styles.chatHeaderStatus}>Online</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={styles.chatCloseBtn} activeOpacity={0.7}>
+              <Text style={styles.chatCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Messages */}
+          <View style={styles.chatMessages}>
+            {messages.map((msg) => (
+              <View
+                key={msg.id}
+                style={[
+                  styles.chatMessageRow,
+                  msg.sender === 'driver' ? styles.chatMessageRowRight : styles.chatMessageRowLeft,
+                ]}
+              >
+                <View
+                  style={[
+                    styles.chatBubble,
+                    msg.sender === 'driver' ? styles.chatBubbleDriver : styles.chatBubbleCustomer,
+                  ]}
+                >
+                  <Text style={msg.sender === 'driver' ? styles.chatTextDriver : styles.chatTextCustomer}>
+                    {msg.text}
+                  </Text>
+                  <Text style={styles.chatTime}>{msg.time}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          {/* Input */}
+          <View style={styles.chatInputArea}>
+            <TextInput
+              style={styles.chatInput}
+              value={message}
+              onChangeText={setMessage}
+              placeholder="Type a message..."
+              placeholderTextColor={colors.grey}
+              multiline
+              maxLength={200}
+            />
+            <TouchableOpacity
+              style={[styles.chatSendBtn, !message.trim() && styles.chatSendBtnDisabled]}
+              onPress={handleSend}
+              activeOpacity={0.7}
+              disabled={!message.trim()}
+            >
+              <Text style={styles.chatSendText}>Send</Text>
+            </TouchableOpacity>
+          </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+}
+
 const styles = StyleSheet.create({
   /* Backdrop overlay - pushes content to bottom */
   backdrop: {
@@ -297,6 +398,11 @@ const styles = StyleSheet.create({
   star: {
     fontSize: moderateScale(32),
     color: '#FFD700',
+  },
+  starTouchArea: {
+    padding: scale(4),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   ratingDivider: {
     width: '100%',
@@ -951,7 +1057,7 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(20),
   },
   personIcon: {
-    fontSize: moderateScale(20),
+    fontSize: moderateScale(18),
   },
   checkBadge: {
     position: 'absolute',
@@ -1004,6 +1110,138 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(16),
     fontFamily: fonts.semiBold,
   },
+
+  /* Chat Modal Styles */
+  chatBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  chatContainer: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: moderateScale(24),
+    borderTopRightRadius: moderateScale(24),
+    height: '80%',
+    width: '100%',
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: scale(20),
+    paddingTop: verticalScale(16),
+    paddingBottom: verticalScale(12),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  chatHeaderInfo: {
+    flex: 1,
+  },
+  chatHeaderName: {
+    fontSize: moderateScale(18),
+    fontFamily: fonts.bold,
+    color: colors.secondary,
+    marginBottom: verticalScale(2),
+  },
+  chatHeaderStatus: {
+    fontSize: moderateScale(12),
+    color: '#4CAF50',
+    fontFamily: fonts.medium,
+  },
+  chatCloseBtn: {
+    width: scale(40),
+    height: scale(40),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatCloseText: {
+    fontSize: moderateScale(20),
+    color: colors.grey,
+    fontWeight: 'bold',
+  },
+  chatMessages: {
+    flex: 1,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(16),
+  },
+  chatMessageRow: {
+    marginBottom: verticalScale(12),
+  },
+  chatMessageRowRight: {
+    alignItems: 'flex-end',
+  },
+  chatMessageRowLeft: {
+    alignItems: 'flex-start',
+  },
+  chatBubble: {
+    maxWidth: '80%',
+    paddingHorizontal: scale(14),
+    paddingVertical: verticalScale(10),
+    borderRadius: moderateScale(18),
+  },
+  chatBubbleDriver: {
+    backgroundColor: '#1A1A1A',
+    borderBottomRightRadius: moderateScale(4),
+  },
+  chatBubbleCustomer: {
+    backgroundColor: '#F0F0F0',
+    borderBottomLeftRadius: moderateScale(4),
+  },
+  chatTextDriver: {
+    fontSize: moderateScale(14),
+    color: colors.white,
+    fontFamily: fonts.medium,
+    lineHeight: moderateScale(20),
+  },
+  chatTextCustomer: {
+    fontSize: moderateScale(14),
+    color: colors.secondary,
+    fontFamily: fonts.medium,
+    lineHeight: moderateScale(20),
+  },
+  chatTime: {
+    fontSize: moderateScale(10),
+    color: colors.grey,
+    marginTop: verticalScale(4),
+    alignSelf: 'flex-end',
+  },
+  chatInputArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(12),
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    backgroundColor: colors.white,
+  },
+  chatInput: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+    borderRadius: moderateScale(20),
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(10),
+    fontSize: moderateScale(14),
+    color: colors.secondary,
+    fontFamily: fonts.medium,
+    maxHeight: verticalScale(80),
+    marginRight: scale(12),
+  },
+  chatSendBtn: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: moderateScale(20),
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(10),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatSendBtnDisabled: {
+    backgroundColor: '#CCCCCC',
+  },
+  chatSendText: {
+    color: colors.white,
+    fontSize: moderateScale(14),
+    fontFamily: fonts.bold,
+  },
 });
 
 /* ════════════════════════════════════════════════════════════════
@@ -1028,17 +1266,14 @@ export function PickupConfirmationModal({ visible, onContinue, onGoBack }) {
               <View style={styles.infoList}>
                 <View style={styles.infoItem}>
                   <View style={styles.infoIconBg}>
-                    <Text style={styles.handIcon}>✋</Text>
-                    <View style={styles.checkBadge}>
-                      <Text style={styles.checkText}>✓</Text>
-                    </View>
+                    <ConfirmCollectedIcon width={moderateScale(24)} height={moderateScale(24)} />
                   </View>
                   <Text style={styles.infoText}>Confirm that the order has been Collected</Text>
                 </View>
 
                 <View style={styles.infoItem}>
                   <View style={styles.infoIconBg}>
-                    <Text style={styles.personIcon}>👤</Text>
+                    <PersonIcon width={moderateScale(22)} height={moderateScale(22)} />
                   </View>
                   <Text style={styles.infoText}>We'll let the customer know you have their order</Text>
                 </View>
@@ -1126,7 +1361,7 @@ export function VerifyOrderModal({ visible, ride, onVerify, onClose }) {
           {/* Not Ready Option */}
           <TouchableOpacity style={styles.optionRow} activeOpacity={0.7}>
             <View style={styles.optionIconBg}>
-              <Text style={styles.clockIcon}>⏱</Text>
+              <NotReadyIcon width={moderateScale(20)} height={moderateScale(20)} />
             </View>
             <Text style={styles.optionText}>Not ready</Text>
           </TouchableOpacity>
@@ -1134,7 +1369,7 @@ export function VerifyOrderModal({ visible, ride, onVerify, onClose }) {
           {/* Report Issue Option */}
           <TouchableOpacity style={styles.optionRow} activeOpacity={0.7}>
             <View style={styles.optionIconBg}>
-              <Text style={styles.warningIcon}>⚠</Text>
+              <ReportIssueIcon width={moderateScale(20)} height={moderateScale(20)} />
             </View>
             <Text style={styles.optionText}>Report issue</Text>
           </TouchableOpacity>
@@ -1322,7 +1557,7 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
     if (!cameraDevice) {
       return (
         <View style={styles.photoPreviewBox}>
-          <Text style={styles.photoPlaceholderText}>📷</Text>
+          <CameraIcon size={moderateScale(48)} color={colors.grey} />
           <Text style={styles.photoPlaceholderSubtext}>
             {hasPermission ? 'No camera device found' : 'Camera Preview'}
           </Text>
@@ -1338,7 +1573,7 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
     if (!hasPermission) {
       return (
         <View style={[styles.photoPreviewBox, { backgroundColor: '#000' }]}>
-          <Text style={[styles.photoPlaceholderText, { color: '#fff' }]}>📷</Text>
+          <CameraIcon size={moderateScale(48)} color="#fff" />
           <Text style={[styles.photoPlaceholderSubtext, { color: '#fff' }]}>
             Requesting camera permission...
           </Text>
@@ -1360,7 +1595,7 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
     } catch (error) {
       return (
         <View style={styles.photoPreviewBox}>
-          <Text style={styles.photoPlaceholderText}>📷</Text>
+          <CameraIcon size={moderateScale(48)} color={colors.grey} />
           <Text style={styles.photoPlaceholderSubtext}>Camera Preview</Text>
         </View>
       );
@@ -1393,7 +1628,7 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
             <View style={styles.capturedPhotoContainer}>
               {capturedPhoto === 'mock_photo' ? (
                 <View style={[styles.photoPreviewBox, { backgroundColor: '#E8F4FD' }]}>
-                  <Text style={styles.photoPlaceholderText}>📷</Text>
+                  <CameraIcon size={moderateScale(48)} color={colors.grey} />
                   <Text style={styles.photoPlaceholderSubtext}>Mock Photo Captured</Text>
                 </View>
               ) : (
@@ -1431,11 +1666,12 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.nextBtn, { backgroundColor: '#1A1A1A' }]}
+                style={[styles.nextBtn, { backgroundColor: '#1A1A1A', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: scale(8) }]}
                 onPress={handleConfirmPhoto}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.nextBtnText, { color: '#C8FF00' }]}>Use Photo ✓</Text>
+                <Text style={[styles.nextBtnText, { color: '#C8FF00' }]}>Use Photo</Text>
+                <Check size={moderateScale(18)} color="#C8FF00" />
               </TouchableOpacity>
             </>
           ) : (
@@ -1450,11 +1686,12 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.captureBtn, { backgroundColor: '#1A1A1A' }]}
+                style={[styles.captureBtn, { backgroundColor: '#1A1A1A', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: scale(8) }]}
                 onPress={takePhoto}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.captureBtnText, { color: '#C8FF00' }]}>📸 Capture</Text>
+                <CameraIcon size={moderateScale(18)} color="#C8FF00" />
+                <Text style={[styles.captureBtnText, { color: '#C8FF00' }]}>Capture</Text>
               </TouchableOpacity>
             </>
           )}
@@ -1499,7 +1736,7 @@ export function DeliveryInfoModal({ visible, onCompleteDelivery, onClose, photoU
             <View style={styles.photoThumbnail}>
               {photoUri ? (
                 photoUri === 'mock_photo' ? (
-                  <Text style={styles.photoThumbText}>📷</Text>
+                  <ImageIcon size={moderateScale(24)} color={colors.grey} />
                 ) : (
                   <Image 
                     source={{ uri: photoUri }} 
@@ -1508,15 +1745,15 @@ export function DeliveryInfoModal({ visible, onCompleteDelivery, onClose, photoU
                   />
                 )
               ) : (
-                <Text style={styles.photoThumbText}>📷</Text>
+                <ImageIcon size={moderateScale(24)} color={colors.grey} />
               )}
             </View>
             <Text style={styles.uploadedText}>
-              {photoUri ? '✓ Photo attached' : 'No photo attached'}
+              {photoUri ? 'Photo attached' : 'No photo attached'}
             </Text>
             {photoUri && (
               <TouchableOpacity style={styles.deletePhotoBtn} activeOpacity={0.7}>
-                <Text style={styles.deletePhotoText}>🗑</Text>
+                <Trash2 size={moderateScale(20)} color={colors.grey} />
               </TouchableOpacity>
             )}
           </View>
