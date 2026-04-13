@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import BackArrow from '../assets/drawerIcons/back_arrow.svg';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
 import { scale, moderateScale } from 'react-native-size-matters';
 import { useNavigation } from '@react-navigation/native';
 import fonts from '../utils/fonts/fontsList';
@@ -17,26 +17,27 @@ const Header = ({
 }) => {
 
   const navigation = useNavigation();
+  const { colors } = useTheme();
 
   const handleBack = () => {
     navigation.goBack();
   };
 
   return (
-    <View style={[styles.container]}>
+    <View style={[styles.container, { backgroundColor: colors.cardBackground, borderColor: colors.divider }]}>
       {showBack ? (
         <TouchableOpacity
           onPress={handleBack}
           style={styles.backBtn}
           activeOpacity={0.7}
         >
-          <BackArrow width={scale(24)} height={scale(24)} fill={colors.darkText} />
+          <BackArrow width={scale(24)} height={scale(24)} color={colors.textPrimary} />
         </TouchableOpacity>
       ) : (
         <View style={styles.placeholder} />
       )}
 
-      <Text style={[styles.title]}>{title}</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
 
 
     </View>
@@ -50,9 +51,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingHorizontal: scale(22),
     paddingVertical: scale(16),
-    borderColor: colors.divider,
     borderBottomWidth: 1,
-    backgroundColor: colors.white,
   },
   backBtn: {
     padding: scale(8),
@@ -62,7 +61,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: moderateScale(18),
     fontFamily: fonts.bold,
-    color: colors.darkText,
   },
   placeholder: {
     width: 0,

@@ -8,12 +8,14 @@ import {
   Switch,
 } from 'react-native';
 import { Volume2, VolumeX, Navigation2, Bell } from 'lucide-react-native';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
 import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
 const SoundVoiceSettingsScreen = ({ navigation }) => {
+  const { colors } = useTheme();
+  
   // 3 Essential Settings for Delivery Drivers
   const [allSounds, setAllSounds] = useState(true);
   const [newOrderAlerts, setNewOrderAlerts] = useState(true);
@@ -26,10 +28,10 @@ const SoundVoiceSettingsScreen = ({ navigation }) => {
       onPress={() => onChange(!value)}
     >
       <View style={styles.toggleLeft}>
-        <View style={styles.iconBox}>{icon}</View>
+        <View style={[styles.iconBox, { backgroundColor: colors.background }]}>{icon}</View>
         <View style={styles.toggleTextBox}>
-          <Text style={styles.toggleLabel}>{label}</Text>
-          {description && <Text style={styles.toggleDesc}>{description}</Text>}
+          <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>{label}</Text>
+          {description && <Text style={[styles.toggleDesc, { color: colors.textSecondary }]}>{description}</Text>}
         </View>
       </View>
       <Switch
@@ -42,15 +44,15 @@ const SoundVoiceSettingsScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Sound & Voice" showBack={true}  />
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
         {/* 1. All Sounds (Master Toggle) */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
           {renderToggle(
             allSounds ? (
-              <Volume2 size={22} color={colors.secondary} />
+              <Volume2 size={22} color={colors.textPrimary} />
             ) : (
               <VolumeX size={22} color={colors.grey} />
             ),
@@ -62,28 +64,23 @@ const SoundVoiceSettingsScreen = ({ navigation }) => {
         </View>
 
         {/* 2. New Order Alerts */}
-        <View style={[styles.card, !allSounds && styles.disabled]}>
+        <View style={[styles.card, { backgroundColor: colors.cardBackground }, !allSounds && styles.disabled]}>
           {renderToggle(
-            <Bell size={22} color={allSounds ? colors.secondary : colors.grey} />,
+            <Bell size={22} color={allSounds ? colors.textPrimary : colors.grey} />,
             'New Order Alerts',
             allSounds && newOrderAlerts,
             setNewOrderAlerts,
             'Sound when new delivery request comes'
           )}
         </View>
-
-    
-    
-     
       </ScrollView>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     paddingTop: verticalScale(20),
@@ -91,7 +88,6 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: scale(16),
     marginBottom: verticalScale(12),
-    backgroundColor: colors.white,
     borderRadius: scale(12),
     padding: scale(4),
   },
@@ -114,7 +110,6 @@ const styles = StyleSheet.create({
     width: scale(44),
     height: scale(44),
     borderRadius: scale(12),
-    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -125,32 +120,11 @@ const styles = StyleSheet.create({
   toggleLabel: {
     fontSize: moderateScale(15),
     fontFamily: fonts.semiBold,
-    color: colors.secondary,
   },
   toggleDesc: {
     fontSize: moderateScale(12),
     fontFamily: fonts.regular,
-    color: colors.grey,
     marginTop: verticalScale(3),
-  },
-  testButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: scale(10),
-    marginHorizontal: scale(16),
-    marginTop: verticalScale(30),
-    backgroundColor: colors.primary,
-    paddingVertical: verticalScale(14),
-    borderRadius: scale(12),
-  },
-  testButtonText: {
-    fontSize: moderateScale(15),
-    fontFamily: fonts.bold,
-    color: colors.white,
-  },
-  testButtonDisabled: {
-    color: colors.grey,
   },
 });
 

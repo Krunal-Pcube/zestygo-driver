@@ -16,7 +16,7 @@ import { AuthContext } from '../MVC/context/AuthContext';
 import { logoutAllDevices, logoutCurrentDevice } from '../MVC/Model/authApi';
 import { getDeviceInfo } from '../utils/deviceInfo';
 import Toast from 'react-native-toast-message';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
 
 // Custom drawer icons
 import EarningsIcon from '../assets/drawerIcons/earnings.svg';
@@ -28,7 +28,6 @@ import SettingsIcon from '../assets/drawerIcons/material-symbols-light_settings-
 import LogoutIcon from '../assets/drawerIcons/majesticons_logout.svg';
 import DrawerChevron from '../assets/drawerIcons/drawerchevron.svg';
 import BackArrow from '../assets/drawerIcons/back_arrow.svg';
-
 
 const menuItems = [
   { name: 'Earnings', icon: EarningsIcon, label: 'Earnings' },
@@ -42,6 +41,7 @@ const menuItems = [
 const DrawerContent = (props) => {
   const { navigation } = props;
   const { logout } = useContext(AuthContext);
+  const { colors, isDarkMode } = useTheme();
 
   const [onRideBooking, setOnRideBooking] = React.useState(true);
   const [logoutModalVisible, setLogoutModalVisible] = React.useState(false);
@@ -103,7 +103,7 @@ const DrawerContent = (props) => {
     <>
       <ScrollView
         {...props}
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={{ paddingHorizontal: 0, paddingTop: 0 }}
       >
         {/* Header */}
@@ -115,16 +115,16 @@ const DrawerContent = (props) => {
             <BackArrow
               width={scale(24)}
               height={scale(24)}
-              fill="#333"
+              color={colors.textPrimary}
             />
           </TouchableOpacity> 
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Profile</Text>
         </View>
 
         {/* Profile Card */}
         <TouchableOpacity
           activeOpacity={0.90}
-          style={styles.profileCard}
+          style={[styles.profileCard, { backgroundColor: isDarkMode ? '#2C2C2C' : colors.secondary }]}
           onPress={() => navigation.navigate('Profile')}
         >
           <Image
@@ -132,8 +132,8 @@ const DrawerContent = (props) => {
             style={styles.avatarImage}
           />
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>James Smith</Text>
-            <Text style={styles.profilePhone}>+251 455 222 22</Text>
+            <Text style={[styles.profileName, { color: '#FFFFFF' }]}>James Smith</Text>
+            <Text style={[styles.profilePhone, { color: '#AAAAAA' }]}>+251 455 222 22</Text>
           </View>
           <DrawerChevron width={scale(16)} height={scale(16)} fill="#fff" />
         </TouchableOpacity>
@@ -146,8 +146,8 @@ const DrawerContent = (props) => {
               style={styles.menuItem}
               onPress={() => navigation.navigate(item.name)}
             >
-              <item.icon width={22} height={22} fill="#333" />
-              <Text style={styles.menuLabel}>{item.label}</Text>
+              <item.icon width={22} height={22} stroke={colors.textPrimary} />
+              <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>{item.label}</Text>
             </TouchableOpacity>
           ))}
 
@@ -155,8 +155,8 @@ const DrawerContent = (props) => {
             style={styles.menuItem}
             onPress={() => setLogoutModalVisible(true)}
           >
-            <LogoutIcon width={22} height={22} fill="#333" />
-            <Text style={styles.menuLabel}>Logout</Text>
+            <LogoutIcon width={22} height={22} stroke={colors.textPrimary} />
+            <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>Logout</Text>
           </TouchableOpacity>
         </View>
 
@@ -169,7 +169,7 @@ const DrawerContent = (props) => {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Logout</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Logout</Text>
               <Text style={styles.modalSubtitle}>
                 Choose how you want to log out
               </Text>
@@ -181,7 +181,7 @@ const DrawerContent = (props) => {
                 onPress={handleLogoutAllDevices}
                 disabled={loadingType !== null}
               >
-                <Text style={styles.yesButtonText}>Logout All Devices</Text>
+                <Text style={[styles.yesButtonText, { color: colors.primary }]}>Logout All Devices</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -189,7 +189,7 @@ const DrawerContent = (props) => {
                 onPress={handleLogoutCurrentDevice}
                 disabled={loadingType !== null}
               >
-                <Text style={styles.currentDeviceText}>
+                <Text style={[styles.currentDeviceText, { color: colors.primary }]}>
                   Logout Current Device
                 </Text>
               </TouchableOpacity>
@@ -205,16 +205,16 @@ const DrawerContent = (props) => {
           </View>
         </Modal>
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
         {/* On-Ride Booking Toggle */}
         <View style={styles.toggleContainer}>
-          <Text style={styles.toggleLabel}>On-Ride Booking</Text>
+          <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>On-Ride Booking</Text>
           <Switch
             value={onRideBooking}
             onValueChange={setOnRideBooking}
-            trackColor={{ false: '#767577', true: '#4CAF50' }}
-            thumbColor={onRideBooking ? '#fff' : '#f4f3f4'}
+            trackColor={{ false: '#767577', true: colors.primary }}
+            thumbColor={onRideBooking ? colors.white : '#f4f3f4'}
           />
         </View>
       </ScrollView>
@@ -243,7 +243,6 @@ const styles = StyleSheet.create({
   // Layout
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
 
   // Header
@@ -262,14 +261,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: moderateScale(18),
     fontFamily: fonts.semiBold,
-    color: '#333',
   },
 
   // Profile Card
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2C2C2C',
     paddingHorizontal: scale(16),
     paddingVertical: verticalScale(20),
     marginBottom: verticalScale(20),
@@ -286,12 +283,10 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: moderateScale(16),
     fontFamily: fonts.semiBold,
-    color: '#fff',
     marginBottom: verticalScale(2),
   },
   profilePhone: {
     fontSize: moderateScale(13),
-    color: '#999',
   },
 
   // Menu
@@ -306,14 +301,12 @@ const styles = StyleSheet.create({
   },
   menuLabel: {
     fontSize: moderateScale(15),
-    color: '#333',
     fontFamily: fonts.regular,
   },
 
   // Divider & Toggle
   divider: {
     height: 1,
-    backgroundColor: '#E0E0E0',
     marginHorizontal: scale(16),
     marginVertical: verticalScale(12),
   },
@@ -326,7 +319,6 @@ const styles = StyleSheet.create({
   },
   toggleLabel: {
     fontSize: moderateScale(14),
-    color: '#333',
     fontFamily: fonts.regular,
   },
 
@@ -349,9 +341,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: moderateScale(18),
     fontFamily: fonts.bold,
-    color: '#1a1a1a',
-    alignSelf: 'flex-start',
-    marginBottom: verticalScale(4),
   },
   modalSubtitle: {
     fontSize: moderateScale(14),
@@ -377,11 +366,10 @@ const styles = StyleSheet.create({
   yesButtonText: {
     fontSize: moderateScale(16),
     fontFamily: fonts.semiBold,
-    color: colors.primary,
   },
   currentDeviceButton: {
     width: '100%',
-    backgroundColor: colors.secondary,
+    backgroundColor: '#1F1F1F',
     borderRadius: moderateScale(10),
     paddingVertical: verticalScale(14),
     alignItems: 'center',
@@ -390,7 +378,6 @@ const styles = StyleSheet.create({
   currentDeviceText: {
     fontSize: moderateScale(16),
     fontFamily: fonts.semiBold,
-    color: colors.primary,
   },
   cancelButton: {
     width: '100%',

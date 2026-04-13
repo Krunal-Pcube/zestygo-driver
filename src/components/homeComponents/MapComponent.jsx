@@ -6,7 +6,7 @@
  *  - Floating buttons that track bottom sheet position
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { StyleSheet, View, Animated, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from 'react-native-maps';
 import ReAnimated, { useAnimatedStyle } from 'react-native-reanimated';
@@ -367,23 +367,109 @@ export default function MapComponent({
     );
   }, [mapFocus, activeRide, location, restaurantCoord, customerCoord]);
 
-  // Determine route coordinates based on step
-  const getRouteCoordinates = () => {
-    if (!activeRide) return [];
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
+
+  // Decode Google Maps polyline into array of coordinates
+  const decodePolyline = useCallback((encoded) => {
+    const poly = [];
+    let index = 0;
+    const len = encoded.length;
+    let lat = 0;
+    let lng = 0;
+
+    while (index < len) {
+      let b;
+      let shift = 0;
+      let result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const dlat = ((result & 1) !== 0 ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const dlng = ((result & 1) !== 0 ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+
+      poly.push({
+        latitude: lat / 1e5,
+        longitude: lng / 1e5,
+      });
+    }
+    return poly;
+  }, []);
+
+  // Fetch route from Google Directions API
+  const fetchRoute = useCallback(async (origin, destination) => {
+    if (!origin || !destination) return;
+
+    const originStr = `${origin.latitude},${origin.longitude}`;
+    const destStr = `${destination.latitude},${destination.longitude}`;
     
+    // Replace with your Google Maps API key
+    const GOOGLE_MAPS_API_KEY = 'AIzaSyAN2cTEOnOBmPIXmNtBWen5db7Xl0aEOPk';
+    
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${originStr}&destination=${destStr}&mode=driving&key=${GOOGLE_MAPS_API_KEY}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.routes && data.routes.length > 0) {
+        const points = data.routes[0].overview_polyline.points;
+        const decodedPoints = decodePolyline(points);
+        setRouteCoordinates(decodedPoints);
+      } else {
+        // Fallback to straight line if no route found
+        setRouteCoordinates([origin, destination]);
+      }
+    } catch (error) {
+      console.error('[DIRECTIONS] Error fetching route:', error);
+      // Fallback to straight line
+      setRouteCoordinates([origin, destination]);
+    }
+  }, [decodePolyline]);
+
+  // Clear route when step changes to prevent showing old path
+  useEffect(() => {
+    setRouteCoordinates([]);
+  }, [showRoute]);
+
+  // Fetch route when locations change
+  useEffect(() => {
+    if (!activeRide || !location) {
+      setRouteCoordinates([]);
+      return;
+    }
+
+    let origin = location;
+    let destination;
+
     switch (showRoute) {
       case 'driver_to_restaurant':
-        return [location, restaurantCoord].filter(Boolean);
+        destination = restaurantCoord;
+        break;
       case 'driver_to_customer':
-        return [location, customerCoord].filter(Boolean);
-      case 'restaurant_to_customer':
-        return [restaurantCoord, customerCoord].filter(Boolean);
+        destination = customerCoord;
+        break;
       default:
-        return [];
+        setRouteCoordinates([]);
+        return;
     }
-  };
 
-  const routeCoordinates = getRouteCoordinates();
+    if (destination) {
+      fetchRoute(origin, destination);
+    }
+  }, [activeRide, location, restaurantCoord, customerCoord, showRoute, fetchRoute]);
+
   const hasActiveRide = deliveryStep && deliveryStep !== RIDE_STEPS.IDLE && deliveryStep !== RIDE_STEPS.COMPLETED;
 
  
@@ -418,7 +504,7 @@ if (!location || !location.latitude || !location.longitude) {
           followsUserLocation={false}
           showsMyLocationButton={false}
           showsCompass={false}
-          rotateEnabled={false}
+          rotateEnabled={true}
           onRegionChangeComplete={(region) => {
             if (region.heading !== undefined) {
               setCameraHeading(region.heading);
@@ -458,9 +544,7 @@ if (!location || !location.latitude || !location.longitude) {
           {routeCoordinates.length > 1 && (
             <Polyline
               coordinates={routeCoordinates}
-              strokeColor={showRoute === 'driver_to_restaurant' ? colors.green : colors.orange}
-              strokeWidth={4}
-              lineDashPattern={showRoute === 'restaurant_to_customer' ? [5, 5] : [0]}
+              strokeWidth={5}
             />
           )}
         </MapView>

@@ -310,11 +310,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   const declineRide = (rideId) => {
-    setRideRequests(prev => {
-      const updated = prev.filter(r => r.id !== rideId);
-      if (updated.length === 0) setShowRideRequests(false);
-      return updated;
-    });
+    setRideRequests(prev => prev.filter(r => r.id !== rideId));
   };
 
   const handleArrived = () => {
@@ -322,7 +318,51 @@ export default function HomeScreen({ navigation }) {
     console.log('[RIDE] Driver arrived at pickup location');
   };
 
+  const handleNavigate = useCallback(async () => {
+    if (!rideData || !location) {
+      Alert.alert('Error', 'Location or ride data not available');
+      return;
+    }
 
+    // Determine destination based on current step
+    let destination;
+    if (currentStep === 'going_to_pickup' || currentStep === 'arrived_at_pickup') {
+      destination = rideData.pickup?.coordinate;
+    } else if (currentStep === 'going_to_dropoff' || currentStep === 'arrived_at_dropoff') {
+      destination = rideData.dropoff?.coordinate;
+    }
+
+    if (!destination) {
+      Alert.alert('Error', 'Destination coordinates not available');
+      return;
+    }
+
+    const { latitude: destLat, longitude: destLng } = destination;
+    const { latitude: originLat, longitude: originLng } = location;
+
+    // Build Google Maps URL based on platform
+    let url;
+    if (Platform.OS === 'ios') {
+      // iOS Google Maps URL scheme
+      url = `comgooglemaps://?daddr=${destLat},${destLng}&directionsmode=driving`;
+      // Fallback to web URL if app not installed
+      const canOpen = await Linking.canOpenURL(url);
+      if (!canOpen) {
+        url = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}&travelmode=driving`;
+      }
+    } else {
+      // Android - use web URL for broader compatibility
+      url = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}&travelmode=driving`;
+    }
+
+    try {
+      await Linking.openURL(url);
+      console.log('[NAV] Opening Google Maps with destination:', destination);
+    } catch (error) {
+      console.error('[NAV] Error opening Google Maps:', error);
+      Alert.alert('Error', 'Failed to open Google Maps. Please make sure the app is installed.');
+    }
+  }, [rideData, location, currentStep]);
 
   const handleCancelRide = (reason) => {
     console.log('[RIDE] Cancel reason:', reason);
@@ -466,7 +506,7 @@ export default function HomeScreen({ navigation }) {
         rideStep={currentStep}
         isVisible={isActive && !showRatingModal && !showEarningsModal}
         onArrived={handleArrived}
-        onNavigate={() => console.log('[NAV] Starting navigation')}
+        onNavigate={handleNavigate}
         onCall={() => handleCallCustomer()}
         onChat={handleOpenChat}
         onCancel={handleCancelRide}

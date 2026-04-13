@@ -12,12 +12,13 @@ import {
   Alert,
 } from 'react-native';
 import { Phone, User, Heart, Shield, Flame, Siren } from 'lucide-react-native';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
 import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
 const EmergencyContactScreen = ({ navigation }) => {
+  const { colors } = useTheme();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [relationship, setRelationship] = useState('');
@@ -25,10 +26,10 @@ const EmergencyContactScreen = ({ navigation }) => {
   const isValid = name.trim() && phone.trim().length >= 10;
 
   const emergencyNumbers = [
-    { icon: <Shield size={22} color={colors.white} />, label: 'Police', number: '100', color: '#1a73e8' },
-    { icon: <Heart size={22} color={colors.white} />, label: 'Ambulance', number: '108', color: '#d93025' },
-    { icon: <Flame size={22} color={colors.white} />, label: 'Fire', number: '101', color: '#ea4335' },
-    { icon: <Siren size={22} color={colors.white} />, label: 'Emergency', number: '112', color: '#f9ab00' },
+    { icon: <Shield size={22} color="#FFFFFF" />, label: 'Police', number: '100', color: '#1a73e8' },
+    { icon: <Heart size={22} color="#FFFFFF" />, label: 'Ambulance', number: '108', color: '#d93025' },
+    { icon: <Flame size={22} color="#FFFFFF" />, label: 'Fire', number: '101', color: '#ea4335' },
+    { icon: <Siren size={22} color="#FFFFFF" />, label: 'Emergency', number: '112', color: '#f9ab00' },
   ];
 
   const handleEmergencyCall = (label, number) => {
@@ -45,7 +46,7 @@ const EmergencyContactScreen = ({ navigation }) => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
       <Header title="Emergency Contact" showBack={true} />
 
@@ -56,7 +57,7 @@ const EmergencyContactScreen = ({ navigation }) => {
       >
     
         {/* Emergency Services Section */}
-        <Text style={styles.emergencySectionTitle}>Emergency Services</Text>
+        <Text style={[styles.emergencySectionTitle, { color: colors.grey }]}>Emergency Services</Text>
         <View style={styles.emergencyGrid}>
           {emergencyNumbers.map((item) => (
             <TouchableOpacity
@@ -83,7 +84,6 @@ const EmergencyContactScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     paddingTop: verticalScale(20),
@@ -91,7 +91,6 @@ const styles = StyleSheet.create({
   infoCard: {
     marginHorizontal: scale(16),
     marginBottom: verticalScale(20),
-    backgroundColor: colors.white,
     borderRadius: scale(12),
     padding: scale(16),
     flexDirection: 'row',
@@ -102,20 +101,17 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: moderateScale(13),
     fontFamily: fonts.regular,
-    color: colors.darkText,
     lineHeight: 20,
   },
   inputCard: {
     marginHorizontal: scale(16),
     marginBottom: verticalScale(12),
-    backgroundColor: colors.white,
     borderRadius: scale(12),
     padding: scale(16),
   },
   label: {
     fontSize: moderateScale(13),
     fontFamily: fonts.semiBold,
-    color: colors.secondary,
     marginBottom: verticalScale(10),
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -129,34 +125,29 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: moderateScale(15),
     fontFamily: fonts.regular,
-    color: colors.secondary,
     paddingVertical: verticalScale(8),
     borderBottomWidth: 1,
-    borderBottomColor: colors.veryLightGrey,
   },
   saveButton: {
     marginHorizontal: scale(16),
     marginTop: verticalScale(30),
-    backgroundColor: colors.primary,
     paddingVertical: verticalScale(16),
     borderRadius: scale(12),
     alignItems: 'center',
   },
   saveButtonDisabled: {
-    backgroundColor: colors.veryLightGrey,
+    backgroundColor: '#EDEDED',
   },
   saveButtonText: {
     fontSize: moderateScale(16),
     fontFamily: fonts.bold,
-    color: colors.white,
   },
   saveButtonTextDisabled: {
-    color: colors.grey,
+    color: '#767774',
   },
   emergencySectionTitle: {
     fontSize: moderateScale(13),
     fontFamily: fonts.semiBold,
-    color: colors.grey,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginHorizontal: scale(16),
@@ -178,18 +169,17 @@ const styles = StyleSheet.create({
   emergencyLabel: {
     fontSize: moderateScale(13),
     fontFamily: fonts.semiBold,
-    color: colors.white,
+    color: '#FFFFFF',
     marginTop: verticalScale(4),
   },
   emergencyNumber: {
     fontSize: moderateScale(16),
     fontFamily: fonts.bold,
-    color: colors.white,
+    color: '#FFFFFF',
   },
   emergencyNote: {
     fontSize: moderateScale(11),
     fontFamily: fonts.regular,
-    color: colors.grey,
     textAlign: 'center',
     marginTop: verticalScale(16),
     marginBottom: verticalScale(30),

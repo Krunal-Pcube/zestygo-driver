@@ -8,12 +8,14 @@ import {
   Switch,
 } from 'react-native';
 import { Navigation2, MapPin, Compass, Eye } from 'lucide-react-native';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
 import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
 const NavigationSettingsScreen = ({ navigation }) => {
+  const { colors } = useTheme();
+  
   // 3 Essential Navigation Settings
   const [autoNavigate, setAutoNavigate] = useState(true);
   const [showTraffic, setShowTraffic] = useState(true);
@@ -26,12 +28,12 @@ const NavigationSettingsScreen = ({ navigation }) => {
       onPress={() => onChange(!value)}
     >
       <View style={styles.toggleLeft}>
-        <View style={styles.iconBox}>{icon}</View>
+        <View style={[styles.iconBox, { backgroundColor: colors.background }]}>{icon}</View>
         <View style={styles.toggleTextBox}>
-          <Text style={styles.toggleLabel}>{label}</Text>
-          {description && <Text style={styles.toggleDesc}>{description}</Text>}
+          <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>{label}</Text>
+          {description && <Text style={[styles.toggleDesc, { color: colors.textSecondary }]}>{description}</Text>}
         </View>
-      </View>
+      </View> 
       <Switch
         value={value}
         onValueChange={onChange}
@@ -54,17 +56,17 @@ const NavigationSettingsScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Navigation" showBack={true} />
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
         {/* Map Preferences */}
-        <Text style={styles.sectionTitle}>Map Preferences</Text>
+        <Text style={[styles.sectionTitle, { color: colors.grey }]}>Map Preferences</Text>
 
         {/* 1. Auto-Navigate */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
           {renderToggle(
-            <Navigation2 size={22} color={colors.secondary} />,
+            <Navigation2 size={22} color={colors.textPrimary} />,
             'Auto-Navigate',
             autoNavigate,
             setAutoNavigate,
@@ -72,22 +74,18 @@ const NavigationSettingsScreen = ({ navigation }) => {
           )}
         </View>
 
-  
-
-   
-
         {/* Navigation Provider */}
-        <Text style={[styles.sectionTitle, { marginTop: verticalScale(24) }]}>
+        <Text style={[styles.sectionTitle, { marginTop: verticalScale(24), color: colors.grey }]}>
           Navigation App
         </Text>
         
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
           <TouchableOpacity style={styles.navAppRow} activeOpacity={0.7}>
             <View style={styles.navAppLeft}>
-              <MapPin size={20} color={colors.secondary} />
-              <Text style={styles.navAppText}>Google Maps</Text>
+              <MapPin size={20} color={colors.textPrimary} />
+              <Text style={[styles.navAppText, { color: colors.textPrimary }]}>Google Maps</Text>
             </View>
-            <Text style={styles.navAppSubtext}>Default</Text>
+            <Text style={[styles.navAppSubtext, { color: colors.grey }]}>Default</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -98,7 +96,6 @@ const NavigationSettingsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     paddingTop: verticalScale(20),
@@ -106,7 +103,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: moderateScale(13),
     fontFamily: fonts.semiBold,
-    color: colors.grey,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginHorizontal: scale(16),
@@ -116,7 +112,6 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: scale(16),
     marginBottom: verticalScale(12),
-    backgroundColor: colors.white,
     borderRadius: scale(12),
     padding: scale(4),
   },
@@ -136,7 +131,6 @@ const styles = StyleSheet.create({
     width: scale(44),
     height: scale(44),
     borderRadius: scale(12),
-    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -147,12 +141,11 @@ const styles = StyleSheet.create({
   toggleLabel: {
     fontSize: moderateScale(15),
     fontFamily: fonts.semiBold,
-    color: colors.secondary,
+   
   },
   toggleDesc: {
     fontSize: moderateScale(12),
     fontFamily: fonts.regular,
-    color: colors.grey,
     marginTop: verticalScale(3),
   },
   optionsRow: {
@@ -165,23 +158,19 @@ const styles = StyleSheet.create({
   option: {
     flex: 1,
     paddingVertical: verticalScale(10),
-    backgroundColor: colors.background,
     borderRadius: scale(8),
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: colors.veryLightGrey,
   },
   optionSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#CFFF04',
+    borderColor: '#CFFF04',
   },
   optionText: {
     fontSize: moderateScale(13),
     fontFamily: fonts.medium,
-    color: colors.grey,
   },
   optionTextSelected: {
-    color: colors.white,
     fontFamily: fonts.semiBold,
   },
   navAppRow: {
@@ -199,12 +188,10 @@ const styles = StyleSheet.create({
   navAppText: {
     fontSize: moderateScale(15),
     fontFamily: fonts.semiBold,
-    color: colors.secondary,
   },
   navAppSubtext: {
     fontSize: moderateScale(12),
     fontFamily: fonts.regular,
-    color: colors.grey,
   },
 });
 

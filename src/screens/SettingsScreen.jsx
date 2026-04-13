@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   Switch,
 } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
 import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../components/Header';
@@ -33,23 +33,22 @@ const settingsData = [
 ];
 
 const SettingsScreen = ({ navigation }) => {
-  const [toggles, setToggles] = useState({
-    1: true,
-    5: false,
-  });
+  const { isDarkMode, toggleDarkMode, colors } = useTheme();
 
   const handleToggle = (id) => {
-    setToggles((prev) => ({ ...prev, [id]: !prev[id] }));
+    if (id === 5) {
+      toggleDarkMode(!isDarkMode);
+    }
   };
 
   const renderSettingItem = (item) => {
     const Icon = item.icon;
-    const isToggled = toggles[item.id];
+    const isToggled = item.id === 5 ? isDarkMode : false;
 
     return (
       <TouchableOpacity
         key={item.id}
-        style={styles.settingItem}
+        style={[styles.settingItem, { borderBottomColor: colors.divider }]}
         activeOpacity={0.7}
         onPress={() => {
           if (item.type === 'toggle') {
@@ -60,8 +59,10 @@ const SettingsScreen = ({ navigation }) => {
         }}
       >
         <View style={styles.settingLeft}>
-          <Icon width={scale(22)} height={scale(22)} fill={colors.darkText} />
-          <Text style={styles.settingText}>{item.title}</Text>
+          <Icon width={scale(22)} height={scale(22)} color={colors.textPrimary} stroke={colors.textPrimary} />
+          <Text style={[styles.settingText, { color: colors.textPrimary }]}>
+            {item.title}
+          </Text>
         </View>
         {item.type === 'toggle' ? (
           <Switch
@@ -78,7 +79,7 @@ const SettingsScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Settings" showBack={true} />
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -91,7 +92,6 @@ const SettingsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
   },
   settingItem: {
     flexDirection: 'row',
@@ -100,7 +100,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: scale(20),
     paddingVertical: scale(20),
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
   },
   settingLeft: {
     flexDirection: 'row',
@@ -109,7 +108,6 @@ const styles = StyleSheet.create({
   },
   settingText: {
     fontSize: moderateScale(15),
-    color: colors.darkText,
     fontFamily: fonts.regular,
   },
 });

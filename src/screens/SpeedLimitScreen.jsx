@@ -8,12 +8,13 @@ import {
   Switch,
 } from 'react-native';
 import { Gauge, AlertTriangle, BellOff } from 'lucide-react-native';
-import { colors } from '../utils/colors';
+import { useTheme } from '../context/ThemeContext';
 import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
 const SpeedLimitScreen = ({ navigation }) => {
+  const { colors } = useTheme();
   const [speedAlerts, setSpeedAlerts] = useState(true);
   const [selectedLimit, setSelectedLimit] = useState(80);
 
@@ -26,10 +27,10 @@ const SpeedLimitScreen = ({ navigation }) => {
       onPress={() => onChange(!value)}
     >
       <View style={styles.toggleLeft}>
-        <View style={styles.iconBox}>{icon}</View>
+        <View style={[styles.iconBox, { backgroundColor: colors.background }]}>{icon}</View>
         <View style={styles.toggleTextBox}>
-          <Text style={styles.toggleLabel}>{label}</Text>
-          <Text style={styles.toggleDesc}>
+          <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>{label}</Text>
+          <Text style={[styles.toggleDesc, { color: colors.textSecondary }]}>
             Alert when you exceed speed limit
           </Text>
         </View>
@@ -44,14 +45,14 @@ const SpeedLimitScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Speed Limit" showBack={true} />
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
         {/* Speed Alert Toggle */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
           {renderToggle(
-            <AlertTriangle size={22} color={colors.secondary} />,
+            <AlertTriangle size={22} color={colors.textPrimary} />,
             'Speed Alerts',
             speedAlerts,
             setSpeedAlerts
@@ -61,16 +62,17 @@ const SpeedLimitScreen = ({ navigation }) => {
         {/* Speed Limit Selection */}
         {speedAlerts && (
           <>
-            <Text style={styles.sectionTitle}>Set Speed Limit (km/h)</Text>
+            <Text style={[styles.sectionTitle, { color: colors.grey }]}>Set Speed Limit (km/h)</Text>
 
-            <View style={styles.card}>
+            <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
               <View style={styles.speedGrid}>
                 {speedOptions.map((speed) => (
                   <TouchableOpacity
                     key={speed}
                     style={[
                       styles.speedButton,
-                      selectedLimit === speed && styles.speedButtonActive,
+                      { backgroundColor: colors.background },
+                      selectedLimit === speed && [styles.speedButtonActive, { backgroundColor: colors.primary }],
                     ]}
                     onPress={() => setSelectedLimit(speed)}
                     activeOpacity={0.7}
@@ -78,15 +80,14 @@ const SpeedLimitScreen = ({ navigation }) => {
                     <Gauge
                       size={24}
                       color={
-                        selectedLimit === speed
-                          ? colors.white
-                          : colors.grey
+                        selectedLimit === speed ? colors.white : colors.grey
                       }
                     />
                     <Text
                       style={[
                         styles.speedText,
-                        selectedLimit === speed && styles.speedTextActive,
+                        { color: colors.grey },
+                        selectedLimit === speed && [styles.speedTextActive, { color: colors.white }],
                       ]}
                     >
                       {speed}
@@ -97,9 +98,9 @@ const SpeedLimitScreen = ({ navigation }) => {
             </View>
 
             {/* Selected Info */}
-            <View style={styles.infoCard}>
+            <View style={[styles.infoCard, { backgroundColor: colors.cardBackground }]}>
               <BellOff size={20} color={colors.grey} />
-              <Text style={styles.infoText}>
+              <Text style={[styles.infoText, { color: colors.textPrimary }]}>
                 You will be alerted when speed exceeds {selectedLimit} km/h
               </Text>
             </View>
@@ -115,7 +116,6 @@ export default SpeedLimitScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
 
   content: {
@@ -125,7 +125,6 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: scale(16),
     marginBottom: verticalScale(12),
-    backgroundColor: colors.white,
     borderRadius: scale(12),
     padding: scale(4),
   },
@@ -148,7 +147,6 @@ const styles = StyleSheet.create({
     width: scale(44),
     height: scale(44),
     borderRadius: scale(12),
-    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -161,20 +159,17 @@ const styles = StyleSheet.create({
   toggleLabel: {
     fontSize: moderateScale(15),
     fontFamily: fonts.semiBold,
-    color: colors.secondary,
   },
 
   toggleDesc: {
     fontSize: moderateScale(12),
     fontFamily: fonts.regular,
-    color: colors.grey,
     marginTop: verticalScale(3),
   },
 
   sectionTitle: {
     fontSize: moderateScale(13),
     fontFamily: fonts.semiBold,
-    color: colors.grey,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginHorizontal: scale(16),
@@ -193,7 +188,6 @@ const styles = StyleSheet.create({
   speedButton: {
     width: '48%', // ✅ 2 columns responsive
     height: verticalScale(80),
-    backgroundColor: colors.background,
     borderRadius: scale(12),
     alignItems: 'center',
     justifyContent: 'center',
@@ -201,23 +195,21 @@ const styles = StyleSheet.create({
   },
 
   speedButtonActive: {
-    backgroundColor: colors.secondary,
+    backgroundColor: '#CFFF04',
   },
 
   speedText: {
     fontSize: moderateScale(16),
     fontFamily: fonts.bold,
-    color: colors.grey,
   },
 
   speedTextActive: {
-    color: colors.white,
+    color: '#FFFFFF',
   },
 
   infoCard: {
     marginHorizontal: scale(16),
     marginTop: verticalScale(16),
-    backgroundColor: colors.white,
     borderRadius: scale(12),
     padding: scale(16),
     flexDirection: 'row',
@@ -228,7 +220,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: moderateScale(13),
     fontFamily: fonts.regular,
-    color: colors.darkText,
     lineHeight: 20,
     marginLeft: scale(10),
   },
