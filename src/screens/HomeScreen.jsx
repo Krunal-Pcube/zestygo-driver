@@ -311,6 +311,14 @@ export default function HomeScreen({ navigation }) {
 
   const declineRide = (rideId) => {
     setRideRequests(prev => prev.filter(r => r.id !== rideId));
+    // Reset bottom sheet to show when no more ride requests
+    if (rideRequests.length <= 1) {
+      setShowRideRequests(false);
+      // Force bottom sheet to reopen after a short delay
+      setTimeout(() => {
+        bottomSheetRef.current?.snapToIndex(0);
+      }, 100);
+    }
   };
 
   const handleArrived = () => {

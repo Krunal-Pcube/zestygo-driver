@@ -165,15 +165,7 @@ const EarningsScreen = ({ navigation }) => {
               <Banknote size={moderateScale(18)} color={colors.darkText} strokeWidth={2} />
               <Text style={styles.actionButtonText}>Withdraw</Text>
             </TouchableOpacity>
-            <View style={styles.buttonDivider} />
-            <TouchableOpacity
-              style={styles.actionButton}
-              activeOpacity={0.7}
-              onPress={() => navigation.navigate('AddMoney')}
-            >
-              <PlusCircle size={moderateScale(16)} color={colors.darkText} strokeWidth={2} />
-              <Text style={styles.actionButtonText}>Add Money</Text>
-            </TouchableOpacity>
+       
           </View>
 
           <View style={styles.transactionsContainer}>

@@ -104,7 +104,7 @@ export function EarningsModal({ visible, tripId, amount, customerName, onDone, o
               <Text style={styles.earningsAmount}>${amount}</Text>
 
               {/* Collect cash text */}
-              <Text style={styles.collectText}>Collect cash from {customerName}</Text>
+              <Text style={styles.collectText}>Your Earnings</Text>
 
               {/* View More Details Link */}
               <TouchableOpacity onPress={onViewDetails} activeOpacity={0.7}>
