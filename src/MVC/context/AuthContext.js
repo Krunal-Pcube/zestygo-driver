@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const bootstrapAuth = async () => {
       try {
-        const data = await getAuthData();
+        const data = await getAuthData(); 
         console.log('Loaded auth from storage::', data); // <— check shape
         console.log('AUTH TOKEN FROM STORAGE ::', data?.token); // <— check shape
  

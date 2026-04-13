@@ -16,6 +16,7 @@ import Svg, { Polygon, Circle, G } from 'react-native-svg';
 import { RIDE_STEPS, STEP_CONFIG } from '../../hooks/useRideState';
 import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
+import LottieView from 'lottie-react-native'; 
 
 /* ════════════════════════════════════════════════════════════════
    Uber-Style Driver Marker
@@ -101,8 +102,8 @@ const DriverMarker = ({ coordinate, heading, cameraHeading }) => {
 
             {/* ── Arrow SVG (sharp, bold) ── */}
             <Svg
-              width={scale(18)}
-              height={scale(18)}
+              width={scale(22)}
+              height={scale(22)}
               viewBox="0 0 24 24"
             >
               {/* Bold upward arrow — rotated by parent Animated.View */}
@@ -385,17 +386,22 @@ export default function MapComponent({
   const routeCoordinates = getRouteCoordinates();
   const hasActiveRide = deliveryStep && deliveryStep !== RIDE_STEPS.IDLE && deliveryStep !== RIDE_STEPS.COMPLETED;
 
-  // Don't render map until we have a valid location
-  if (!location || !location.latitude || !location.longitude) {
-    return (
-      <View style={styles.loadingContainer}>
-        <View style={styles.loadingBox}>
-          <ActivityIndicator size="large" color={colors.secondary} />
-          <Text style={styles.loadingText}>Getting your location...</Text>
-        </View>
+ 
+if (!location || !location.latitude || !location.longitude) {
+  return (
+    <View style={styles.loadingContainer}>
+      <View style={styles.loadingBox}>
+        <LottieView
+          source={require('../../assets/loading_map.json')} // 👈 your lottie file
+          autoPlay
+          loop
+          style={{ width: scale(250), height: scale(100) }}
+        />
+        <Text style={styles.loadingText}>Getting your location...</Text>
       </View>
-    );
-  }
+    </View>
+  );
+}
 
   return (
     <>
@@ -412,11 +418,11 @@ export default function MapComponent({
           followsUserLocation={false}
           showsMyLocationButton={false}
           showsCompass={false}
-          rotateEnabled={true}
+          rotateEnabled={false}
           onRegionChangeComplete={(region) => {
             if (region.heading !== undefined) {
               setCameraHeading(region.heading);
-            }
+            } 
           }}
           initialRegion={{
             latitude: location.latitude,

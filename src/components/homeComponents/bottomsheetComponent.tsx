@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import {
   View,
@@ -9,6 +8,7 @@ import {
   Animated as RNAnimated,
   Image,
   Easing,
+  Vibration,
 } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
@@ -242,6 +242,97 @@ const offlineStyles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: '#333',
     letterSpacing: 0.5,
+  },
+});
+
+/* ════════════════════════════════════════════════════════════════
+   Animated Online Text - "You're Online" -> "Finding Trips"
+   ════════════════════════════════════════════════════════════════ */
+const AnimatedOnlineText = () => {
+  const [showFindingTrips, setShowFindingTrips] = React.useState(false);
+  const slideAnim = React.useRef(new RNAnimated.Value(0)).current;
+  const opacityAnim = React.useRef(new RNAnimated.Value(1)).current;
+
+  React.useEffect(() => {
+    // Initial delay before starting animation
+    const initialDelay = setTimeout(() => {
+      // Animate slide up and fade
+      RNAnimated.parallel([
+        RNAnimated.timing(slideAnim, {
+          toValue: -1,
+          duration: 500,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.cubic),
+        }),
+        RNAnimated.timing(opacityAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setShowFindingTrips(true);
+        slideAnim.setValue(1);
+        opacityAnim.setValue(0);
+
+        // Slide in "Finding Trips"
+        RNAnimated.parallel([
+          RNAnimated.timing(slideAnim, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+            easing: Easing.out(Easing.cubic),
+          }),
+          RNAnimated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
+    }, 2000); // Show "You're Online" for 2 seconds
+
+    return () => clearTimeout(initialDelay);
+  }, []);
+
+  const translateY = slideAnim.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: [0, 0, 20],
+  });
+
+  return (
+    <View style={animatedTextStyles.container}>
+      <RNAnimated.View
+        style={[
+          animatedTextStyles.textWrapper,
+          {
+            transform: [{ translateY }],
+            opacity: opacityAnim,
+          },
+        ]}
+      >
+        <Text style={animatedTextStyles.text}>
+          {showFindingTrips ? 'Finding Trips' : "You're Online"}
+        </Text>
+      </RNAnimated.View>
+    </View>
+  );
+};
+
+const animatedTextStyles = StyleSheet.create({
+  container: {
+    height: verticalScale(24),
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  textWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  text: {
+    fontSize: moderateScale(16),
+    fontFamily: fonts.bold,
+    color: colors.black,
   },
 });
 
@@ -507,7 +598,12 @@ export default function BottomSheetComponent({
   });
 
   const toggleOnlineStatus = () => {
-    setIsOnline(prev => !prev);
+    const newStatus = !isOnline;
+    setIsOnline(newStatus);
+    
+    // Vibrate when going online
+  
+    
     bottomSheetRef.current?.snapToIndex(0);
   };
 
@@ -551,9 +647,7 @@ export default function BottomSheetComponent({
 
           {/* Center */}
           {isOnline ? (
-            <View style={styles.onlineBadge}>
-              <Text style={styles.onlineBadgeText}>You're Online</Text>
-            </View>
+            <AnimatedOnlineText />
           ) : (
             <OnlineToggleButton isOnline={isOnline} onPress={toggleOnlineStatus} />
           )}

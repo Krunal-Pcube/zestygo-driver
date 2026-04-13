@@ -133,6 +133,7 @@ export default function HomeScreen({ navigation }) {
 
   const [isOnline, setIsOnline] = useState(false);
   const [earnings] = useState(154.75);
+  const [notificationCount, setNotificationCount] = useState(2); // TODO: Fetch from API
   const [rideRequests, setRideRequests] = useState([]);
   const [hasArrived, setHasArrived] = useState(false);
   const [showRideRequests, setShowRideRequests] = useState(false);
@@ -153,7 +154,7 @@ export default function HomeScreen({ navigation }) {
 
   const animatedPosition = useSharedValue(SCREEN_HEIGHT * 0.85);
   const snapPoints = useMemo(() => ['15%'], []);
-  const floatBtnOffset = verticalScale(72);
+  const floatBtnOffset = verticalScale(58);
 
   const isFocused = useIsFocused();
 
@@ -433,7 +434,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={{ flex: 1 }}>
 
-      <HomeHeader navigation={navigation} earnings={earnings} />
+      <HomeHeader navigation={navigation} earnings={earnings} notificationCount={notificationCount} />
 
       <MapComponent
         key={`map-${isFocused ? 'focused' : 'blurred'}`}

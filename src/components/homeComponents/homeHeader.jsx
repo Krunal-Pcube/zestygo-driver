@@ -11,7 +11,7 @@ import MenuIcon from '../../assets/homeIcons/Menu.svg';
 import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
 
-export default function HomeHeader({ navigation, earnings = 0 }) {
+export default function HomeHeader({ navigation, earnings = 0, notificationCount = 0 }) {
   return (
     <View style={styles.header}>
       {/* Left: Menu */}
@@ -35,6 +35,13 @@ export default function HomeHeader({ navigation, earnings = 0 }) {
         onPress={() => navigation?.navigate('Notifications')}
       >
         <NotificationIcon width={moderateScale(24)} height={moderateScale(24)} fill={colors.secondary} />
+        {notificationCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>
+              {notificationCount > 99 ? '99+' : notificationCount}
+            </Text>
+          </View>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -74,5 +81,24 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(18),
     fontFamily: fonts.bold,
     letterSpacing: 0.4,
+  },
+  badge: {
+    position: 'absolute',
+    top: verticalScale(4),
+    right: scale(4),
+    minWidth: scale(18),
+    height: scale(18),
+    borderRadius: scale(9),
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: scale(4),
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  badgeText: {
+    color: colors.secondary,
+    fontSize: moderateScale(10),
+    fontFamily: fonts.bold,
   },
 });

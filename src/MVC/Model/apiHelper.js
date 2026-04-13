@@ -9,7 +9,7 @@ import Toast from 'react-native-toast-message';
 // export const BASE_URL = 'http://192.168.29.164:3000/';  
 
 // export const BASE_URL = 'https://api.zesty-go.com';    
-export const BASE_URL = 'http://apideveloper.zesty-go.com';
+export const BASE_URL = 'https://apideveloper.zesty-go.com';
  
 const ApiHelper = axios.create({   
   baseURL: BASE_URL,   

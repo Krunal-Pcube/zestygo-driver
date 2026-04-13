@@ -23,13 +23,13 @@ import EmergencyContactIcon from '../assets/settingsScreen/emergency_contact.svg
 import SpeedLimitIcon from '../assets/settingsScreen/speed_limit.svg';
 
 const settingsData = [
-  { id: 1, title: 'Sound and Voice', icon: SoundAndVoiceIcon, type: 'toggle', value: true },
-  { id: 2, title: 'Navigation', icon: NavigationIcon, type: 'link' },
-  { id: 3, title: 'Accessibility', icon: AccessibilityIcon, type: 'link' },
+  { id: 1, title: 'Sound and Voice', icon: SoundAndVoiceIcon, type: 'link', screen: 'SoundVoiceSettings' },
+  { id: 2, title: 'Navigation', icon: NavigationIcon, type: 'link', screen: 'NavigationSettings' },
+  { id: 3, title: 'Accessibility', icon: AccessibilityIcon, type: 'link', screen: 'AccessibilitySettings' },
   { id: 5, title: 'Dark Mode', icon: DarkModeIcon, type: 'toggle', value: false },
   { id: 6, title: 'Follow my ride', icon: FollowMyRideIcon, type: 'link' },
-  { id: 7, title: 'Emergency Contact', icon: EmergencyContactIcon, type: 'link' },
-  { id: 8, title: 'Speed Limit', icon: SpeedLimitIcon, type: 'link' },
+  { id: 7, title: 'Emergency Contact', icon: EmergencyContactIcon, type: 'link', screen: 'EmergencyContact' },
+  { id: 8, title: 'Speed Limit', icon: SpeedLimitIcon, type: 'link', screen: 'SpeedLimit' },
 ];
 
 const SettingsScreen = ({ navigation }) => {
@@ -54,6 +54,8 @@ const SettingsScreen = ({ navigation }) => {
         onPress={() => {
           if (item.type === 'toggle') {
             handleToggle(item.id);
+          } else if (item.screen) {
+            navigation.navigate(item.screen);
           }
         }}
       >

@@ -2,6 +2,11 @@ import React, { useContext } from 'react';
 import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import DrawerNavigator from './DrawerNavigator';
 import TripDetailsScreen from '../screens/TripDetailsScreen';
+import SoundVoiceSettingsScreen from '../screens/SoundVoiceSettingsScreen';
+import NavigationSettingsScreen from '../screens/NavigationSettingsScreen';
+import AccessibilitySettingsScreen from '../screens/AccessibilitySettingsScreen';
+import EmergencyContactScreen from '../screens/EmergencyContactScreen';
+import SpeedLimitScreen from '../screens/SpeedLimitScreen';
 import LoginScreen from '../screens/authScreens/LoginScreen';
 import SignupScreen from '../screens/authScreens/SignupScreen';
 import OtpLogin from '../screens/authScreens/OtpLogin';
@@ -26,9 +31,7 @@ const RootNavigator = () => {
     ); 
   }
 
-
-  return (
-    
+  return (    
     <Stack.Navigator
       key={auth?.token ? 'authenticated' : 'unauthenticated'}
       initialRouteName={auth?.token ? 'Drawer' : 'Login'}
@@ -52,6 +55,41 @@ const RootNavigator = () => {
       <Stack.Screen
         name="TripDetails"
         component={TripDetailsScreen}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+        }}
+      />
+      <Stack.Screen
+        name="SoundVoiceSettings"
+        component={SoundVoiceSettingsScreen}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+        }}
+      />
+      <Stack.Screen
+        name="NavigationSettings"
+        component={NavigationSettingsScreen}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+        }}
+      />
+      <Stack.Screen
+        name="AccessibilitySettings"
+        component={AccessibilitySettingsScreen}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+        }}
+      />
+      <Stack.Screen
+        name="EmergencyContact"
+        component={EmergencyContactScreen}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+        }}
+      />
+      <Stack.Screen
+        name="SpeedLimit"
+        component={SpeedLimitScreen}
         options={{
           cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
         }}
