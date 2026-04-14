@@ -21,7 +21,9 @@ import {
   PermissionsAndroid,
   Alert,
   Linking,
+  Vibration,
 } from 'react-native';
+import { promptForEnableLocationIfNeeded } from 'react-native-android-location-enabler';
 import { Marker } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -32,7 +34,9 @@ import { useIsFocused } from '@react-navigation/native';
 import AcceptenceIcon from '../assets/homeIcons/acceptence.svg';
 import RatingIcon from '../assets/homeIcons/rating.svg';
 import CancellationIcon from '../assets/homeIcons/cancellation.svg';
+import { useTheme } from '../context/ThemeContext';
 import { colors } from '../utils/colors';
+import { getVibrationSetting, getScreenFlashSetting } from '../utils/accessibilityStorage';
 import fonts from '../utils/fonts/fontsList';
 import RideRequestCard from '../components/homeComponents/Riderequestcard';
 import HomeHeader from '../components/homeComponents/homeHeader';
@@ -78,37 +82,58 @@ async function requestLocationPermission() {
   }
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   GPS ENABLED CHECK & PROMPT (Android only)
+   Uses react-native-android-location-enabler to prompt user to
+   enable GPS when it's turned off.
+───────────────────────────────────────────────────────────────── */
 
+
+async function checkAndPromptGPSEnabled() {
+  if (Platform.OS !== 'android') return true;
+
+  try {
+    // ✅ Use the named import directly — no object prefix
+    await promptForEnableLocationIfNeeded();
+    return true;
+  } catch (error) {
+    console.warn('[GPS] User denied enabling GPS:', error);
+    return false;
+  }
+}
 
 /* ─────────────────────────────────────────────────────────────────
    STATS ROW
 ───────────────────────────────────────────────────────────────── */
-const StatCell = ({ icon, value, label }) => (
+const StatCell = ({ icon, value, label, colors }) => (
   <View style={styles.statCell}>
     {icon}
-    <Text style={styles.statValue}>{value}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
+    <Text style={[styles.statValue, { color: colors.secondary }]}>{value}</Text>
+    <Text style={[styles.statLabel, { color: colors.grey }]}>{label}</Text>
   </View>
 );
 
-const StatsContent = () => (
+const StatsContent = ({ colors }) => (
   <View style={styles.statsRow}>
     <StatCell
       icon={<AcceptenceIcon width={moderateScale(24)} height={moderateScale(24)} fill={colors.blue} />}
       value="95.0%"
       label="Acceptance"
+      colors={colors}
     />
-    <View style={styles.statDivider} />
+    <View style={[styles.statDivider, { backgroundColor: colors.veryLightGrey }]} />
     <StatCell
       icon={<RatingIcon width={moderateScale(24)} height={moderateScale(24)} fill={colors.orange} />}
       value="4.75"
       label="Rating"
+      colors={colors}
     />
-    <View style={styles.statDivider} />
+    <View style={[styles.statDivider, { backgroundColor: colors.veryLightGrey }]} />
     <StatCell
       icon={<CancellationIcon width={moderateScale(24)} height={moderateScale(24)} fill={colors.red} />}
       value="2.0%"
       label="Cancellation"
+      colors={colors}
     />
   </View>
 );
@@ -141,9 +166,11 @@ export default function HomeScreen({ navigation }) {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showEarningsModal, setShowEarningsModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
+  const [screenFlashAnim] = useState(new Animated.Value(0));
   const [location, setLocation] = useState(null);
   const [heading, setHeading] = useState(0);
   const [locationReady, setLocationReady] = useState(false);
+  const [gpsReady, setGpsReady] = useState(false);
   const [cameraHeading, setCameraHeading] = useState(0);
 
   const mapRef = useRef(null);
@@ -157,6 +184,7 @@ export default function HomeScreen({ navigation }) {
   const floatBtnOffset = verticalScale(58);
 
   const isFocused = useIsFocused();
+  const { colors } = useTheme();
 
   /* ── Request permission + start GPS ──────────────────────────── */
   useEffect(() => {
@@ -174,6 +202,21 @@ export default function HomeScreen({ navigation }) {
         setLocationReady(false);
         return;
       }
+
+      // ── Check if GPS is enabled (Android only) ────────────────
+      const gpsEnabled = await checkAndPromptGPSEnabled();
+      if (!gpsEnabled) {
+        Alert.alert(
+          'GPS Required',
+          'GPS is required for this app to work properly. Please enable GPS and try again.',
+          [{ text: 'OK' }],
+        );
+        setGpsReady(false);
+        setLocationReady(false);
+        return;
+      }
+
+      setGpsReady(true);
       setLocationReady(true);
 
       // ── Configure the community geolocation library ───────────
@@ -241,7 +284,7 @@ export default function HomeScreen({ navigation }) {
         watchIdRef.current = null;
       }
     };
-  }, []);
+  }, [isFocused]);
 
   /* ── Fake ride requests while online ─────────────────────────── */
   useEffect(() => {
@@ -265,7 +308,7 @@ export default function HomeScreen({ navigation }) {
   }, [sheetIndex]);
 
   /* ── Generate fake ride ───────────────────────────────────────── */
-  const generateNewRide = () => {
+  const generateNewRide = async () => {
     const streets = ['Main St', 'Oak Ave', 'Park Rd', 'Elm St'];
     const avenues = ['Broadway', '5th Ave', 'Market St', 'Beach Rd'];
     const names = ['John', 'Sarah', 'Mike', 'Emma', 'David'];
@@ -301,6 +344,30 @@ export default function HomeScreen({ navigation }) {
 
     setRideRequests(prev => [...prev, newRide]);
     setShowRideRequests(true);
+
+    // Vibrate if accessibility setting is enabled
+    const shouldVibrate = await getVibrationSetting();
+    if (shouldVibrate) {
+      Vibration.vibrate(500); // 500ms vibration
+    }
+
+    // Screen flash if accessibility setting is enabled
+    const shouldFlash = await getScreenFlashSetting();
+    if (shouldFlash) {
+      // Flash animation: fade in white overlay then fade out
+      Animated.sequence([
+        Animated.timing(screenFlashAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(screenFlashAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
   };
 
   const acceptRide = (ride) => {
@@ -311,13 +378,10 @@ export default function HomeScreen({ navigation }) {
 
   const declineRide = (rideId) => {
     setRideRequests(prev => prev.filter(r => r.id !== rideId));
-    // Reset bottom sheet to show when no more ride requests
+    // Hide ride request card when no more requests
     if (rideRequests.length <= 1) {
       setShowRideRequests(false);
-      // Force bottom sheet to reopen after a short delay
-      setTimeout(() => {
-        bottomSheetRef.current?.snapToIndex(0);
-      }, 100);
+      // Bottom sheet will naturally show as it's no longer hidden by the card
     }
   };
 
@@ -481,6 +545,14 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={{ flex: 1 }}>
+      {/* Screen flash overlay for accessibility */}
+      <Animated.View
+        style={[
+          styles.screenFlashOverlay,
+          { opacity: screenFlashAnim }
+        ]}
+        pointerEvents="none"
+      />
 
       <HomeHeader navigation={navigation} earnings={earnings} notificationCount={notificationCount} />
 
@@ -550,6 +622,7 @@ export default function HomeScreen({ navigation }) {
 
       {!isActive && !showRideRequests && (
         <BottomSheetComponent
+          key={`sheet-${gpsReady ? 'ready' : 'not-ready'}`}
           bottomSheetRef={bottomSheetRef}
           snapPoints={snapPoints}
           animatedPosition={animatedPosition}
@@ -563,8 +636,9 @@ export default function HomeScreen({ navigation }) {
           dotPulse={dotPulse}
           activeRide={rideData}
           locationReady={locationReady}
+          gpsReady={gpsReady}
         >
-          <StatsContent />
+          <StatsContent colors={colors} />
         </BottomSheetComponent>
       )}
 
@@ -577,6 +651,16 @@ export default function HomeScreen({ navigation }) {
    STYLES
 ───────────────────────────────────────────────────────────────── */
 const styles = StyleSheet.create({
+
+  screenFlashOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#FFFFFF',
+    zIndex: 9999,
+  },
 
   rideCard: {
     width: Dimensions.get('window').width - scale(32),
@@ -694,9 +778,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly', paddingVertical: verticalScale(12),
   },
   statCell: { alignItems: 'center', gap: verticalScale(4), flex: 1 },
-  statValue: { fontSize: moderateScale(16), fontFamily: fonts.bold, color: colors.secondary },
-  statLabel: { fontSize: moderateScale(11), fontFamily: fonts.regular, color: colors.grey },
-  statDivider: { width: 1, height: verticalScale(40), backgroundColor: colors.veryLightGrey },
+  statValue: { fontSize: moderateScale(16), fontFamily: fonts.bold },
+  statLabel: { fontSize: moderateScale(11), fontFamily: fonts.regular },
+  statDivider: { width: 1, height: verticalScale(40) },
   cancelIconBox: {
     width: scale(22), height: scale(22), borderRadius: scale(6),
     backgroundColor: colors.red, alignItems: 'center', justifyContent: 'center',
@@ -747,4 +831,4 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(8),
     overflow: 'hidden',
   },
-});
+}); 

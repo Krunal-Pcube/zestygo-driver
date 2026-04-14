@@ -14,12 +14,12 @@ export const changeStatusController = async ({ payload, onStatusChange }) => {
       // Update context/state (passed from screen)
       onStatusChange?.(updatedStatus);
 
-      Toast.show({
-        type: 'success',
-        text1: res.data.message || 'Status updated successfully',
-        position: 'top',
-        topOffset: 50,
-      });
+      // Toast.show({
+      //   type: 'success',
+      //   text1: res.data.message || 'Status updated successfully',
+      //   position: 'top',
+      //   topOffset: 50,
+      // });
 
       return true;
     }

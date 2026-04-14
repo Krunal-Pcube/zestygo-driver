@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,16 +9,40 @@ import {
 } from 'react-native';
 import { Vibrate, Zap } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
+import { getVibrationSetting, setVibrationSetting, getScreenFlashSetting, setScreenFlashSetting } from '../utils/accessibilityStorage';
 import fonts from '../utils/fonts/fontsList';
 import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
 import Header from '../components/Header';
 
 const AccessibilitySettingsScreen = ({ navigation }) => {
   const { colors } = useTheme();
-  
+
   // 2 Simple Toggles
   const [vibrationForRequest, setVibrationForRequest] = useState(true);
   const [screenFlashForRequest, setScreenFlashForRequest] = useState(false);
+
+  // Load settings on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      const vibration = await getVibrationSetting();
+      const screenFlash = await getScreenFlashSetting();
+      setVibrationForRequest(vibration);
+      setScreenFlashForRequest(screenFlash);
+    };
+    loadSettings();
+  }, []);
+
+  // Save vibration setting
+  const handleVibrationChange = async (value) => {
+    setVibrationForRequest(value);
+    await setVibrationSetting(value);
+  };
+
+  // Save screen flash setting
+  const handleScreenFlashChange = async (value) => {
+    setScreenFlashForRequest(value);
+    await setScreenFlashSetting(value);
+  };
 
   const renderToggle = (icon, label, value, onChange) => (
     <TouchableOpacity
@@ -53,7 +77,7 @@ const AccessibilitySettingsScreen = ({ navigation }) => {
             <Vibrate size={22} color={colors.textPrimary} />,
             'Vibration',
             vibrationForRequest,
-            setVibrationForRequest
+            handleVibrationChange
           )}
         </View>
 
@@ -63,7 +87,7 @@ const AccessibilitySettingsScreen = ({ navigation }) => {
             <Zap size={22} color={colors.textPrimary} />,
             'Screen Flash',
             screenFlashForRequest,
-            setScreenFlashForRequest
+            handleScreenFlashChange
           )}
         </View>
       </ScrollView>

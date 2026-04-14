@@ -199,14 +199,21 @@ export default function ActiveRideBottomSheet({
     setShowVerifyOrder(false);
   };
 
-  // Snap bottom sheet when visibility changes
+  // Snap bottom sheet only when initially becoming visible with a ride
+  const wasVisibleRef = useRef(false);
   useEffect(() => {
-    if (isVisible && ride) {
-      setTimeout(() => {
+    if (isVisible && ride && !wasVisibleRef.current) {
+      wasVisibleRef.current = true;
+      // Small delay to ensure component is mounted
+      const timer = setTimeout(() => {
         bottomSheetRef.current?.snapToIndex(0);
       }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [isVisible, ride, snapPoints]);
+    if (!isVisible) {
+      wasVisibleRef.current = false;
+    }
+  }, [isVisible, ride]);
 
   if (!isVisible || !ride) return null;
 

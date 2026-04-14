@@ -26,10 +26,8 @@ const settingsData = [
   { id: 1, title: 'Sound and Voice', icon: SoundAndVoiceIcon, type: 'link', screen: 'SoundVoiceSettings' },
   { id: 2, title: 'Navigation', icon: NavigationIcon, type: 'link', screen: 'NavigationSettings' },
   { id: 3, title: 'Accessibility', icon: AccessibilityIcon, type: 'link', screen: 'AccessibilitySettings' },
-  { id: 5, title: 'Dark Mode', icon: DarkModeIcon, type: 'toggle', value: false },
-  { id: 6, title: 'Follow my ride', icon: FollowMyRideIcon, type: 'link' },
-  { id: 7, title: 'Emergency Contact', icon: EmergencyContactIcon, type: 'link', screen: 'EmergencyContact' },
-  { id: 8, title: 'Speed Limit', icon: SpeedLimitIcon, type: 'link', screen: 'SpeedLimit' },
+  // { id: 5, title: 'Dark Mode', icon: DarkModeIcon, type: 'toggle', value: false },
+  { id: 4, title: 'Emergency Contact', icon: EmergencyContactIcon, type: 'link', screen: 'EmergencyContact' },
 ];
 
 const SettingsScreen = ({ navigation }) => {

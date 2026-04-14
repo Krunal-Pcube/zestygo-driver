@@ -1,3 +1,6 @@
+
+
+
 import React, { useEffect } from 'react';
 import {
   View,
@@ -15,10 +18,11 @@ import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { Car, DollarSign } from 'lucide-react-native';
 import ChevronIcon from '../../assets/homeIcons/chevron.svg';
 import VectorIcon from '../../assets/homeIcons/Vector.svg';
-import { colors } from '../../utils/colors';
+import { useTheme } from '../../context/ThemeContext';
 import fonts from '../../utils/fonts/fontsList';
 import Sound from 'react-native-sound';
 import LinearGradient from 'react-native-linear-gradient';
+import { changeStatusController } from '../../MVC/controllers/driverStatusController';
 
 /* ════════════════════════════════════════════════════════════════
    Online Toggle Button
@@ -43,6 +47,7 @@ const playToggleSound = (isGoingOnline) => {
 };
 
 const OnlineToggleButton = ({ isOnline, onPress }) => {
+  const { colors } = useTheme();
   const pressScale = React.useRef(new RNAnimated.Value(1)).current;
 
   // Idle: gentle steering wheel wobble rotation
@@ -154,7 +159,7 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
               resizeMode="contain"
             />
           </View>
-          <Text style={offlineStyles.text}>GO OFFLINE</Text>
+          <Text style={[offlineStyles.text, { color: colors.black }]}>GO OFFLINE</Text>
         </TouchableOpacity>
       </RNAnimated.View>
     );
@@ -164,7 +169,7 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
   return (
     <RNAnimated.View style={{ transform: [{ scale: pressScale }] }}>
       <TouchableOpacity activeOpacity={1} onPress={handlePress}>
-        <View style={[onlineBtnStyles.pill, { backgroundColor: colors.secondary }]}>
+        <View style={[onlineBtnStyles.pill, { backgroundColor: colors.secondary, shadowColor: colors.black }]}>
 
           {/*
             Wobble wraps Spin so both transforms compose cleanly.
@@ -173,7 +178,7 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
           <RNAnimated.View style={{ transform: [{ rotate: wobbleAngle }] }}>
             <RNAnimated.Image
               source={require('../../assets/homeIcons/car-handle.png')}
-              style={[onlineBtnStyles.icon, { transform: [{ rotate: spinAngle }] }]}
+              style={[onlineBtnStyles.icon, { transform: [{ rotate: spinAngle }], tintColor: colors.primary }]}
               resizeMode="contain"
             />
           </RNAnimated.View>
@@ -197,7 +202,6 @@ const onlineBtnStyles = StyleSheet.create({
     paddingHorizontal: scale(36),
     paddingVertical: verticalScale(12),
     borderRadius: scale(32),
-    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -211,7 +215,6 @@ const onlineBtnStyles = StyleSheet.create({
   icon: {
     width: scale(22),
     height: scale(22),
-    tintColor: colors.primary,
   },
 });
 
@@ -240,7 +243,6 @@ const offlineStyles = StyleSheet.create({
     marginTop: verticalScale(8),
     fontSize: moderateScale(14),
     fontFamily: fonts.bold,
-    color: '#333',
     letterSpacing: 0.5,
   },
 });
@@ -249,6 +251,7 @@ const offlineStyles = StyleSheet.create({
    Animated Online Text - "You're Online" -> "Finding Trips"
    ════════════════════════════════════════════════════════════════ */
 const AnimatedOnlineText = () => {
+  const { colors } = useTheme();
   const [showFindingTrips, setShowFindingTrips] = React.useState(false);
   const slideAnim = React.useRef(new RNAnimated.Value(0)).current;
   const opacityAnim = React.useRef(new RNAnimated.Value(1)).current;
@@ -310,7 +313,7 @@ const AnimatedOnlineText = () => {
           },
         ]}
       >
-        <Text style={animatedTextStyles.text}>
+        <Text style={[animatedTextStyles.text, { color: colors.black }]}>
           {showFindingTrips ? 'Finding Trips' : "You're Online"}
         </Text>
       </RNAnimated.View>
@@ -332,7 +335,6 @@ const animatedTextStyles = StyleSheet.create({
   text: {
     fontSize: moderateScale(16),
     fontFamily: fonts.bold,
-    color: colors.black,
   },
 });
 
@@ -561,16 +563,12 @@ export default function BottomSheetComponent({
   dotPulse,
   activeRide,
   locationReady,
+  gpsReady,
   children,
 }) {
-  const [mountKey, setMountKey] = React.useState(0);
+  const { colors } = useTheme();
 
-  React.useEffect(() => {
-    if (locationReady) {
-      setMountKey(prev => prev + 1);
-    }
-  }, [locationReady]);
-
+  // Snap bottom sheet on initial mount only
   useEffect(() => {
     const timer = setTimeout(() => {
       bottomSheetRef.current?.snapToIndex(0);
@@ -578,45 +576,74 @@ export default function BottomSheetComponent({
     return () => clearTimeout(timer);
   }, []);
 
+  // Snap bottom sheet when location becomes ready (after GPS enabled)
   useEffect(() => {
-    if (locationReady && mountKey > 0) {
+    if (locationReady) {
       const timer = setTimeout(() => {
         bottomSheetRef.current?.snapToIndex(0);
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [locationReady, mountKey, bottomSheetRef]);
+  }, [locationReady]);
+
+  // Snap bottom sheet when GPS becomes ready
+  useEffect(() => {
+    if (gpsReady) {
+      const timer = setTimeout(() => {
+        bottomSheetRef.current?.snapToIndex(0);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [gpsReady]);
 
   const handleChevron = () => {
     const next = sheetIndex === 0 ? 1 : 0;
     bottomSheetRef.current?.snapToIndex(next);
   };
 
+  /* ... */
   const chevronAngle = chevronRot.interpolate({
     inputRange: [0, 1],
     outputRange: ['180deg', '0deg'],
   });
 
-  const toggleOnlineStatus = () => {
+  const toggleOnlineStatus = async () => {
     const newStatus = !isOnline;
-    setIsOnline(newStatus);
-    
-    // Vibrate when going online
-  
-    
-    bottomSheetRef.current?.snapToIndex(0);
+   
+    const payload = {
+      current_status: newStatus ? 'online' : 'offline',
+      accepting_new_orders: newStatus ? '1' : '0',
+    };
+
+    try {
+      const success = await changeStatusController({
+        payload,
+        onStatusChange: (updatedStatus) => {
+          // Optional: use updatedStatus from API response if needed
+          console.log('Updated driver status:', updatedStatus);
+        },
+      });
+
+      if (success) {
+        setIsOnline(newStatus);              // ✅ Only update state on 200
+        bottomSheetRef.current?.snapToIndex(0);
+      }
+      // If success === false, toast is already shown by controller — do nothing
+    } catch (error) {
+      // Error toast is already handled inside changeStatusController
+      console.log('Toggle status failed:', error);
+    }
   };
 
   return (
     <BottomSheet
-      key={mountKey}
       ref={bottomSheetRef}
       index={0}
       snapPoints={snapPoints}
       animatedPosition={animatedPosition}
       onChange={handleSheetChange}
       handleComponent={null}
-      backgroundStyle={styles.sheetBg}
+      backgroundStyle={[styles.sheetBg, { backgroundColor: colors.white }]}
       enablePanDownToClose={false}
       enableContentPanningGesture={true}
       enableHandlePanningGesture={false}
@@ -626,7 +653,7 @@ export default function BottomSheetComponent({
     >
       <BottomSheetView style={styles.sheetBody}>
         {/* ── Drag handle bar ── */}
-        <View style={styles.dragBar} />
+        <View style={[styles.dragBar, { backgroundColor: colors.veryLightGrey }]} />
 
         {/* ── Main row: Chevron | Center Content | Menu ── */}
         <View style={styles.actionRow}>
@@ -640,7 +667,7 @@ export default function BottomSheetComponent({
               <ChevronIcon
                 width={moderateScale(16)}
                 height={moderateScale(16)}
-                fill={colors.mediumGrey}
+                stroke={colors.mediumGrey}
               />
             </RNAnimated.View>
           </TouchableOpacity>
@@ -657,7 +684,7 @@ export default function BottomSheetComponent({
             <VectorIcon
               width={moderateScale(18)}
               height={moderateScale(18)}
-              fill={colors.mediumGrey}
+              stroke={colors.mediumGrey}
             />
           </TouchableOpacity>
         </View>
@@ -669,17 +696,17 @@ export default function BottomSheetComponent({
 
         {/* Active Ride Info */}
         {activeRide && (
-          <View style={styles.activeRideSheetCard}>
+          <View style={[styles.activeRideSheetCard, { backgroundColor: colors.background }]}>
             <View style={styles.activeRideSheetHeader}>
               <Car size={moderateScale(20)} color={colors.secondary} />
-              <Text style={styles.activeRideSheetTitle}>Active Ride</Text>
-              <View style={styles.farePill}>
+              <Text style={[styles.activeRideSheetTitle, { color: colors.secondary }]}>Active Ride</Text>
+              <View style={[styles.farePill, { backgroundColor: colors.greenLight }]}>
                 <DollarSign size={moderateScale(12)} color={colors.secondary} />
-                <Text style={styles.farePillText}>{activeRide.fare}</Text>
+                <Text style={[styles.farePillText, { color: colors.secondary }]}>{activeRide.fare}</Text>
               </View>
             </View>
             <View style={styles.activeRideRoute}>
-              <Text style={styles.activeRideRouteText} numberOfLines={1}>
+              <Text style={[styles.activeRideRouteText, { color: colors.grey }]} numberOfLines={1}>
                 {activeRide.pickup.address} → {activeRide.dropoff.address}
               </Text>
             </View>
@@ -701,7 +728,6 @@ const styles = StyleSheet.create({
   sheetBg: {
     borderTopLeftRadius: moderateScale(22),
     borderTopRightRadius: moderateScale(22),
-    backgroundColor: colors.white,
   },
   sheetBody: {
     paddingHorizontal: scale(16),
@@ -713,7 +739,6 @@ const styles = StyleSheet.create({
     width: scale(36),
     height: verticalScale(4),
     borderRadius: scale(2),
-    backgroundColor: colors.veryLightGrey,
     marginBottom: verticalScale(6),
   },
   actionRow: {
@@ -735,13 +760,10 @@ const styles = StyleSheet.create({
     gap: scale(8),
     paddingHorizontal: scale(18),
     paddingVertical: verticalScale(10),
-    borderColor: colors.green,
-    backgroundColor: colors.white,
   },
   onlineBadgeText: {
     fontSize: moderateScale(16),
     fontFamily: fonts.bold,
-    color: colors.black,
   },
   statusDot: {
     width: scale(10),
@@ -749,7 +771,6 @@ const styles = StyleSheet.create({
     borderRadius: scale(5),
   },
   activeRideSheetCard: {
-    backgroundColor: colors.background,
     borderRadius: moderateScale(12),
     padding: scale(12),
     marginTop: verticalScale(10),
@@ -765,7 +786,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: moderateScale(14),
     fontFamily: fonts.bold,
-    color: colors.secondary,
   },
   farePill: {
     flexDirection: 'row',
@@ -774,12 +794,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: scale(8),
     paddingVertical: verticalScale(4),
     borderRadius: scale(12),
-    backgroundColor: colors.greenLight,
   },
   farePillText: {
     fontSize: moderateScale(12),
     fontFamily: fonts.bold,
-    color: colors.secondary,
   },
   activeRideRoute: {
     flexDirection: 'row',
@@ -787,7 +805,6 @@ const styles = StyleSheet.create({
   },
   activeRideRouteText: {
     fontSize: moderateScale(12),
-    color: colors.grey,
   },
   goOfflineWrapper: {
     alignItems: 'center',
