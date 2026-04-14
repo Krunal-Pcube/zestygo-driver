@@ -1,6 +1,6 @@
 
 import Toast from 'react-native-toast-message';
-import { changeStatus } from '../Model/driverStatusApi';
+import { changeLocationEveryMinute, changeStatus } from '../Model/driverStatusApi';
 
 export const changeStatusController = async ({ payload, onStatusChange }) => {
   try {
@@ -43,5 +43,37 @@ export const changeStatusController = async ({ payload, onStatusChange }) => {
     });
 
     throw error;
+  }
+};
+
+
+
+export const changeLocationController = async ({ payload, onLocationUpdate }) => {
+  try {
+    const res = await changeLocationEveryMinute(payload);
+
+    console.log('Location Update Payload + Response ::::', payload, res);
+
+    if (res?.data?.status === 200) {
+      const updatedLocation = res.data.data;
+
+      // Optional callback (if you want to update state/UI)
+      onLocationUpdate?.(updatedLocation);
+
+      return true;
+    }
+
+    // ❌ Optional: You can skip toast here to avoid spam every minute
+    console.log('Location update failed:', res?.data?.message);
+
+    return false;
+  } catch (error) {
+    // ❌ Avoid toast spam for background calls
+    console.log(
+      'Location update error:',
+      error?.response?.data?.message || error.message
+    );
+
+    return false;
   }
 };

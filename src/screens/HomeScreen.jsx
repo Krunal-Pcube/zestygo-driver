@@ -25,6 +25,7 @@ import {
 } from 'react-native';
 import { promptForEnableLocationIfNeeded } from 'react-native-android-location-enabler';
 import { Marker } from 'react-native-maps';
+import DeviceInfo from 'react-native-device-info';
 import Geolocation from '@react-native-community/geolocation';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { useSharedValue } from 'react-native-reanimated';
@@ -45,6 +46,7 @@ import BottomSheetComponent from '../components/homeComponents/bottomsheetCompon
 import ActiveRideBottomSheet from '../components/homeComponents/ActiveRideBottomSheet';
 import { RatingModal, EarningsModal, ChatModal } from '../components/homeComponents/TripCompletionModals';
 import useRideState from '../hooks/useRideState';
+import { changeLocationController } from '../MVC/controllers/driverStatusController';
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 
@@ -172,6 +174,7 @@ export default function HomeScreen({ navigation }) {
   const [locationReady, setLocationReady] = useState(false);
   const [gpsReady, setGpsReady] = useState(false);
   const [cameraHeading, setCameraHeading] = useState(0);
+  const [showLowBatteryAlert, setShowLowBatteryAlert] = useState(false);
 
   const mapRef = useRef(null);
   const bottomSheetRef = useRef(null);
@@ -295,7 +298,79 @@ export default function HomeScreen({ navigation }) {
     return () => clearInterval(interval);
   }, [isOnline, rideData]);
 
+  /* ── Update location to backend every minute when online ──── */
+  useEffect(() => {
+    let interval;
 
+    const updateLocation = async () => {
+      if (!isOnline || !location?.latitude || !location?.longitude) {
+        return;
+      }
+
+      const payload = {
+        current_latitude: location.latitude.toString(),
+        current_longitude: location.longitude.toString(),
+      };
+
+      try {
+        await changeLocationController({
+          payload,
+          onLocationUpdate: (updatedData) => {
+            console.log('[Location] Updated on server:', updatedData);
+          },
+        });
+      } catch (error) {
+        console.log('[Location] Update failed:', error);
+      }
+    };
+
+    // Update immediately when going online
+    if (isOnline) {
+      updateLocation();
+    }
+
+    // Then update every 60 seconds
+    interval = setInterval(updateLocation, 60000);
+
+    return () => clearInterval(interval);
+  }, [isOnline, location]);
+
+  /* ── Monitor battery level ──────────────────────────────────── */
+  useEffect(() => {
+    let interval;
+    
+    const checkBattery = async () => {
+      try {
+        const level = await DeviceInfo.getBatteryLevel();
+        const batteryPercent = level * 100;
+        
+        // Show alert if battery is below 20% and not already shown
+        if (batteryPercent <= 20 && batteryPercent > 0 && !showLowBatteryAlert) {
+          setShowLowBatteryAlert(true);
+          Alert.alert(
+            'Low Battery Warning',
+            `Your battery is at ${Math.round(batteryPercent)}%. Please charge your device to continue using the app.`,
+            [ 
+              { 
+                text: 'OK', 
+                onPress: () => setShowLowBatteryAlert(false) 
+              }
+            ]
+          );
+        }
+      } catch (error) {
+        console.log('[Battery] Error checking battery level:', error);
+      }
+    };
+
+    // Check immediately
+    checkBattery();
+    
+    // Check every 60 seconds
+    interval = setInterval(checkBattery, 60000);
+    
+    return () => clearInterval(interval);
+  }, [showLowBatteryAlert]);
 
   /* ── Chevron follows sheet index ─────────────────────────────── */
   useEffect(() => {
@@ -637,6 +712,7 @@ export default function HomeScreen({ navigation }) {
           activeRide={rideData}
           locationReady={locationReady}
           gpsReady={gpsReady}
+          location={location}
         >
           <StatsContent colors={colors} />
         </BottomSheetComponent>

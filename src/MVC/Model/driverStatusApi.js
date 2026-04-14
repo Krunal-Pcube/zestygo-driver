@@ -5,4 +5,7 @@ export const changeStatus = payload => {
 }; 
 
 
+export const changeLocationEveryMinute = payload => {
+  return ApiHelper.put('driver/status/location', payload);
+}; 
 

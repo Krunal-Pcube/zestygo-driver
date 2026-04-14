@@ -564,6 +564,7 @@ export default function BottomSheetComponent({
   activeRide,
   locationReady,
   gpsReady,
+  location,
   children,
 }) {
   const { colors } = useTheme();
@@ -613,6 +614,8 @@ export default function BottomSheetComponent({
     const payload = {
       current_status: newStatus ? 'online' : 'offline',
       accepting_new_orders: newStatus ? '1' : '0',
+      current_latitude: location?.latitude?.toString() || '',
+      current_longitude: location?.longitude?.toString() || '',
     };
 
     try {
