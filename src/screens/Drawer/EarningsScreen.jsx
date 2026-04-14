@@ -9,10 +9,10 @@ import {
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { ChevronRight, Banknote, PlusCircle } from 'lucide-react-native';
-import { colors } from '../utils/colors';
-import fonts from '../utils/fonts/fontsList';
+import { colors } from '../../utils/colors';
+import fonts from '../../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
-import Header from '../components/Header';
+import Header from '../../components/Header';
 
 const INDICATOR_WIDTH = scale(80);
 const TABS = ['earnings', 'wallet'];

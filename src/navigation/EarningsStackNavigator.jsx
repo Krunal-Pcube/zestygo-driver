@@ -1,9 +1,9 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import EarningsScreen from '../screens/EarningsScreen';
+import EarningsScreen from '../screens/Drawer/EarningsScreen';
 import AllOrdersScreen from '../screens/AllOrdersScreen';
 import AddMoneyScreen from '../screens/AddMoneyScreen';
-import WithdrawScreen from '../screens/WithdrawScreen';
+import WithdrawScreen from '../screens/Drawer/WithdrawScreen';
 import LastOrderEarningsScreen from '../screens/LastOrderEarningsScreen';
 
 const Stack = createStackNavigator();

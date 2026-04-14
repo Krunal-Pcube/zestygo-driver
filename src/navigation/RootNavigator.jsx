@@ -2,11 +2,10 @@ import React, { useContext } from 'react';
 import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import DrawerNavigator from './DrawerNavigator';
 import TripDetailsScreen from '../screens/TripDetailsScreen';
-import SoundVoiceSettingsScreen from '../screens/SoundVoiceSettingsScreen';
+import SoundVoiceSettingsScreen from '../screens/Drawer/SoundVoiceSettingsScreen';
 import NavigationSettingsScreen from '../screens/NavigationSettingsScreen';
 import AccessibilitySettingsScreen from '../screens/AccessibilitySettingsScreen';
 import EmergencyContactScreen from '../screens/EmergencyContactScreen';
-import SpeedLimitScreen from '../screens/SpeedLimitScreen';
 import LoginScreen from '../screens/authScreens/LoginScreen';
 import SignupScreen from '../screens/authScreens/SignupScreen';
 import OtpLogin from '../screens/authScreens/OtpLogin';
@@ -87,13 +86,7 @@ const RootNavigator = () => {
           cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
         }}
       />
-      <Stack.Screen
-        name="SpeedLimit"
-        component={SpeedLimitScreen}
-        options={{
-          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-        }}
-      />
+     
     </Stack.Navigator>
   );
 }

@@ -670,7 +670,7 @@ export default function BottomSheetComponent({
               <ChevronIcon
                 width={moderateScale(16)}
                 height={moderateScale(16)}
-                stroke={colors.mediumGrey}
+                // stroke={colors.mediumGrey}
               />
             </RNAnimated.View>
           </TouchableOpacity>
@@ -687,7 +687,7 @@ export default function BottomSheetComponent({
             <VectorIcon
               width={moderateScale(18)}
               height={moderateScale(18)}
-              stroke={colors.mediumGrey}
+              // stroke={colors.mediumGrey}
             />
           </TouchableOpacity>
         </View>

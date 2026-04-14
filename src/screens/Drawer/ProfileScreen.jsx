@@ -4,12 +4,12 @@ import {
   ScrollView, Image, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { ArrowLeft, Pencil, X } from 'lucide-react-native';
-import ActionButton from '../components/common/ActionButton';
-import AcceptenceIcon from '../assets/homeIcons/acceptence.svg';
-import RatingIcon from '../assets/homeIcons/rating.svg';
-import CancellationIcon from '../assets/homeIcons/cancellation.svg';
-import { colors } from '../utils/colors'; 
-import fonts from '../utils/fonts/fontsList';
+import ActionButton from '../../components/common/ActionButton';
+import AcceptenceIcon from '../../assets/homeIcons/acceptence.svg';
+import RatingIcon from '../../assets/homeIcons/rating.svg';
+import CancellationIcon from '../../assets/homeIcons/cancellation.svg';
+import { colors } from '../../utils/colors'; 
+import fonts from '../../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 
 const profileData = {

@@ -7,10 +7,10 @@ import {
   ScrollView,
   TextInput,
 } from 'react-native';
-import { colors } from '../utils/colors';
-import fonts from '../utils/fonts/fontsList';
+import { colors } from '../../utils/colors';
+import fonts from '../../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
-import Header from '../components/Header';
+import Header from '../../components/Header';
 
 const quickAmounts = [10, 100, 500];
 

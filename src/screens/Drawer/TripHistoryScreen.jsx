@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import { colors } from '../utils/colors';
-import fonts from '../utils/fonts/fontsList';
+import { colors } from '../../utils/colors';
+import fonts from '../../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
-import Header from '../components/Header';
+import Header from '../../components/Header';
 
 const tripsData = [
   { id: 1, date: 'Mon, 26 March', trips: 25, amount: 78 },

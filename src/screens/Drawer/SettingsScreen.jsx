@@ -8,19 +8,18 @@ import {
   Switch,
 } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
-import { useTheme } from '../context/ThemeContext';
-import fonts from '../utils/fonts/fontsList';
+import { useTheme } from '../../context/ThemeContext';
+import fonts from '../../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
-import Header from '../components/Header';
+import Header from '../../components/Header';
 
 // Settings screen SVG icons
-import SoundAndVoiceIcon from '../assets/settingsScreen/sound_and_voice.svg';
-import NavigationIcon from '../assets/settingsScreen/navigation.svg';
-import AccessibilityIcon from '../assets/settingsScreen/accessibility.svg';
-import DarkModeIcon from '../assets/settingsScreen/dark_mode.svg';
-import FollowMyRideIcon from '../assets/settingsScreen/follow_my_ride.svg';
-import EmergencyContactIcon from '../assets/settingsScreen/emergency_contact.svg';
-import SpeedLimitIcon from '../assets/settingsScreen/speed_limit.svg';
+import SoundAndVoiceIcon from '../../assets/settingsScreen/sound_and_voice.svg';
+import NavigationIcon from '../../assets/settingsScreen/navigation.svg';
+import AccessibilityIcon from '../../assets/settingsScreen/accessibility.svg';
+import DarkModeIcon from '../../assets/settingsScreen/dark_mode.svg';
+import FollowMyRideIcon from '../../assets/settingsScreen/follow_my_ride.svg';
+import EmergencyContactIcon from '../../assets/settingsScreen/emergency_contact.svg';
 
 const settingsData = [
   { id: 1, title: 'Sound and Voice', icon: SoundAndVoiceIcon, type: 'link', screen: 'SoundVoiceSettings' },

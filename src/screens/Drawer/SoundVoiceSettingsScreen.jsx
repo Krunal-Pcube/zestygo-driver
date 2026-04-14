@@ -8,10 +8,10 @@ import {
   Switch,
 } from 'react-native';
 import { Volume2, VolumeX, Navigation2, Bell } from 'lucide-react-native';
-import { useTheme } from '../context/ThemeContext';
-import fonts from '../utils/fonts/fontsList';
+import { useTheme } from '../../context/ThemeContext';
+import fonts from '../../utils/fonts/fontsList';
 import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
-import Header from '../components/Header';
+import Header from '../../components/Header';
 
 const SoundVoiceSettingsScreen = ({ navigation }) => {
   const { colors } = useTheme();
