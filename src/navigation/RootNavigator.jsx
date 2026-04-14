@@ -2,10 +2,10 @@ import React, { useContext } from 'react';
 import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import DrawerNavigator from './DrawerNavigator';
 import TripDetailsScreen from '../screens/TripDetailsScreen';
-import SoundVoiceSettingsScreen from '../screens/Drawer/SoundVoiceSettingsScreen';
-import NavigationSettingsScreen from '../screens/NavigationSettingsScreen';
-import AccessibilitySettingsScreen from '../screens/AccessibilitySettingsScreen';
-import EmergencyContactScreen from '../screens/EmergencyContactScreen';
+import SoundVoiceSettingsScreen from '../screens/Settings/SoundVoiceSettingsScreen';
+import NavigationSettingsScreen from '../screens/Settings/NavigationSettingsScreen';
+import AccessibilitySettingsScreen from '../screens/Settings/AccessibilitySettingsScreen';
+import EmergencyContactScreen from '../screens/Settings/EmergencyContactScreen';
 import LoginScreen from '../screens/authScreens/LoginScreen';
 import SignupScreen from '../screens/authScreens/SignupScreen';
 import OtpLogin from '../screens/authScreens/OtpLogin';
@@ -15,7 +15,7 @@ import ResetPassword from '../screens/authScreens/ResetPassword';
 import ResetPasswordSuccess from '../screens/authScreens/ResetPasswordSucess';
 import { AuthContext } from '../MVC/context/AuthContext';
 import { ActivityIndicator, View } from 'react-native';
-
+ 
 const Stack = createStackNavigator();
 
 const RootNavigator = () => {

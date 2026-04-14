@@ -6,7 +6,7 @@ export const changeStatusController = async ({ payload, onStatusChange }) => {
   try {
     const res = await changeStatus(payload);
  
-    console.log('Change Status Payload + Response ::::', payload, res);
+    // console.log('Change Status Payload + Response ::::', payload, res);
 
     if (res.data.status === 200) {
       const updatedStatus = res.data.data;
@@ -52,7 +52,7 @@ export const changeLocationController = async ({ payload, onLocationUpdate }) =>
   try {
     const res = await changeLocationEveryMinute(payload);
 
-    console.log('Location Update Payload + Response ::::', payload, res);
+    // console.log('Location Update Payload + Response ::::', payload, res);
 
     if (res?.data?.status === 200) {
       const updatedLocation = res.data.data;

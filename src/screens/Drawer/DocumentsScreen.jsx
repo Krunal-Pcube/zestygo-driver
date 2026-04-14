@@ -27,10 +27,10 @@ import {
   Image as ImageIcon,
 } from 'lucide-react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import { useTheme } from '../context/ThemeContext';
-import fonts from '../utils/fonts/fontsList';
+import { useTheme } from '../../context/ThemeContext';
+import fonts from '../../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
-import Header from '../components/Header';
+import Header from '../../components/Header';
 
 // ─── Document field definitions ───────────────────────────────────────────────
 const DOCUMENT_FIELDS = {

@@ -8,11 +8,11 @@ import {
   Switch,
 } from 'react-native';
 import { Vibrate, Zap } from 'lucide-react-native';
-import { useTheme } from '../context/ThemeContext';
-import { getVibrationSetting, setVibrationSetting, getScreenFlashSetting, setScreenFlashSetting } from '../utils/accessibilityStorage';
-import fonts from '../utils/fonts/fontsList';
+import { useTheme } from '../../context/ThemeContext';
+import { getVibrationSetting, setVibrationSetting, getScreenFlashSetting, setScreenFlashSetting } from '../../utils/accessibilityStorage';
+import fonts from '../../utils/fonts/fontsList';
 import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
-import Header from '../components/Header';
+import Header from '../../components/Header';
 
 const AccessibilitySettingsScreen = ({ navigation }) => {
   const { colors } = useTheme();

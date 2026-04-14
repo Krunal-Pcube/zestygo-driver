@@ -60,7 +60,6 @@ export default function HomeScreen({ navigation }) {
   const [earnings] = useState(154.75);
   const [notificationCount, setNotificationCount] = useState(2); // TODO: Fetch from API
   const [rideRequests, setRideRequests] = useState([]);
-  const [hasArrived, setHasArrived] = useState(false);
   const [showRideRequests, setShowRideRequests] = useState(false);
   const [sheetIndex, setSheetIndex] = useState(0);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -608,4 +607,4 @@ export default function HomeScreen({ navigation }) {
     </View>
   );
 
-}
+} 

@@ -12,10 +12,10 @@ import {
   Alert,
 } from 'react-native';
 import { Phone, User, Heart, Shield, Flame, Siren } from 'lucide-react-native';
-import { useTheme } from '../context/ThemeContext';
-import fonts from '../utils/fonts/fontsList';
+import { useTheme } from '../../context/ThemeContext';
+import fonts from '../../utils/fonts/fontsList';
 import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
-import Header from '../components/Header';
+import Header from '../../components/Header';
 
 const EmergencyContactScreen = ({ navigation }) => {
   const { colors } = useTheme();

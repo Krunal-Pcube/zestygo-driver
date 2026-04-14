@@ -7,10 +7,10 @@ import {
   ScrollView,
 } from 'react-native';
 import { Bell, Package, DollarSign, Info, ChevronRight } from 'lucide-react-native';
-import { colors } from '../utils/colors';
-import fonts from '../utils/fonts/fontsList';
+import { colors } from '../../utils/colors';
+import fonts from '../../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
-import Header from '../components/Header';
+import Header from '../../components/Header';
 
 const notificationsData = [
   {

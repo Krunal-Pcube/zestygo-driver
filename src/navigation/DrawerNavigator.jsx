@@ -6,8 +6,8 @@ import EarningsStackNavigator from './EarningsStackNavigator';
 import TripHistoryScreen from '../screens/Drawer/TripHistoryScreen';
 import SettingsScreen from '../screens/Drawer/SettingsScreen';
 import HelpScreen from '../screens/Drawer/HelpScreen';
-import DocumentsScreen from '../screens/DocumentsScreen';
-import NotificationsScreen from '../screens/NotificationsScreen';
+import DocumentsScreen from '../screens/Drawer/DocumentsScreen';
+import NotificationsScreen from '../screens/Settings/NotificationsScreen';
 import DrawerContent from '../components/DrawerContent';
 import { scale } from 'react-native-size-matters';
 
