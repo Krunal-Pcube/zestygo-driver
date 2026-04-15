@@ -34,6 +34,9 @@ import StatsContent from '../../components/homeComponents/StatsContent';
 import useRideState from '../../hooks/useRideState';
 import { changeLocationController } from '../../MVC/controllers/driverStatusController';
 import { requestLocationPermission, checkAndPromptGPSEnabled } from '../../utils/gpsHelpers';
+import { onSocketEvent, offSocketEvent } from '../../services/socketIndex';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../../utils/storage/asyncStorageKeys';
 import styles from '../../components/homeComponents/HomeScreenStyles';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -57,6 +60,24 @@ export default function HomeScreen({ navigation }) {
   } = useRideState();
 
   const [isOnline, setIsOnline] = useState(false);
+
+  /* ── Load saved online status from AsyncStorage ──────────────── */
+  useEffect(() => {
+    const loadOnlineStatus = async () => {
+      try {
+        const savedStatus = await AsyncStorage.getItem(STORAGE_KEYS.DRIVER_ONLINE_STATUS);
+        if (savedStatus !== null) {
+          const parsedStatus = JSON.parse(savedStatus);
+          console.log('[Status] Loaded from AsyncStorage:', parsedStatus);
+          setIsOnline(parsedStatus);
+        }
+      } catch (error) {
+        console.log('[Status] Error loading from AsyncStorage:', error);
+      }
+    };
+
+    loadOnlineStatus();
+  }, []);
   const [earnings] = useState(154.75);
   const [notificationCount, setNotificationCount] = useState(2); // TODO: Fetch from API
   const [rideRequests, setRideRequests] = useState([]);
@@ -186,14 +207,35 @@ export default function HomeScreen({ navigation }) {
     };
   }, [isFocused]);
 
-  /* ── Fake ride requests while online ─────────────────────────── */
+  /* ── Real socket ride requests while online ───────────────────── */
   useEffect(() => {
     if (!isOnline) return;
-    const interval = setInterval(() => {
-      if (Math.random() > 0.4 && !rideData) generateNewRide();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isOnline, rideData]);
+
+    const handleNewOrderOffer = (orderData) => {
+      console.log('[Socket] New order offer received:', orderData);
+      if (rideData) {
+        console.log('[Socket] Ignoring offer - already on an active ride');
+        return;
+      }
+
+      // Use raw socket data directly
+      const data = Array.isArray(orderData) ? orderData[0] : orderData;
+      if (!data || !data.offer) {
+        console.error('[Socket] Invalid order data format:', orderData);
+        return;
+      }
+
+      setRideRequests(prev => [...prev, data]);
+      setShowRideRequests(true);
+      triggerNewRideNotifications();
+    };
+
+    onSocketEvent('new_order_offer', handleNewOrderOffer);
+
+    return () => {
+      offSocketEvent('new_order_offer', handleNewOrderOffer);
+    };
+  }, [isOnline, rideData, location]);
 
   /* ── Update location to backend every minute when online ──── */
   useEffect(() => {
@@ -221,16 +263,14 @@ export default function HomeScreen({ navigation }) {
       }
     };
 
-    // Update immediately when going online
-    if (isOnline) {
-      updateLocation();
-    }
-
+    // Update immediately
+    updateLocation();
+ 
     // Then update every 60 seconds
-    interval = setInterval(updateLocation, 60000);
+    interval = setInterval(updateLocation, 600000000);
 
     return () => clearInterval(interval);
-  }, [isOnline, location]);
+  }, [isOnline]);
 
   /* ── Monitor battery level ──────────────────────────────────── */
   useEffect(() => {
@@ -279,44 +319,8 @@ export default function HomeScreen({ navigation }) {
     }).start();
   }, [sheetIndex]);
 
-  /* ── Generate fake ride ───────────────────────────────────────── */
-  const generateNewRide = async () => {
-    const streets = ['Main St', 'Oak Ave', 'Park Rd', 'Elm St'];
-    const avenues = ['Broadway', '5th Ave', 'Market St', 'Beach Rd'];
-    const names = ['John', 'Sarah', 'Mike', 'Emma', 'David'];
-    const phoneNumbers = ['+1234567890', '+1987654321', '+1555123456', '+1444555666', '+1777888999'];
-
-    const newRide = {
-      id: Date.now(),
-      type: Math.random() > 0.5 ? 'match' : 'accept',
-      passengerName: names[Math.floor(Math.random() * names.length)],
-      phoneNumber: phoneNumbers[Math.floor(Math.random() * phoneNumbers.length)],
-      rating: (Math.random() * 1.5 + 3.5).toFixed(1),
-      fare: Math.floor(Math.random() * 25 + 12),
-      duration: Math.floor(Math.random() * 20 + 10),
-      pickup: {
-        name: 'Dave\'s Hot Chicken',
-        address: `${Math.floor(Math.random() * 9999)} ${streets[Math.floor(Math.random() * streets.length)]}`,
-        distance: (Math.random() * 2 + 0.5).toFixed(1),
-        eta: Math.floor(Math.random() * 8 + 3),
-        coordinate: {
-          latitude: location.latitude + (Math.random() - 0.5) * 0.02,
-          longitude: location.longitude + (Math.random() - 0.5) * 0.02,
-        },
-      },
-      dropoff: {
-        address: `${Math.floor(Math.random() * 9999)} ${avenues[Math.floor(Math.random() * avenues.length)]}`,
-        distance: (Math.random() * 8 + 2).toFixed(1),
-        coordinate: {
-          latitude: location.latitude + (Math.random() - 0.5) * 0.05,
-          longitude: location.longitude + (Math.random() - 0.5) * 0.05,
-        },
-      },
-    };
-
-    setRideRequests(prev => [...prev, newRide]);
-    setShowRideRequests(true);
-
+  /* ── Trigger notifications for new ride ────────────────────────── */
+  const triggerNewRideNotifications = async () => {
     // Vibrate if accessibility setting is enabled
     const shouldVibrate = await getVibrationSetting();
     if (shouldVibrate) {
@@ -336,19 +340,19 @@ export default function HomeScreen({ navigation }) {
           toValue: 0,
           duration: 300,
           useNativeDriver: true,
-        }),
+        }), 
       ]).start();
     }
   };
 
   const acceptRide = (ride) => {
     startRide(ride);
-    setRideRequests(prev => prev.filter(r => r.id !== ride.id));
+  setRideRequests(prev => prev.filter(r => r.offer?.order_id !== ride.offer?.order_id));
     setShowRideRequests(false);
   };
 
   const declineRide = (rideId) => {
-    setRideRequests(prev => prev.filter(r => r.id !== rideId));
+    setRideRequests(prev => prev.filter(r => r.offer?.order_id !== rideId));
     if (rideRequests.length <= 1) {
       setShowRideRequests(false);
     }
@@ -537,7 +541,7 @@ export default function HomeScreen({ navigation }) {
         ride={rideRequests[0]}
         visible={showRideRequests && rideRequests.length > 0}
         onAccept={acceptRide}
-        onDecline={() => declineRide(rideRequests[0]?.id)}
+        onDecline={() => declineRide(rideRequests[0]?.offer?.order_id)}
         duration={14}
       />
 

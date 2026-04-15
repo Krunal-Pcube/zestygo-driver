@@ -16,16 +16,16 @@ import fonts from '../../utils/fonts/fontsList';
 import Sound from 'react-native-sound';
 
 /* ─── Badge row ─────────────────────────────────────────────────── */
-const BadgeRow = ({ onClose }) => (
+const BadgeRow = ({ onClose, orderType, scheduleType }) => (
   <View style={s.badgeRow}>
     <View style={s.badgeDelivery}>
       <DeliveryIcon width={scale(12)} height={scale(12)} fill={colors.primary} />
-      <Text style={s.badgeDeliveryText}>Delivery</Text>
+      <Text style={s.badgeDeliveryText}>{orderType ? orderType.charAt(0).toUpperCase() + orderType.slice(1) : 'Delivery'}</Text>
     </View>
 
     <View style={s.badgeExclusive}>
       <Zap size={scale(10)} color="#555555" strokeWidth={2.5} />
-      <Text style={s.badgeExclusiveText}>Exclusive</Text>
+      <Text style={s.badgeExclusiveText}>{scheduleType ? scheduleType.charAt(0).toUpperCase() + scheduleType.slice(1) : 'Now'}</Text>
     </View>
 
     <TouchableOpacity style={s.closeBtn} onPress={onClose} activeOpacity={0.7}>
@@ -164,12 +164,14 @@ export default function RideRequestCard({
       <View style={s.card}>
 
         {/* Badge row */}
-        <BadgeRow onClose={onDecline} />
+        <BadgeRow onClose={onDecline} orderType={ride?.order?.order_type} scheduleType={ride?.order?.schedule_type} />
 
         {/* Price */}
-        <Text style={s.price}>${ride?.fare?.toFixed(2) ?? '0.00'}</Text>
+        <Text style={s.price}>
+          ${(ride?.payout?.delivery_fee_amount || 0).toFixed(2)} + {(ride?.payout?.tip_amount || 0).toFixed(2)} (Tip)
+        </Text>
         <View style={s.taxPill}>
-          <Text style={s.taxText}>Including 5% tax</Text>
+          <Text style={s.taxText}>Total: ${((ride?.payout?.delivery_fee_amount || 0) + (ride?.payout?.tip_amount || 0)).toFixed(2)}</Text>
         </View>
 
         {/* Route */}
@@ -182,17 +184,18 @@ export default function RideRequestCard({
             </View>
             <View style={s.routeTextItem}>
               <Text style={s.routeTime}>
-                {`${ride?.pickup?.eta ?? 0} min (${ride?.pickup?.distance ?? 0} km)`}
+                {`${ride?.eta?.to_restaurant_minutes ?? 0} min (${ride?.route?.to_restaurant_km ?? 0} km)`}
               </Text>
-              <Text style={s.routeName} numberOfLines={2}>
-                {ride?.pickup?.address ?? ''}
+              <Text style={s.routeName} numberOfLines={1}>
+                {ride?.restaurant?.name ?? ''}
+              </Text>
+              <Text style={s.routeSubName} numberOfLines={2}>
+                {ride?.restaurant?.address ?? ''}
               </Text>
             </View>
           </View>
 
-          {/* ── Dotted connector ──
-               width === dotIconWrap width so the dots sit perfectly
-               centred under both icons regardless of text height       */}
+          {/* ── Dotted connector ── */}
           <View style={s.connectorWrap}>
             {[...Array(5)].map((_, i) => (
               <View key={i} style={s.lineDot} />
@@ -206,10 +209,13 @@ export default function RideRequestCard({
             </View>
             <View style={s.routeTextItem}>
               <Text style={s.routeTime}>
-                {`${ride?.duration ?? 0} min (${ride?.dropoff?.distance ?? 0} km)`}
+                {`${ride?.eta?.to_customer_minutes ?? 0} min (${ride?.route?.to_customer_km ?? 0} km)`}
               </Text>
-              <Text style={s.routeName} numberOfLines={2}>
-                {ride?.dropoff?.address ?? ''}
+              <Text style={s.routeName} numberOfLines={1}>
+                {ride?.customer?.name ?? ''}
+              </Text>
+              <Text style={s.routeSubName} numberOfLines={2}>
+                {ride?.customer?.address ?? ''}
               </Text>
             </View>
           </View>
@@ -351,10 +357,17 @@ const s = StyleSheet.create({
     color: '#1A1A1A',
   },
   routeName: {
-    fontSize: moderateScale(13),
-    color: '#888888',
+    fontSize: moderateScale(14),
+    color: '#1A1A1A',
+    fontFamily: fonts.semiBold,
     marginTop: verticalScale(2),
     lineHeight: moderateScale(18),
+  },
+  routeSubName: {
+    fontSize: moderateScale(12),
+    color: '#888888',
+    marginTop: verticalScale(1),
+    lineHeight: moderateScale(16),
   },
 
   // Connector: same width as dotIconWrap so dots sit centred

@@ -1,6 +1,4 @@
 
-
-
 import React, { useEffect } from 'react';
 import {
   View,
@@ -11,7 +9,6 @@ import {
   Animated as RNAnimated,
   Image,
   Easing,
-  Vibration,
 } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
@@ -23,13 +20,14 @@ import fonts from '../../utils/fonts/fontsList';
 import Sound from 'react-native-sound';
 import LinearGradient from 'react-native-linear-gradient';
 import { changeStatusController } from '../../MVC/controllers/driverStatusController';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../../utils/storage/asyncStorageKeys';
 
 /* ════════════════════════════════════════════════════════════════
-   Online Toggle Button
+   Sound helper
    ════════════════════════════════════════════════════════════════ */
 const playToggleSound = (isGoingOnline) => {
   const soundFile = isGoingOnline ? 'go_online.mp3' : 'go_offline.mp3';
-
   const sound = new Sound(
     soundFile,
     Platform.OS === 'ios' ? Sound.MAIN_BUNDLE : '',
@@ -39,29 +37,37 @@ const playToggleSound = (isGoingOnline) => {
         return;
       }
       sound.setVolume(1.0);
-      sound.play(() => {
-        sound.release();
-      });
+      sound.play(() => sound.release());
     }
   );
 };
 
-const OnlineToggleButton = ({ isOnline, onPress }) => {
+/* ════════════════════════════════════════════════════════════════
+   Online Toggle Button
+   ════════════════════════════════════════════════════════════════ */
+const OnlineToggleButton = ({ isOnline, onPress, isLoading }) => {
   const { colors } = useTheme();
+
   const pressScale = React.useRef(new RNAnimated.Value(1)).current;
 
-  // Idle: gentle steering wheel wobble rotation
+  // Idle wobble rotation (offline, not loading)
   const steerRot = React.useRef(new RNAnimated.Value(0)).current;
 
-  // On-press: full spin (2 rotations)
+  // Single press spin (offline → tap)
   const spinRot = React.useRef(new RNAnimated.Value(0)).current;
 
-  // Guard to prevent double-tap during spin
+  // Continuous loader spin for Go Online pill
+  const loaderRot = React.useRef(new RNAnimated.Value(0)).current;
+
+  // Continuous ring rotation for Go Offline circle
+  const ringRot = React.useRef(new RNAnimated.Value(0)).current;
+
+  // Guard against double-tap during animation
   const isSpinning = React.useRef(false);
 
-  // Start wobble loop when in "Go Online" (offline) state
+  // ── Idle wobble: only when offline and not loading ──
   React.useEffect(() => {
-    if (isOnline) return;
+    if (isOnline || isLoading) return;
 
     const wobbleLoop = RNAnimated.loop(
       RNAnimated.sequence([
@@ -85,24 +91,54 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
         }),
       ])
     );
-
     wobbleLoop.start();
     return () => wobbleLoop.stop();
-  }, [isOnline]);
+  }, [isOnline, isLoading]);
+
+  // ── Continuous spin: "Going Online" pill loader ──
+  React.useEffect(() => {
+    if (!isLoading || isOnline) return;
+
+    loaderRot.setValue(0);
+    const loop = RNAnimated.loop(
+      RNAnimated.timing(loaderRot, {
+        toValue: 1,
+        duration: 900,
+        useNativeDriver: true,
+        easing: Easing.linear,
+      })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [isLoading, isOnline]);
+
+  // ── Rotating arc ring: "Going Offline" circle loader ──
+  React.useEffect(() => {
+    if (!isLoading || !isOnline) return;
+
+    ringRot.setValue(0);
+    const loop = RNAnimated.loop(
+      RNAnimated.timing(ringRot, {
+        toValue: 1,
+        duration: 1100,
+        useNativeDriver: true,
+        easing: Easing.linear,
+      })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [isLoading, isOnline]);
 
   const handlePress = () => {
-    if (isSpinning.current) return;
+    if (isSpinning.current || isLoading) return;
     isSpinning.current = true;
 
-    // Play sound immediately
     playToggleSound(!isOnline);
 
     // Stop wobble and reset
-    steerRot.stopAnimation(() => {
-      steerRot.setValue(0);
-    });
+    steerRot.stopAnimation(() => steerRot.setValue(0));
 
-    // Button press-scale bounce (runs in parallel with spin)
+    // Button bounce
     RNAnimated.sequence([
       RNAnimated.timing(pressScale, {
         toValue: 0.95,
@@ -117,7 +153,7 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
       }),
     ]).start();
 
-    // Full spin → then trigger onPress after animation completes
+    // Single press spin → then trigger onPress (API call starts)
     spinRot.setValue(0);
     RNAnimated.timing(spinRot, {
       toValue: 1,
@@ -131,19 +167,28 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
     });
   };
 
-  // Wobble: −14° ↔ +14°
+  // Interpolations
   const wobbleAngle = steerRot.interpolate({
     inputRange: [-1, 0, 1],
     outputRange: ['-14deg', '0deg', '14deg'],
   });
 
-  // Spin: 0° → 720° (two full rotations)
   const spinAngle = spinRot.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
 
-  // ── Go Offline UI ── red circle + hand icon
+  const loaderAngle = loaderRot.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const ringAngle = ringRot.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  /* ── Go Offline UI (red circle + hand + optional ring loader) ── */
   if (isOnline) {
     return (
       <RNAnimated.View style={{ transform: [{ scale: pressScale }] }}>
@@ -151,40 +196,80 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
           activeOpacity={1}
           onPress={handlePress}
           style={offlineStyles.container}
+          disabled={isLoading}
         >
-          <View style={offlineStyles.circle}>
-            <Image
-              source={require('../../assets/homeIcons/hand.png')}
-              style={offlineStyles.handIcon}
-              resizeMode="contain"
-            />
+          {/* Ring wrapper — positions the rotating arc perfectly outside the circle */}
+          <View style={offlineStyles.ringWrapper}>
+
+            {/* Rotating arc — only visible while loading */}
+            {isLoading && (
+              <RNAnimated.View
+                style={[
+                  offlineStyles.loaderRing,
+                  { transform: [{ rotate: ringAngle }] },
+                ]}
+              />
+            )}
+
+            {/* Red circle with hand icon */}
+            <View style={[
+              offlineStyles.circle,
+              isLoading && offlineStyles.circleDimmed,
+            ]}>
+              <Image
+                source={require('../../assets/homeIcons/hand.png')}
+                style={offlineStyles.handIcon}
+                resizeMode="contain"
+              />
+            </View>
           </View>
-          <Text style={[offlineStyles.text, { color: colors.black }]}>GO OFFLINE</Text>
+
+          <Text style={[offlineStyles.text, { color: colors.black }]}>
+            {isLoading ? 'Going Offline…' : 'GO OFFLINE'}
+          </Text>
         </TouchableOpacity>
       </RNAnimated.View>
     );
   }
 
-  // ── Go Online UI ── green pill with animated steering wheel
+  /* ── Go Online UI (green pill with steering wheel) ── */
   return (
     <RNAnimated.View style={{ transform: [{ scale: pressScale }] }}>
-      <TouchableOpacity activeOpacity={1} onPress={handlePress}>
-        <View style={[onlineBtnStyles.pill, { backgroundColor: colors.secondary, shadowColor: colors.black }]}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={handlePress}
+        disabled={isLoading}
+      >
+        <View style={[
+          onlineBtnStyles.pill,
+          { backgroundColor: colors.secondary, shadowColor: colors.black },
+          isLoading && onlineBtnStyles.pillLoading,
+        ]}>
 
           {/*
-            Wobble wraps Spin so both transforms compose cleanly.
-            Wobble animates during idle; Spin fires on press.
+            When loading  → outer view applies continuous loaderAngle spin.
+            When idle     → outer view applies wobble, inner image applies tap spinAngle.
           */}
-          <RNAnimated.View style={{ transform: [{ rotate: wobbleAngle }] }}>
+          <RNAnimated.View
+            style={{
+              transform: [{ rotate: isLoading ? loaderAngle : wobbleAngle }],
+            }}
+          >
             <RNAnimated.Image
               source={require('../../assets/homeIcons/car-handle.png')}
-              style={[onlineBtnStyles.icon, { transform: [{ rotate: spinAngle }], tintColor: colors.primary }]}
+              style={[
+                onlineBtnStyles.icon,
+                {
+                  tintColor: colors.primary,
+                  transform: [{ rotate: isLoading ? '0deg' : spinAngle }],
+                },
+              ]}
               resizeMode="contain"
             />
           </RNAnimated.View>
 
           <Text style={[onlineBtnStyles.label, { color: colors.primary }]}>
-            Go Online
+            {isLoading ? 'Going Online…' : 'Go Online'}
           </Text>
         </View>
       </TouchableOpacity>
@@ -192,7 +277,7 @@ const OnlineToggleButton = ({ isOnline, onPress }) => {
   );
 };
 
-// Go Online button styles (pill)
+/* ── Go Online button styles (pill) ── */
 const onlineBtnStyles = StyleSheet.create({
   pill: {
     flexDirection: 'row',
@@ -207,6 +292,9 @@ const onlineBtnStyles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  pillLoading: {
+    opacity: 0.85,
+  },
   label: {
     fontSize: moderateScale(15),
     fontFamily: fonts.bold,
@@ -218,11 +306,29 @@ const onlineBtnStyles = StyleSheet.create({
   },
 });
 
-// Go Offline button styles (red circle with hand)
+/* ── Go Offline button styles (red circle with hand) ── */
 const offlineStyles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Outer wrapper: sized to accommodate the ring + circle
+  ringWrapper: {
+    width: scale(78),
+    height: scale(78),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Spinning arc — sits outside the circle, rotates as loader
+  loaderRing: {
+    position: 'absolute',
+    width: scale(78),
+    height: scale(78),
+    borderRadius: scale(39),
+    borderWidth: scale(3),
+    borderColor: 'transparent',
+    borderTopColor: '#E53935',               // leading solid arc
+    borderRightColor: 'rgba(229,57,53,0.3)', // fading tail — natural sweep look
   },
   circle: {
     width: scale(70),
@@ -233,6 +339,9 @@ const offlineStyles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: scale(4),
     borderColor: '#FFCDD2',
+  },
+  circleDimmed: {
+    opacity: 0.8,
   },
   handIcon: {
     width: scale(32),
@@ -248,7 +357,7 @@ const offlineStyles = StyleSheet.create({
 });
 
 /* ════════════════════════════════════════════════════════════════
-   Animated Online Text - "You're Online" -> "Finding Trips"
+   Animated Online Text — "You're Online" → "Finding Trips"
    ════════════════════════════════════════════════════════════════ */
 const AnimatedOnlineText = () => {
   const { colors } = useTheme();
@@ -257,9 +366,7 @@ const AnimatedOnlineText = () => {
   const opacityAnim = React.useRef(new RNAnimated.Value(1)).current;
 
   React.useEffect(() => {
-    // Initial delay before starting animation
     const initialDelay = setTimeout(() => {
-      // Animate slide up and fade
       RNAnimated.parallel([
         RNAnimated.timing(slideAnim, {
           toValue: -1,
@@ -277,7 +384,6 @@ const AnimatedOnlineText = () => {
         slideAnim.setValue(1);
         opacityAnim.setValue(0);
 
-        // Slide in "Finding Trips"
         RNAnimated.parallel([
           RNAnimated.timing(slideAnim, {
             toValue: 0,
@@ -292,7 +398,7 @@ const AnimatedOnlineText = () => {
           }),
         ]).start();
       });
-    }, 2000); // Show "You're Online" for 2 seconds
+    }, 2000);
 
     return () => clearTimeout(initialDelay);
   }, []);
@@ -307,10 +413,7 @@ const AnimatedOnlineText = () => {
       <RNAnimated.View
         style={[
           animatedTextStyles.textWrapper,
-          {
-            transform: [{ translateY }],
-            opacity: opacityAnim,
-          },
+          { transform: [{ translateY }], opacity: opacityAnim },
         ]}
       >
         <Text style={[animatedTextStyles.text, { color: colors.black }]}>
@@ -395,14 +498,12 @@ const AnimatedOnlineStrip = () => {
       style={stripStyles.wrapper}
       onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
     >
-      {/* ── Dark base track ── */}
       <LinearGradient
         colors={['#0a0a0a', '#111', '#0a0a0a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={stripStyles.track}
       >
-        {/* ── Static dim tint across full track ── */}
         <LinearGradient
           colors={['transparent', 'rgba(207,255,4,0.08)', 'transparent']}
           start={{ x: 0, y: 0 }}
@@ -410,7 +511,6 @@ const AnimatedOnlineStrip = () => {
           style={StyleSheet.absoluteFill}
         />
 
-        {/* ── Moving neon glow ── */}
         <RNAnimated.View
           style={[
             stripStyles.glowWrapper,
@@ -421,7 +521,6 @@ const AnimatedOnlineStrip = () => {
             },
           ]}
         >
-          {/* Outer wide bloom — feathered edges */}
           <LinearGradient
             colors={[
               'transparent',
@@ -436,8 +535,6 @@ const AnimatedOnlineStrip = () => {
             end={{ x: 1, y: 0 }}
             style={stripStyles.glowOuter}
           />
-
-          {/* Mid layer — tighter core */}
           <LinearGradient
             colors={[
               'transparent',
@@ -450,8 +547,6 @@ const AnimatedOnlineStrip = () => {
             end={{ x: 1, y: 0 }}
             style={stripStyles.glowMid}
           />
-
-          {/* Inner white-hot core */}
           <LinearGradient
             colors={[
               'transparent',
@@ -467,15 +562,12 @@ const AnimatedOnlineStrip = () => {
         </RNAnimated.View>
       </LinearGradient>
 
-      {/* ── Top edge reflection line ── */}
       <LinearGradient
         colors={['transparent', 'rgba(207,255,4,0.25)', 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={stripStyles.topReflection}
       />
-
-      {/* ── Bottom shadow bleed ── */}
       <LinearGradient
         colors={['rgba(207,255,4,0.12)', 'transparent']}
         start={{ x: 0, y: 0 }}
@@ -569,7 +661,10 @@ export default function BottomSheetComponent({
 }) {
   const { colors } = useTheme();
 
-  // Snap bottom sheet on initial mount only
+  // ── Loading state: true while API call is in-flight ──
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  // Snap on mount
   useEffect(() => {
     const timer = setTimeout(() => {
       bottomSheetRef.current?.snapToIndex(0);
@@ -577,7 +672,7 @@ export default function BottomSheetComponent({
     return () => clearTimeout(timer);
   }, []);
 
-  // Snap bottom sheet when location becomes ready (after GPS enabled)
+  // Snap when location becomes ready
   useEffect(() => {
     if (locationReady) {
       const timer = setTimeout(() => {
@@ -587,7 +682,7 @@ export default function BottomSheetComponent({
     }
   }, [locationReady]);
 
-  // Snap bottom sheet when GPS becomes ready
+  // Snap when GPS becomes ready
   useEffect(() => {
     if (gpsReady) {
       const timer = setTimeout(() => {
@@ -602,15 +697,16 @@ export default function BottomSheetComponent({
     bottomSheetRef.current?.snapToIndex(next);
   };
 
-  /* ... */
   const chevronAngle = chevronRot.interpolate({
     inputRange: [0, 1],
     outputRange: ['180deg', '0deg'],
   });
 
   const toggleOnlineStatus = async () => {
+    if (isLoading) return; // prevent double-tap while loading
+
     const newStatus = !isOnline;
-   
+
     const payload = {
       current_status: newStatus ? 'online' : 'offline',
       accepting_new_orders: newStatus ? '1' : '0',
@@ -618,23 +714,28 @@ export default function BottomSheetComponent({
       current_longitude: location?.longitude?.toString() || '',
     };
 
+    setIsLoading(true); // ← start loader BEFORE API call
+
     try {
       const success = await changeStatusController({
         payload,
         onStatusChange: (updatedStatus) => {
-          // Optional: use updatedStatus from API response if needed
           console.log('Updated driver status:', updatedStatus);
         },
       });
 
       if (success) {
-        setIsOnline(newStatus);              // ✅ Only update state on 200
+        setIsOnline(newStatus);              // ✅ Only update state on success
+        // Store status in AsyncStorage after successful API call
+        await AsyncStorage.setItem(STORAGE_KEYS.DRIVER_ONLINE_STATUS, JSON.stringify(newStatus));
+        console.log('[Status] Saved to AsyncStorage:', newStatus);
         bottomSheetRef.current?.snapToIndex(0);
       }
-      // If success === false, toast is already shown by controller — do nothing
+      // If success === false, toast is already shown by controller
     } catch (error) {
-      // Error toast is already handled inside changeStatusController
       console.log('Toggle status failed:', error);
+    } finally {
+      setIsLoading(false); // ← always stop loader, success or failure
     }
   };
 
@@ -655,11 +756,12 @@ export default function BottomSheetComponent({
       activeOffsetY={[-5, 5]}
     >
       <BottomSheetView style={styles.sheetBody}>
-        {/* ── Drag handle bar ── */}
+        {/* Drag handle bar */}
         <View style={[styles.dragBar, { backgroundColor: colors.veryLightGrey }]} />
 
-        {/* ── Main row: Chevron | Center Content | Menu ── */}
+        {/* Main row: Chevron | Center Content | Menu */}
         <View style={styles.actionRow}>
+
           {/* Left: Chevron */}
           <TouchableOpacity
             onPress={handleChevron}
@@ -670,16 +772,19 @@ export default function BottomSheetComponent({
               <ChevronIcon
                 width={moderateScale(16)}
                 height={moderateScale(16)}
-                // stroke={colors.mediumGrey}
               />
             </RNAnimated.View>
           </TouchableOpacity>
 
-          {/* Center */}
+          {/* Center: animated text when online, toggle button when offline */}
           {isOnline ? (
             <AnimatedOnlineText />
           ) : (
-            <OnlineToggleButton isOnline={isOnline} onPress={toggleOnlineStatus} />
+            <OnlineToggleButton
+              isOnline={isOnline}
+              onPress={toggleOnlineStatus}
+              isLoading={isLoading}
+            />
           )}
 
           {/* Right: Vector icon */}
@@ -687,11 +792,11 @@ export default function BottomSheetComponent({
             <VectorIcon
               width={moderateScale(18)}
               height={moderateScale(18)}
-              // stroke={colors.mediumGrey}
             />
           </TouchableOpacity>
         </View>
 
+        {/* Neon sweep strip — only when online */}
         {isOnline && <AnimatedOnlineStrip />}
 
         <View style={{ height: scale(40) }} />
@@ -719,7 +824,11 @@ export default function BottomSheetComponent({
         {/* Go Offline button — only visible when online */}
         {isOnline && (
           <View style={styles.goOfflineWrapper}>
-            <OnlineToggleButton isOnline={isOnline} onPress={toggleOnlineStatus} />
+            <OnlineToggleButton
+              isOnline={isOnline}
+              onPress={toggleOnlineStatus}
+              isLoading={isLoading}
+            />
           </View>
         )}
       </BottomSheetView>

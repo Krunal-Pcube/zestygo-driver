@@ -1,7 +1,5 @@
-
 export const STORAGE_KEYS = {
   AUTH_DATA:            'AUTH_DATA',
-  ADDRESS_CHECKED:    'ADDRESS_CHECKED',
-  FCM_TOKEN:              'FCM_TOKEN',
-};  
- 
+  FCM_TOKEN:          'FCM_TOKEN',
+  DRIVER_ONLINE_STATUS: 'DRIVER_ONLINE_STATUS',
+};
