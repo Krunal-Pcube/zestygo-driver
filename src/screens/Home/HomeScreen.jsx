@@ -15,7 +15,9 @@ import {
   Dimensions,
   Alert,
   Linking,
+  Text,
   Vibration,
+  TouchableOpacity,
 } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import Geolocation from '@react-native-community/geolocation';
@@ -99,6 +101,23 @@ export default function HomeScreen({ navigation }) {
   const chevronRot = useRef(new Animated.Value(0)).current;
   const dotPulse = useRef(new Animated.Value(1)).current;
   const watchIdRef = useRef(null);
+
+  /* ── DEBUG: Generate test ride without socket ─────────────────── */
+  const addTestRide = useCallback(() => {
+    const testRide = {
+      offer: { order_id: `TEST_${Date.now()}` },
+      order: { order_type: 'delivery', schedule_type: 'now' },
+      payout: { delivery_fee_amount: 15.5, tip_amount: 3.5 },
+      restaurant: { name: 'Test Restaurant', address: '123 Test St, Test City' },
+      customer: { name: 'John Doe', address: '456 Customer Ave, Test City' },
+      eta: { to_restaurant_minutes: 5, to_customer_minutes: 12 },
+      route: { to_restaurant_km: 1.2, to_customer_km: 4.5 },
+    };
+    setRideRequests(prev => [...prev, testRide]);
+    setShowRideRequests(true);
+    triggerNewRideNotifications();
+    console.log('[TEST] Added test ride:', testRide.offer.order_id);
+  }, []);
 
   const animatedPosition = useSharedValue(SCREEN_HEIGHT * 0.85);
   const snapPoints = useMemo(() => ['15%'], []);
@@ -237,40 +256,45 @@ export default function HomeScreen({ navigation }) {
     };
   }, [isOnline, rideData, location]);
 
+
   /* ── Update location to backend every minute when online ──── */
-  useEffect(() => {
-    let interval;
+useEffect(() => {
+  let interval;
 
-    const updateLocation = async () => {
-      if (!isOnline || !location?.latitude || !location?.longitude) {
-        return;
-      }
+  const updateLocation = async () => {
+    if (!isOnline || !location?.latitude || !location?.longitude) {
+      return;
+    }
 
-      const payload = {
-        current_latitude: location.latitude.toString(),
-        current_longitude: location.longitude.toString(),
-      };
-
-      try {
-        await changeLocationController({
-          payload,
-          onLocationUpdate: (updatedData) => {
-            console.log('[Location] Updated on server:', updatedData);
-          },
-        });
-      } catch (error) {
-        console.log('[Location] Update failed:', error);
-      }
+    const payload = {
+      current_latitude: location.latitude.toString(),
+      current_longitude: location.longitude.toString(),
     };
 
-    // Update immediately
-    updateLocation();
- 
-    // Then update every 60 seconds
-    interval = setInterval(updateLocation, 600000000);
+    try {
+      await changeLocationController({
+        payload,
+        onLocationUpdate: (updatedData) => {
+          console.log('[Location] Updated on server:', updatedData);
+        },
+      });
+    } catch (error) {
+      console.log('[Location] Update failed:', error);
+    }
+  };
 
-    return () => clearInterval(interval);
-  }, [isOnline]);
+  // Only set up interval if online
+  if (isOnline) {
+    // Remove immediate call - just start the interval
+    interval = setInterval(updateLocation, 60000); // First call after 1 minute ✅
+  }
+ 
+  return () => {
+    if (interval) {
+      clearInterval(interval);
+    }
+  };
+}, [isOnline, location]);
 
   /* ── Monitor battery level ──────────────────────────────────── */
   useEffect(() => {
@@ -340,22 +364,31 @@ export default function HomeScreen({ navigation }) {
           toValue: 0,
           duration: 300,
           useNativeDriver: true,
-        }), 
+        }),
       ]).start();
     }
   };
 
   const acceptRide = (ride) => {
     startRide(ride);
-  setRideRequests(prev => prev.filter(r => r.offer?.order_id !== ride.offer?.order_id));
-    setShowRideRequests(false);
+    setRideRequests(prev => {
+      const remaining = prev.filter(r => r.offer?.order_id !== ride.offer?.order_id);
+      // Hide if no more rides after accepting
+      if (remaining.length === 0) {
+        setShowRideRequests(false);
+      }
+      return remaining;
+    });
   };
 
   const declineRide = (rideId) => {
-    setRideRequests(prev => prev.filter(r => r.offer?.order_id !== rideId));
-    if (rideRequests.length <= 1) {
-      setShowRideRequests(false);
-    }
+    setRideRequests(prev => {
+      const remaining = prev.filter(r => r.offer?.order_id !== rideId);
+      if (remaining.length === 0) {
+        setShowRideRequests(false);
+      }
+      return remaining;
+    });
   };
 
   const handleArrived = () => {
@@ -537,11 +570,15 @@ export default function HomeScreen({ navigation }) {
         onMapClick={handleMapClick}
       />
 
+      <TouchableOpacity style={{ position: 'absolute', top: 80, left:10, backgroundColor: 'red', padding: 10 }} onPress={addTestRide}>
+        <Text style={{color: 'white'}}>Add Test Ride</Text>
+      </TouchableOpacity>
+
       <RideRequestCard
-        ride={rideRequests[0]}
+        rides={rideRequests}
         visible={showRideRequests && rideRequests.length > 0}
         onAccept={acceptRide}
-        onDecline={() => declineRide(rideRequests[0]?.offer?.order_id)}
+        onDecline={declineRide}
         duration={14}
       />
 

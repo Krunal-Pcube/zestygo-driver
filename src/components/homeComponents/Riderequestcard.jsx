@@ -61,9 +61,12 @@ const CountdownButton = ({ remaining, total, onPress, accepted }) => {
   );
 };
 
-/* ─── Main component ─────────────────────────────────────────────── */
-export default function RideRequestCard({
+/* ─── Single Card Component ─────────────────────────────────────── */
+function SingleRideCard({
   ride,
+  index,
+  totalCount,
+  isActive,
   onAccept,
   onDecline,
   visible,
@@ -74,11 +77,17 @@ export default function RideRequestCard({
   const intervalRef = useRef(null);
   const slideY = useRef(new Animated.Value(100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   const soundRef = useRef(null);
 
-  /* ── Sound ────────────────────────────────────────────────────── */
+  // Stack positioning - each card behind is smaller and offset
+  const stackOffset = index * verticalScale(12);
+  const stackScale = 1 - (index * 0.05);
+  const stackOpacity = 1 - (index * 0.15);
+
+  /* ── Sound (only for active/top card) ──────────────────────────── */
   useEffect(() => {
-    if (!visible || accepted) return;
+    if (!visible || !isActive || accepted) return;
 
     let cancelled = false;
 
@@ -104,16 +113,32 @@ export default function RideRequestCard({
         soundRef.current = null;
       }
     };
-  }, [visible, accepted, ride?.id]);
+  }, [visible, isActive, accepted, ride?.id]);
 
-  /* ── Slide in/out ───────────────────────────────────── */
+  /* ── Slide in/out with stack effect ─────────────────────────────── */
   useEffect(() => {
     if (visible) {
-      setRemaining(duration);
-      setAccepted(false);
+      if (isActive) {
+        setRemaining(duration);
+        setAccepted(false);
+      }
       Animated.parallel([
-        Animated.spring(slideY, { toValue: 0, useNativeDriver: true, tension: 80, friction: 12 }),
-        Animated.timing(opacity, { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.spring(slideY, {
+          toValue: isActive ? 0 : stackOffset,
+          useNativeDriver: true,
+          tension: 80,
+          friction: 12
+        }),
+        Animated.timing(opacity, {
+          toValue: isActive ? 1 : stackOpacity,
+          duration: 250,
+          useNativeDriver: true
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: isActive ? 1 : stackScale,
+          duration: 250,
+          useNativeDriver: true
+        }),
       ]).start();
     } else {
       Animated.parallel([
@@ -121,11 +146,11 @@ export default function RideRequestCard({
         Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }),
       ]).start();
     }
-  }, [visible]);
+  }, [visible, isActive, stackOffset, stackScale, stackOpacity, duration]);
 
-  /* ── Countdown tick ─────────────────────────────────── */
+  /* ── Countdown tick (only for active card) ──────────────────────── */
   useEffect(() => {
-    if (!visible || accepted) {
+    if (!isActive || !visible || accepted) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
       return;
@@ -141,33 +166,53 @@ export default function RideRequestCard({
       });
     }, 1000);
     return () => { clearInterval(intervalRef.current); intervalRef.current = null; };
-  }, [visible, accepted, ride?.id]);
+  }, [isActive, visible, accepted, ride?.id]);
 
+  /* ── Auto-decline on timer expiry ──────────────────────────────── */
   useEffect(() => {
-    if (remaining === 0 && visible && !accepted) onDecline?.();
-  }, [remaining, visible, accepted, onDecline]);
-
-  useEffect(() => {
-    if (visible) { setRemaining(duration); setAccepted(false); }
-  }, [visible, ride?.id, duration]);
+    if (remaining === 0 && isActive && visible && !accepted) {
+      onDecline?.();
+    }
+  }, [remaining, isActive, visible, accepted, onDecline]);
 
   const handleAccept = useCallback(() => {
     clearInterval(intervalRef.current);
     setAccepted(true);
     setTimeout(() => onAccept?.(ride), 600);
-  }, [ride]);
+  }, [ride, onAccept]);
 
   if (!visible) return null;
 
+  // Background cards are non-interactive and dimmed
+  const isBackground = !isActive;
+
   return (
-    <Animated.View style={[s.wrapper, { transform: [{ translateY: slideY }], opacity }]}>
-      <View style={s.card}>
+    <Animated.View
+      style={[
+        s.wrapper,
+        {
+          transform: [
+            { translateY: slideY },
+            { scale: scaleAnim }
+          ],
+          opacity,
+          zIndex: 1000 + (totalCount - index),
+          bottom: verticalScale(20) + (index * verticalScale(8)),
+        }
+      ]}
+      pointerEvents={isBackground ? 'none' : 'auto'}
+    >
+      <View style={[s.card, isBackground && s.cardBackground]}>
 
         {/* Badge row */}
-        <BadgeRow onClose={onDecline} orderType={ride?.order?.order_type} scheduleType={ride?.order?.schedule_type} />
+        <BadgeRow
+          onClose={isActive ? onDecline : null}
+          orderType={ride?.order?.order_type}
+          scheduleType={ride?.order?.schedule_type}
+        />
 
         {/* Price */}
-        <Text style={s.price}>
+        <Text style={[s.price, isBackground && s.textMuted]}>
           ${(ride?.payout?.delivery_fee_amount || 0).toFixed(2)} + {(ride?.payout?.tip_amount || 0).toFixed(2)} (Tip)
         </Text>
         <View style={s.taxPill}>
@@ -183,13 +228,13 @@ export default function RideRequestCard({
               <LocationFilledIcon width={scale(14)} height={scale(14)} fill="#1A1A1A" />
             </View>
             <View style={s.routeTextItem}>
-              <Text style={s.routeTime}>
+              <Text style={[s.routeTime, isBackground && s.textMuted]}>
                 {`${ride?.eta?.to_restaurant_minutes ?? 0} min (${ride?.route?.to_restaurant_km ?? 0} km)`}
               </Text>
-              <Text style={s.routeName} numberOfLines={1}>
+              <Text style={[s.routeName, isBackground && s.textMuted]} numberOfLines={1}>
                 {ride?.restaurant?.name ?? ''}
               </Text>
-              <Text style={s.routeSubName} numberOfLines={2}>
+              <Text style={[s.routeSubName, isBackground && s.textMuted]} numberOfLines={2}>
                 {ride?.restaurant?.address ?? ''}
               </Text>
             </View>
@@ -208,13 +253,13 @@ export default function RideRequestCard({
               <LocationFilledIcon width={scale(14)} height={scale(14)} fill="#AAAAAA" />
             </View>
             <View style={s.routeTextItem}>
-              <Text style={s.routeTime}>
+              <Text style={[s.routeTime, isBackground && s.textMuted]}>
                 {`${ride?.eta?.to_customer_minutes ?? 0} min (${ride?.route?.to_customer_km ?? 0} km)`}
               </Text>
-              <Text style={s.routeName} numberOfLines={1}>
+              <Text style={[s.routeName, isBackground && s.textMuted]} numberOfLines={1}>
                 {ride?.customer?.name ?? ''}
               </Text>
-              <Text style={s.routeSubName} numberOfLines={2}>
+              <Text style={[s.routeSubName, isBackground && s.textMuted]} numberOfLines={2}>
                 {ride?.customer?.address ?? ''}
               </Text>
             </View>
@@ -222,27 +267,74 @@ export default function RideRequestCard({
 
         </View>
 
-        {/* Countdown button */}
-        <CountdownButton
-          remaining={remaining}
-          total={duration}
-          onPress={handleAccept}
-          accepted={accepted}
-        />
+        {/* Countdown button - only for active card */}
+        {isActive && (
+          <CountdownButton
+            remaining={remaining}
+            total={duration}
+            onPress={handleAccept}
+            accepted={accepted}
+          />
+        )}
+
+        {/* Queue indicator for background cards */}
+        {isBackground && (
+          <View style={s.queueIndicator}>
+            <Text style={s.queueText}>#{index + 1} in queue</Text>
+          </View>
+        )}
 
       </View>
     </Animated.View>
   );
 }
 
+/* ─── Stacked Cards Component ───────────────────────────────────── */
+export default function RideRequestCard({
+  rides,
+  onAccept,
+  onDecline,
+  visible,
+  duration = 14,
+}) {
+  if (!visible || !rides || rides.length === 0) return null;
+
+  return (
+    <View style={s.stackContainer}>
+      {rides.map((ride, index) => (
+        <SingleRideCard
+          key={ride.offer?.order_id || index}
+          ride={ride}
+          index={index}
+          totalCount={rides.length}
+          isActive={index === 0}
+          onAccept={onAccept}
+          onDecline={() => onDecline?.(ride.offer?.order_id)}
+          visible={visible}
+          duration={duration}
+        />
+      ))}
+    </View>
+  );
+}
+
 /* ─── Styles ─────────────────────────────────────────────────────── */
 const s = StyleSheet.create({
+  stackContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    top: 0,
+    pointerEvents: 'box-none',
+    zIndex: 999,
+  },
   wrapper: {
     position: 'absolute',
     bottom: verticalScale(20),
     left: scale(16),
     right: scale(16),
-    zIndex: 100,
+    zIndex: 1000,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -251,6 +343,27 @@ const s = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.secondary,
     overflow: 'hidden',
+  },
+  cardBackground: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#DDDDDD',
+  },
+  textMuted: {
+    color: '#999999',
+  },
+  queueIndicator: {
+    position: 'absolute',
+    top: scale(16),
+    right: scale(16),
+    backgroundColor: '#F2F2F2',
+    paddingHorizontal: scale(10),
+    paddingVertical: verticalScale(4),
+    borderRadius: scale(20),
+  },
+  queueText: {
+    fontSize: moderateScale(12),
+    fontFamily: fonts.medium,
+    color: '#666666',
   },
 
   /* Badge row */
