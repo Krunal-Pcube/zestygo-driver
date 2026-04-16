@@ -69,6 +69,7 @@ function SingleRideCard({
   isActive,
   onAccept,
   onDecline,
+  onAutoDecline,
   visible,
   duration = 14,
 }) {
@@ -171,9 +172,9 @@ function SingleRideCard({
   /* ── Auto-decline on timer expiry ──────────────────────────────── */
   useEffect(() => {
     if (remaining === 0 && isActive && visible && !accepted) {
-      onDecline?.();
+      onAutoDecline?.(); // No API call for auto-decline
     }
-  }, [remaining, isActive, visible, accepted, onDecline]);
+  }, [remaining, isActive, visible, accepted, onAutoDecline]);
 
   const handleAccept = useCallback(() => {
     clearInterval(intervalRef.current);
@@ -294,6 +295,7 @@ export default function RideRequestCard({
   rides,
   onAccept,
   onDecline,
+  onAutoDecline,
   visible,
   duration = 14,
 }) {
@@ -309,7 +311,8 @@ export default function RideRequestCard({
           totalCount={rides.length}
           isActive={index === 0}
           onAccept={onAccept}
-          onDecline={() => onDecline?.(ride.offer?.order_id)}
+          onDecline={() => onDecline?.(ride)}
+          onAutoDecline={() => onAutoDecline?.(ride)}
           visible={visible}
           duration={duration}
         />

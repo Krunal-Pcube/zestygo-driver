@@ -35,6 +35,7 @@ import { RatingModal, EarningsModal, ChatModal } from '../../components/homeComp
 import StatsContent from '../../components/homeComponents/StatsContent';
 import useRideState from '../../hooks/useRideState';
 import { changeLocationController } from '../../MVC/controllers/driverStatusController';
+import { acceptOrderController, rejectOrderController } from '../../MVC/controllers/driverAssignmentController';
 import { requestLocationPermission, checkAndPromptGPSEnabled } from '../../utils/gpsHelpers';
 import { onSocketEvent, offSocketEvent } from '../../services/socketIndex';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -95,6 +96,7 @@ export default function HomeScreen({ navigation }) {
   const [gpsReady, setGpsReady] = useState(false);
   const [cameraHeading, setCameraHeading] = useState(0);
   const [showLowBatteryAlert, setShowLowBatteryAlert] = useState(false);
+  const hasShownBatteryAlertRef = useRef(false);
 
   const mapRef = useRef(null);
   const bottomSheetRef = useRef(null);
@@ -232,6 +234,7 @@ export default function HomeScreen({ navigation }) {
 
     const handleNewOrderOffer = (orderData) => {
       console.log('[Socket] New order offer received:', orderData);
+
       if (rideData) {
         console.log('[Socket] Ignoring offer - already on an active ride');
         return;
@@ -258,43 +261,46 @@ export default function HomeScreen({ navigation }) {
 
 
   /* ── Update location to backend every minute when online ──── */
-useEffect(() => {
-  let interval;
+  const locationRef = useRef(location);
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
 
-  const updateLocation = async () => {
-    if (!isOnline || !location?.latitude || !location?.longitude) {
-      return;
-    }
+  useEffect(() => {
+    let interval;
 
-    const payload = {
-      current_latitude: location.latitude.toString(),
-      current_longitude: location.longitude.toString(),
+    const updateLocation = async () => {
+      if (!isOnline || !locationRef.current?.latitude || !locationRef.current?.longitude) {
+        return;
+      }
+
+      const payload = {
+        current_latitude: locationRef.current.latitude.toString(),
+        current_longitude: locationRef.current.longitude.toString(),
+      };
+
+      try {
+        await changeLocationController({
+          payload,
+          onLocationUpdate: (updatedData) => {
+            console.log('[Location] Updated on server:', updatedData);
+          },
+        });
+      } catch (error) {
+        console.log('[Location] Update failed:', error);
+      }
     };
 
-    try {
-      await changeLocationController({
-        payload,
-        onLocationUpdate: (updatedData) => {
-          console.log('[Location] Updated on server:', updatedData);
-        },
-      });
-    } catch (error) {
-      console.log('[Location] Update failed:', error);
+    if (isOnline) {
+      interval = setInterval(updateLocation, 60000);
     }
-  };
 
-  // Only set up interval if online
-  if (isOnline) {
-    // Remove immediate call - just start the interval
-    interval = setInterval(updateLocation, 60000); // First call after 1 minute ✅
-  }
- 
-  return () => {
-    if (interval) {
-      clearInterval(interval);
-    }
-  };
-}, [isOnline, location]);
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isOnline]);
 
   /* ── Monitor battery level ──────────────────────────────────── */
   useEffect(() => {
@@ -306,7 +312,8 @@ useEffect(() => {
         const batteryPercent = level * 100;
 
         // Show alert if battery is below 20% and not already shown
-        if (batteryPercent <= 20 && batteryPercent > 0 && !showLowBatteryAlert) {
+        if (batteryPercent <= 20 && batteryPercent > 0 && !hasShownBatteryAlertRef.current) {
+          hasShownBatteryAlertRef.current = true;
           setShowLowBatteryAlert(true);
           Alert.alert(
             'Low Battery Warning',
@@ -314,7 +321,10 @@ useEffect(() => {
             [
               {
                 text: 'OK',
-                onPress: () => setShowLowBatteryAlert(false)
+                onPress: () => {
+                  setShowLowBatteryAlert(false);
+                  hasShownBatteryAlertRef.current = false;
+                }
               }
             ]
           );
@@ -331,7 +341,7 @@ useEffect(() => {
     interval = setInterval(checkBattery, 60000);
 
     return () => clearInterval(interval);
-  }, [showLowBatteryAlert]);
+  }, []);
 
   /* ── Chevron follows sheet index ─────────────────────────────── */
   useEffect(() => {
@@ -369,21 +379,75 @@ useEffect(() => {
     }
   };
 
-  const acceptRide = (ride) => {
-    startRide(ride);
-    setRideRequests(prev => {
-      const remaining = prev.filter(r => r.offer?.order_id !== ride.offer?.order_id);
-      // Hide if no more rides after accepting
-      if (remaining.length === 0) {
-        setShowRideRequests(false);
-      }
-      return remaining;
+  const acceptRide = async (ride) => {
+    const assignmentId = ride?.offer?.assignment_id;
+    if (!assignmentId) {
+      console.error('[Accept] No assignment_id in ride:', ride);
+      Alert.alert('Error', 'Assignment ID not found');
+      return;
+    }
+
+    const success = await acceptOrderController({
+      payload: { assignment_id: assignmentId },
+      onSuccess: (data) => {
+        console.log('[Accept] API success:', data);
+        // Merge socket data + API response + timestamp
+        const completeRideData = {
+          ...ride,
+          apiResponse: data,
+          assignmentId,
+        };
+
+        // This saves to AsyncStorage via startRide
+        startRide(completeRideData);
+
+        // Remove from requests UI
+        setRideRequests(prev => {
+          const remaining = prev.filter(r => r.offer?.order_id !== ride.offer?.order_id);
+          if (remaining.length === 0) {
+            setShowRideRequests(false);
+          }
+          return remaining;
+        });
+      },
     });
+
+    if (!success) {
+      console.log('[Accept] API failed');
+    }
+  }
+
+  const declineRide = async (ride) => {
+    const assignmentId = ride?.offer?.assignment_id;
+    if (!assignmentId) {
+      console.error('[Decline] No assignment_id in ride:', ride);
+      Alert.alert('Error', 'Assignment ID not found');
+      return;
+    }
+
+    const success = await rejectOrderController({
+      payload: { assignment_id: assignmentId },
+      onSuccess: () => {
+        console.log('[Decline] API success');
+        setRideRequests(prev => {
+          const remaining = prev.filter(r => r.offer?.order_id !== ride.offer?.order_id);
+          if (remaining.length === 0) {
+            setShowRideRequests(false);
+          }
+          return remaining;
+        });
+      },
+    });
+
+    if (!success) {
+      console.log('[Decline] API failed');
+    }
   };
 
-  const declineRide = (rideId) => {
+  const autoDeclineRide = (ride) => {
+    console.log('[AutoDecline] Timer expired, removing from UI without API call');
     setRideRequests(prev => {
-      const remaining = prev.filter(r => r.offer?.order_id !== rideId);
+      const remaining = prev.filter(r => r.offer?.order_id !== ride.offer?.order_id);
       if (remaining.length === 0) {
         setShowRideRequests(false);
       }
@@ -404,9 +468,19 @@ useEffect(() => {
 
     let destination;
     if (currentStep === 'going_to_pickup' || currentStep === 'arrived_at_pickup') {
-      destination = rideData.pickup?.coordinate;
+   
+      destination = rideData.restaurant ? {
+      latitude: parseFloat(rideData.restaurant.latitude),
+      longitude: parseFloat(rideData.restaurant.longitude)
+    } : null;
+   
     } else if (currentStep === 'going_to_dropoff' || currentStep === 'arrived_at_dropoff') {
-      destination = rideData.dropoff?.coordinate;
+     
+       destination = rideData.customer ? {
+      latitude: parseFloat(rideData.customer.latitude),
+      longitude: parseFloat(rideData.customer.longitude)
+    } : null;
+
     }
 
     if (!destination) {
@@ -458,10 +532,14 @@ useEffect(() => {
     }
   }, [rideData]);
 
-  const animateChevron = useCallback((toIndex) => setSheetIndex(toIndex), []);
-  const handleSheetChange = useCallback((index) => setSheetIndex(index), []);
+  const handleOpenChat = useCallback(() => {
+    setShowChatModal(true);
+  }, []);
 
-  /* ── Re-center on real GPS location ──────────────────────────── */
+  const handleCloseChat = useCallback(() => {
+    setShowChatModal(false);
+  }, []);
+
   const handleLocate = useCallback(() => {
     Geolocation.getCurrentPosition(
       pos => {
@@ -486,6 +564,9 @@ useEffect(() => {
   const handleMapClick = useCallback(() => {
   }, [navigation, rideData, location]);
 
+  const animateChevron = useCallback((toIndex) => setSheetIndex(toIndex), []);
+  const handleSheetChange = useCallback((index) => setSheetIndex(index), []);
+
   const handleShowRating = useCallback(() => {
     setShowRatingModal(true);
   }, []);
@@ -498,14 +579,6 @@ useEffect(() => {
   const handleCloseRatingModal = useCallback(() => {
     setShowRatingModal(false);
     setShowEarningsModal(true);
-  }, []);
-
-  const handleOpenChat = useCallback(() => {
-    setShowChatModal(true);
-  }, []);
-
-  const handleCloseChat = useCallback(() => {
-    setShowChatModal(false);
   }, []);
 
   const handleEarningsDone = useCallback(() => {
@@ -555,7 +628,7 @@ useEffect(() => {
       <HomeHeader navigation={navigation} earnings={earnings} notificationCount={notificationCount} />
 
       <MapComponent
-        key={`map-${isFocused ? 'focused' : 'blurred'}`}
+        // key={`map-${isFocused ? 'focused' : 'blurred'}`}
         location={location}
         heading={heading}
         cameraHeading={cameraHeading}
@@ -570,8 +643,8 @@ useEffect(() => {
         onMapClick={handleMapClick}
       />
 
-      <TouchableOpacity style={{ position: 'absolute', top: 80, left:10, backgroundColor: 'red', padding: 10 }} onPress={addTestRide}>
-        <Text style={{color: 'white'}}>Add Test Ride</Text>
+      <TouchableOpacity style={{ position: 'absolute', top: 80, left: 10, backgroundColor: 'red', padding: 10 }} onPress={addTestRide}>
+        <Text style={{ color: 'white' }}>Add Test Ride</Text>
       </TouchableOpacity>
 
       <RideRequestCard
@@ -579,6 +652,7 @@ useEffect(() => {
         visible={showRideRequests && rideRequests.length > 0}
         onAccept={acceptRide}
         onDecline={declineRide}
+        onAutoDecline={autoDeclineRide}
         duration={14}
       />
 

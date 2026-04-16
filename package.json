@@ -10,7 +10,7 @@
     "realmerev": "adb -s adb-VOUWQSX4GYQC7TT4-0xiAZd._adb-tls-connect._tcp reverse tcp:8082 tcp:8082",
     "realmestart": "cross-env ANDROID_SERIAL=adb-VOUWQSX4GYQC7TT4-0xiAZd._adb-tls-connect._tcp react-native run-android --port 8082",
     "test": "jest",
-    "rev": "adb reverse tcp:9090 tcp:9090"
+    "rev": "adb reverse tcp:8081 tcp:8081"
   },
   "dependencies": {
     "@callstack/liquid-glass": "^0.7.1",

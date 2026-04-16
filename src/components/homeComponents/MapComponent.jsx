@@ -418,7 +418,12 @@ export default function MapComponent({
   const mapFocus = stepConfig?.mapFocus ?? 'driver';
 
   // Get coordinates
-  const restaurantCoord = activeRide?.pickup?.coordinate;
+ 
+const restaurantCoord = activeRide?.restaurant ? {
+  latitude: parseFloat(activeRide.restaurant.latitude),
+  longitude: parseFloat(activeRide.restaurant.longitude)
+} : null;
+
   const customerCoord = activeRide?.dropoff?.coordinate;
 
   // Camera focus effect - animate to different points based on step
@@ -426,34 +431,32 @@ export default function MapComponent({
     if (!mapRef.current || !activeRide) return;
 
     let targetCoord = location;
-    let zoomLevel = 16;
 
     switch (mapFocus) {
       case 'restaurant':
         targetCoord = restaurantCoord || location;
-        zoomLevel = 17;
         break;
       case 'customer':
         targetCoord = customerCoord || location;
-        zoomLevel = 17;
         break;
       case 'driver':
       default:
         targetCoord = location;
-        zoomLevel = 16;
     }
 
+    if (!targetCoord) return;
+    
     // Animate camera to target
     mapRef.current.animateCamera(
       {
         center: targetCoord,
         heading: 0,
         pitch: 0,
-        zoom: zoomLevel,
+      
       },
-      { duration: 800 }
+      { duration: 300 }
     );
-  }, [mapFocus, activeRide, location, restaurantCoord, customerCoord]);
+  }, [mapFocus, activeRide, location,]);
 
   const [routeCoordinates, setRouteCoordinates] = useState([]);
 

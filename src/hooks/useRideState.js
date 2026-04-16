@@ -4,7 +4,14 @@
  * Easy to extend with new steps
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+
+import {
+  getActiveRide,
+  saveActiveRide,
+  updateRideStep,
+  completeActiveRide
+} from '../utils/storage/rideStorage';
 
 // ═══════════════════════════════════════════════════════════════
 // RIDE STEPS - Add new steps here as needed
@@ -80,36 +87,62 @@ export function useRideState() {
   const [currentStep, setCurrentStep] = useState(RIDE_STEPS.IDLE);
   const [rideData, setRideData] = useState(null);
 
-  const startRide = useCallback((ride) => {
+  useEffect(() => {
+    const loadSavedRide = async () => {
+      const saved = await getActiveRide();
+      if (saved?.data && saved?.step) {
+        setRideData(saved.data);
+        setCurrentStep(saved.step);
+      }
+    };
+    loadSavedRide();
+  }, []);
+
+
+
+  const startRide = useCallback(async (ride) => {
     setRideData(ride);
     setCurrentStep(RIDE_STEPS.GOING_TO_PICKUP);
+     await saveActiveRide(ride, RIDE_STEPS.GOING_TO_PICKUP);
   }, []);
 
-  const arriveAtPickup = useCallback(() => {
+   const arriveAtPickup = useCallback(async () => {
     setCurrentStep(RIDE_STEPS.ARRIVED_AT_PICKUP);
-  }, []);
+    if (rideData) {
+      await updateRideStep(rideData.offer?.order_id, RIDE_STEPS.ARRIVED_AT_PICKUP);
+    }
+  }, [rideData]);
 
-  const startDropoff = useCallback(() => {
+
+  const startDropoff = useCallback(async () => {
     setCurrentStep(RIDE_STEPS.GOING_TO_DROPOFF);
-  }, []);
+    if (rideData) {
+      await updateRideStep(rideData.offer?.order_id, RIDE_STEPS.GOING_TO_DROPOFF);
+    }
+  }, [rideData]);
 
-  const arriveAtDropoff = useCallback(() => {
+
+   const arriveAtDropoff = useCallback(async () => {
     setCurrentStep(RIDE_STEPS.ARRIVED_AT_DROPOFF);
-  }, []);
+    if (rideData) {
+      await updateRideStep(rideData.offer?.order_id, RIDE_STEPS.ARRIVED_AT_DROPOFF);
+    }
+  }, [rideData]);
 
-  const completeRide = useCallback(() => {
+
+ const completeRide = useCallback(async () => {
     setCurrentStep(RIDE_STEPS.COMPLETED);
     setRideData(null);
+    await completeActiveRide(); // Clears storage
   }, []);
-
-  const cancelRide = useCallback(() => {
+ 
+  const cancelRide = useCallback(async () => {
     setCurrentStep(RIDE_STEPS.IDLE);
     setRideData(null);
+    await completeActiveRide(); // Clears storage
   }, []);
 
-  const getCurrentConfig = useCallback(() => {
-    return STEP_CONFIG[currentStep] || STEP_CONFIG[RIDE_STEPS.GOING_TO_PICKUP];
-  }, [currentStep]);
+
 
   const isActive = currentStep !== RIDE_STEPS.IDLE && currentStep !== RIDE_STEPS.COMPLETED;
 
@@ -118,8 +151,8 @@ export function useRideState() {
     currentStep,
     rideData,
     isActive,
-    config: getCurrentConfig(),
-    
+    config: STEP_CONFIG[currentStep] || {},
+
     // Actions
     startRide,
     arriveAtPickup,
@@ -127,11 +160,9 @@ export function useRideState() {
     arriveAtDropoff,
     completeRide,
     cancelRide,
-    
     // Helpers
     RIDE_STEPS,
   };
 }
 
 export default useRideState;
- 

@@ -56,6 +56,17 @@ export default function ActiveRideBottomSheet({
   // Get config based on current step
   const stepConfig = STEP_CONFIG[rideStep] || STEP_CONFIG[RIDE_STEPS.GOING_TO_PICKUP];
   const snapPoints = useMemo(() => [stepConfig.bottomSheetHeight], [stepConfig.bottomSheetHeight]);
+ 
+    // Get distance and ETA based on current step
+  const isGoingToPickup = rideStep === RIDE_STEPS.GOING_TO_PICKUP || rideStep === RIDE_STEPS.ARRIVED_AT_PICKUP;
+  
+  const distance = isGoingToPickup 
+    ? ride?.route?.to_restaurant_km || '0.0'
+    : ride?.route?.to_customer_km || '0.0';
+    
+  const eta = isGoingToPickup
+    ? ride?.eta?.to_restaurant_minutes || '0'
+    : ride?.eta?.to_customer_minutes || '0';
 
   const handleSheetChange = useCallback((index) => {
     setSheetIndex(index);
@@ -216,9 +227,6 @@ export default function ActiveRideBottomSheet({
   }, [isVisible, ride]);
 
   if (!isVisible || !ride) return null;
-
-  const distance = ride?.pickup?.distance || '0.0';
-  const eta = ride?.pickup?.eta || '0';
 
   return (
     <>
