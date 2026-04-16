@@ -460,17 +460,20 @@ export default function HomeScreen({ navigation }) {
   const handleArrived = async () => {
     // Get current order based on current stop index
     const currentOrder = getCurrentOrder();
-    const orderId = currentOrder?.order_id;
+    // Use delivery_trip_order_id (e.g., 2) instead of order_id (e.g., 44)
+    const deliveryTripOrderId = currentOrder?.id;
 
-    if (!orderId) {
-      console.error('[Arrived] No order ID found');
+    if (!deliveryTripOrderId) {
+      console.error('[Arrived] No delivery trip order ID found');
       Alert.alert('Error', 'Order ID not found');
       return;
     }
 
+    console.log('[Arrived] Using delivery_trip_order_id:', deliveryTripOrderId);
+
     // Update order status to "at_restaurant"
     const success = await updateOrderStatusController({
-      orderId,
+      deliveryTripOrderId,
       payload: { status: 'at_restaurant' },
       onStatusUpdate: (data) => {
         console.log('[Arrived] Status updated:', data);
@@ -483,6 +486,36 @@ export default function HomeScreen({ navigation }) {
       console.log('[Arrived] Failed to update status');
     }
   };
+
+  const handleCompletePickup = useCallback(async () => {
+    // Get current order based on current stop index
+    const currentOrder = getCurrentOrder();
+    // Use delivery_trip_order_id (e.g., 2) instead of order_id (e.g., 44)
+    const deliveryTripOrderId = currentOrder?.id;
+
+    if (!deliveryTripOrderId) {
+      console.error('[CompletePickup] No delivery trip order ID found');
+      Alert.alert('Error', 'Order ID not found');
+      return;
+    }
+
+    console.log('[CompletePickup] Using delivery_trip_order_id:', deliveryTripOrderId);
+
+    // Update order status to "picked_up"
+    const success = await updateOrderStatusController({
+      deliveryTripOrderId,
+      payload: { status: 'picked_up' },
+      onStatusUpdate: (data) => {
+        console.log('[CompletePickup] Status updated to picked_up:', data);
+        // Then advance to next stop (start dropoff)
+        startDropoff();
+      },
+    });
+
+    if (!success) {
+      console.log('[CompletePickup] Failed to update status');
+    }
+  }, [getCurrentOrder, startDropoff]);
 
   const handleNavigate = useCallback(async () => {
     if (!rideData || !location) {
@@ -627,6 +660,36 @@ export default function HomeScreen({ navigation }) {
     setShowRatingModal(true);
   }, []);
 
+  const handleCompleteDelivery = useCallback(async () => {
+    // Get current order based on current stop index
+    const currentOrder = getCurrentOrder();
+    // Use delivery_trip_order_id (e.g., 2) instead of order_id (e.g., 44)
+    const deliveryTripOrderId = currentOrder?.id;
+
+    if (!deliveryTripOrderId) {
+      console.error('[CompleteDelivery] No delivery trip order ID found');
+      Alert.alert('Error', 'Order ID not found');
+      return;
+    }
+
+    console.log('[CompleteDelivery] Using delivery_trip_order_id:', deliveryTripOrderId);
+
+    // Update order status to "delivered"
+    const success = await updateOrderStatusController({
+      deliveryTripOrderId,
+      payload: { status: 'delivered' },
+      onStatusUpdate: (data) => {
+        console.log('[CompleteDelivery] Status updated to delivered:', data);
+        // Then show rating modal
+        handleShowRating();
+      },
+    });
+
+    if (!success) {
+      console.log('[CompleteDelivery] Failed to update status');
+    }
+  }, [getCurrentOrder, handleShowRating]);
+
   const handleRatingSubmit = useCallback(() => {
     setShowRatingModal(false);
     setShowEarningsModal(true);
@@ -725,9 +788,9 @@ export default function HomeScreen({ navigation }) {
         onCall={handleCall}
         onChat={handleOpenChat}
         onCancel={handleCancelRide}
-        onStartDropoff={startDropoff}
+        onStartDropoff={handleCompletePickup}
         onCompleteRide={completeRide}
-        onShowRating={handleShowRating}
+        onShowRating={handleCompleteDelivery}
       />
 
       {/* Rating Modal */}

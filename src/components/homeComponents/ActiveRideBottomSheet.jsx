@@ -167,10 +167,7 @@ export default function ActiveRideBottomSheet({
     // Note: isOrderVerified is intentionally preserved
   };
 
-  // Handle complete delivery - show delivery info modal instead of rating directly
-  const handleCompleteDelivery = () => {
-    setShowDeliveryInfo(true);
-  };
+
 
   // Handle confirm order - show drop off order modal
   const handleConfirmOrder = () => {

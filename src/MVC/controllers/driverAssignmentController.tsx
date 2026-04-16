@@ -92,12 +92,12 @@ export const rejectOrderController = async ({ payload, onSuccess }) => {
 
 // ✅ Update Order Status
 export const updateOrderStatusController = async ({
-  orderId,
+  deliveryTripOrderId,
   payload,
   onStatusUpdate,
 }) => {
   try {
-    const res = await updateOrderStatus(orderId, payload); 
+    const res = await updateOrderStatus(deliveryTripOrderId, payload); 
 
     if (res?.data?.status === 200) {
       const data = res.data.data;
@@ -133,7 +133,7 @@ export const updateOrderStatusController = async ({
     });
 
     throw error;
-  }
+  } 
 };
 
 
@@ -146,29 +146,19 @@ export const getTripDetailsController = async ({ deliveryTripId, onSuccess }) =>
 
     if (!deliveryTripId) {
       console.error('[getTripDetailsController] No deliveryTripId provided!');
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Trip ID is missing',
-        position: 'top',
-        topOffset: 50,
-      });
       return null;
     }
 
     const res = await getTripDetails(deliveryTripId);
-    console.log('[getTripDetailsController] API response:', res?.data);
-
+ 
     if (res?.data?.status === 200) {
       const data = res.data.data;
-      console.log('[getTripDetailsController] Success, trip:', data?.trip_number || data?.id);
 
       onSuccess?.(data);
 
-      return data;
+      return data; // useful if you want to use directly
     }
 
-    console.error('[getTripDetailsController] API error:', res?.data);
     Toast.show({
       type: 'error',
       text1: 'Failed',
@@ -179,7 +169,6 @@ export const getTripDetailsController = async ({ deliveryTripId, onSuccess }) =>
 
     return null;
   } catch (error) {
-    console.error('[getTripDetailsController] Exception:', error?.response?.data || error?.message);
     Toast.show({
       type: 'error',
       text1: 'Error',

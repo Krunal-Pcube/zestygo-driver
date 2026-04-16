@@ -10,8 +10,8 @@ export const rejectOrder = payload => {
 }; 
 
 
-export const updateOrderStatus = (orderId, payload) => {
-  return ApiHelper.put(`driver/assignment/order-status/${orderId}`, payload);
+export const updateOrderStatus = (deliveryTripOrderId, payload) => {
+  return ApiHelper.put(`driver/assignment/order-status/${deliveryTripOrderId}`, payload);
 };
 
 

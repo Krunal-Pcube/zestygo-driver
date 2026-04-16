@@ -435,22 +435,38 @@ export default function MapComponent({
     ) || activeRide?.delivery_trip_orders?.[0];
   }, [currentStop, activeRide?.delivery_trip_orders]);
 
-  // Get coordinates from current stop or order
-  const restaurantCoord = currentStop?.stop_type === 'pickup' && currentStop?.latitude ? {
-    latitude: parseFloat(currentStop.latitude),
-    longitude: parseFloat(currentStop.longitude)
-  } : activeOrder?.restaurant_latitude ? {
-    latitude: parseFloat(activeOrder.restaurant_latitude),
-    longitude: parseFloat(activeOrder.restaurant_longitude)
-  } : null;
+  // Get coordinates from current stop or order (memoized to prevent re-renders)
+  const restaurantCoord = useMemo(() => {
+    if (currentStop?.stop_type === 'pickup' && currentStop?.latitude) {
+      return {
+        latitude: parseFloat(currentStop.latitude),
+        longitude: parseFloat(currentStop.longitude)
+      };
+    }
+    if (activeOrder?.restaurant_latitude) {
+      return {
+        latitude: parseFloat(activeOrder.restaurant_latitude),
+        longitude: parseFloat(activeOrder.restaurant_longitude)
+      };
+    }
+    return null;
+  }, [currentStop, activeOrder]);
 
-  const customerCoord = currentStop?.stop_type === 'drop' && currentStop?.latitude ? {
-    latitude: parseFloat(currentStop.latitude),
-    longitude: parseFloat(currentStop.longitude)
-  } : activeOrder?.order?.order_address ? {
-    latitude: parseFloat(activeOrder.order.order_address.latitude),
-    longitude: parseFloat(activeOrder.order.order_address.longitude)
-  } : null;
+  const customerCoord = useMemo(() => {
+    if (currentStop?.stop_type === 'drop' && currentStop?.latitude) {
+      return {
+        latitude: parseFloat(currentStop.latitude),
+        longitude: parseFloat(currentStop.longitude)
+      };
+    }
+    if (activeOrder?.order?.order_address?.latitude) {
+      return {
+        latitude: parseFloat(activeOrder.order.order_address.latitude),
+        longitude: parseFloat(activeOrder.order.order_address.longitude)
+      };
+    }
+    return null;
+  }, [currentStop, activeOrder]);
 
   // Camera focus effect - animate to different points based on step
   useEffect(() => {
