@@ -33,13 +33,25 @@ export default function ArrivedAtPickupView({
   onShowConfirmation,
   onVerifyOrder,
 }) {
-  const restaurant = ride?.pickup;
-  const customerName = ride?.passengerName || 'Kelsey Lavin';
-  const orderCount = 1;
-  const items = '2 items';
-  const expectedTime = '10:32 AM';
-  const address = restaurant?.address || '1582 Queen St W, Toronto, ON M6R 1A6, Canada';
-  const note = 'Park near restaurant. Go in the front entrance, say with FDS Driver. Verify order #230203';
+  // Get active order from delivery_trip_orders
+  const activeOrder = ride?.delivery_trip_orders?.[0];
+
+  // Restaurant info
+  const restaurantName = activeOrder?.restaurant_name || "Restaurant";
+  const restaurantAddress = activeOrder?.restaurant_address || '';
+  const restaurantPhone = activeOrder?.restaurant_contact_number;
+
+  // Customer info
+  const customerName = activeOrder?.customer_name || 'Customer';
+  const orderNumber = activeOrder?.order?.order_number || '';
+  const orderItems = activeOrder?.order?.order_items || [];
+  const itemsText = orderItems.length > 0 ? `${orderItems.length} items` : '';
+
+  // Note from restaurant
+  const note = activeOrder?.order?.restaurant_instructions || 'No special instructions';
+
+  // Order count
+  const orderCount = ride?.delivery_trip_orders?.length || 1;
 
   return (
     <View style={styles.container}>
@@ -66,8 +78,11 @@ export default function ArrivedAtPickupView({
       <View style={styles.restaurantSection}>
         <View style={styles.restaurantHeader}>
           <View style={styles.restaurantInfo}>
-            <Text style={styles.restaurantName}>{restaurant?.name || "Dave's Hot Chicken"}</Text>
-            <Text style={styles.restaurantAddress}>{address}</Text>
+            <Text style={styles.restaurantName}>{restaurantName}</Text>
+            <Text style={styles.restaurantAddress}>{restaurantAddress}</Text>
+            {restaurantPhone && (
+              <Text style={styles.phoneNumber}>📞 {restaurantPhone}</Text>
+            )}
           </View>
           <TouchableOpacity style={styles.phoneBtn} onPress={onCall} activeOpacity={0.7}>
             <View style={styles.phoneIconBg}>
@@ -91,8 +106,8 @@ export default function ArrivedAtPickupView({
         <View style={styles.customerHeader}>
           <View style={styles.customerInfo}>
             <Text style={styles.customerName}>{customerName}</Text>
-            <Text style={styles.orderDetails}>308YY • {items}</Text>
-            <Text style={styles.expectedTime}>Expected time {expectedTime}</Text>
+            <Text style={styles.orderDetails}>{orderNumber} • {itemsText}</Text>
+            <Text style={styles.expectedTime}>ETA: {eta} min</Text>
           </View>
           {isOrderVerified ? (
             <View style={styles.verifiedBadge}>
@@ -204,6 +219,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  phoneNumber: {
+    fontSize: moderateScale(13),
+    color: colors.grey,
+    marginTop: verticalScale(4),
   },
   noteSection: {
     marginBottom: verticalScale(16),

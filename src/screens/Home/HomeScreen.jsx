@@ -33,9 +33,9 @@ import BottomSheetComponent from '../../components/homeComponents/bottomsheetCom
 import ActiveRideBottomSheet from '../../components/homeComponents/ActiveRideBottomSheet';
 import { RatingModal, EarningsModal, ChatModal } from '../../components/homeComponents/TripCompletionModals';
 import StatsContent from '../../components/homeComponents/StatsContent';
-import useRideState from '../../hooks/useRideState';
+import useRideState, { RIDE_STEPS } from '../../hooks/useRideState';
 import { changeLocationController } from '../../MVC/controllers/driverStatusController';
-import { acceptOrderController, rejectOrderController } from '../../MVC/controllers/driverAssignmentController';
+import { acceptOrderController, rejectOrderController, updateOrderStatusController } from '../../MVC/controllers/driverAssignmentController';
 import { requestLocationPermission, checkAndPromptGPSEnabled } from '../../utils/gpsHelpers';
 import { onSocketEvent, offSocketEvent } from '../../services/socketIndex';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -54,12 +54,16 @@ export default function HomeScreen({ navigation }) {
     currentStep,
     rideData,
     isActive,
+    currentStopIndex,
+    totalStops,
     startRide,
     arriveAtPickup,
     startDropoff,
     arriveAtDropoff,
     completeRide,
     cancelRide,
+    getCurrentStop,
+    getCurrentOrder,
   } = useRideState();
 
   const [isOnline, setIsOnline] = useState(false);
@@ -230,6 +234,9 @@ export default function HomeScreen({ navigation }) {
 
   /* ── Real socket ride requests while online ───────────────────── */
   useEffect(() => {
+  
+    console.log("isOnline :::", isOnline)
+  
     if (!isOnline) return;
 
     const handleNewOrderOffer = (orderData) => {
@@ -261,51 +268,51 @@ export default function HomeScreen({ navigation }) {
 
 
   /* ── Update location to backend every minute when online ──── */
-  const locationRef = useRef(location);
-  useEffect(() => {
-    locationRef.current = location;
-  }, [location]);
+  // const locationRef = useRef(location);
+  // useEffect(() => {
+  //   locationRef.current = location;
+  // }, [location]);
 
-  useEffect(() => {
-    let interval;
+  // useEffect(() => {
+  //   let interval;
 
-    const updateLocation = async () => {
-      if (!isOnline || !locationRef.current?.latitude || !locationRef.current?.longitude) {
-        return;
-      }
+  //   const updateLocation = async () => {
+  //     if (!isOnline || !locationRef.current?.latitude || !locationRef.current?.longitude) {
+  //       return;
+  //     }
 
-      const payload = {
-        current_latitude: locationRef.current.latitude.toString(),
-        current_longitude: locationRef.current.longitude.toString(),
-      };
+  //     const payload = {
+  //       current_latitude: locationRef.current.latitude.toString(),
+  //       current_longitude: locationRef.current.longitude.toString(),
+  //     };
 
-      try {
-        await changeLocationController({
-          payload,
-          onLocationUpdate: (updatedData) => {
-            console.log('[Location] Updated on server:', updatedData);
-          },
-        });
-      } catch (error) {
-        console.log('[Location] Update failed:', error);
-      }
-    };
+  //     try {
+  //       await changeLocationController({
+  //         payload,
+  //         onLocationUpdate: (updatedData) => {
+  //           console.log('[Location] Updated on server:', updatedData);
+  //         },
+  //       });
+  //     } catch (error) {
+  //       console.log('[Location] Update failed:', error);
+  //     }
+  //   };
 
-    if (isOnline) {
-      interval = setInterval(updateLocation, 60000);
-    }
+  //   if (isOnline) {
+  //     interval = setInterval(updateLocation, 60000);
+  //   }
 
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [isOnline]);
-
+  //   return () => {
+  //     if (interval) {
+  //       clearInterval(interval);
+  //     }
+  //   };
+  // }, [isOnline]);
+ 
   /* ── Monitor battery level ──────────────────────────────────── */
   useEffect(() => {
     let interval;
-
+    
     const checkBattery = async () => {
       try {
         const level = await DeviceInfo.getBatteryLevel();
@@ -391,15 +398,9 @@ export default function HomeScreen({ navigation }) {
       payload: { assignment_id: assignmentId },
       onSuccess: (data) => {
         console.log('[Accept] API success:', data);
-        // Merge socket data + API response + timestamp
-        const completeRideData = {
-          ...ride,
-          apiResponse: data,
-          assignmentId,
-        };
 
-        // This saves to AsyncStorage via startRide
-        startRide(completeRideData);
+        // Pass API response - startRide extracts delivery_trip_id and fetches details
+        startRide(data);
 
         // Remove from requests UI
         setRideRequests(prev => {
@@ -455,9 +456,32 @@ export default function HomeScreen({ navigation }) {
     });
   };
 
-  const handleArrived = () => {
-    arriveAtPickup();
-    console.log('[RIDE] Driver arrived at pickup location');
+
+  const handleArrived = async () => {
+    // Get current order based on current stop index
+    const currentOrder = getCurrentOrder();
+    const orderId = currentOrder?.order_id;
+
+    if (!orderId) {
+      console.error('[Arrived] No order ID found');
+      Alert.alert('Error', 'Order ID not found');
+      return;
+    }
+
+    // Update order status to "at_restaurant"
+    const success = await updateOrderStatusController({
+      orderId,
+      payload: { status: 'at_restaurant' },
+      onStatusUpdate: (data) => {
+        console.log('[Arrived] Status updated:', data);
+        // Then update local state
+        arriveAtPickup();
+      },
+    });
+
+    if (!success) {
+      console.log('[Arrived] Failed to update status');
+    }
   };
 
   const handleNavigate = useCallback(async () => {
@@ -466,20 +490,30 @@ export default function HomeScreen({ navigation }) {
       return;
     }
 
+    // Get current order based on current stop
+    const activeOrder = getCurrentOrder();
+    const currentStop = getCurrentStop();
+
     let destination;
     if (currentStep === 'going_to_pickup' || currentStep === 'arrived_at_pickup') {
-   
-      destination = rideData.restaurant ? {
-      latitude: parseFloat(rideData.restaurant.latitude),
-      longitude: parseFloat(rideData.restaurant.longitude)
-    } : null;
-   
+      // Use current stop coordinates if available, otherwise fallback to order
+      destination = currentStop?.latitude ? {
+        latitude: parseFloat(currentStop.latitude),
+        longitude: parseFloat(currentStop.longitude)
+      } : activeOrder?.restaurant_latitude ? {
+        latitude: parseFloat(activeOrder.restaurant_latitude),
+        longitude: parseFloat(activeOrder.restaurant_longitude)
+      } : null;
+
     } else if (currentStep === 'going_to_dropoff' || currentStep === 'arrived_at_dropoff') {
-     
-       destination = rideData.customer ? {
-      latitude: parseFloat(rideData.customer.latitude),
-      longitude: parseFloat(rideData.customer.longitude)
-    } : null;
+      // Use current stop coordinates if available, otherwise fallback to order
+      destination = currentStop?.latitude ? {
+        latitude: parseFloat(currentStop.latitude),
+        longitude: parseFloat(currentStop.longitude)
+      } : activeOrder?.order?.order_address?.latitude ? {
+        latitude: parseFloat(activeOrder.order.order_address.latitude),
+        longitude: parseFloat(activeOrder.order.order_address.longitude)
+      } : null;
 
     }
 
@@ -509,28 +543,50 @@ export default function HomeScreen({ navigation }) {
       console.error('[NAV] Error opening Google Maps:', error);
       Alert.alert('Error', 'Failed to open Google Maps. Please make sure the app is installed.');
     }
-  }, [rideData, location, currentStep]);
+  }, [rideData, location, currentStep, getCurrentOrder, getCurrentStop]);
 
   const handleCancelRide = (reason) => {
     console.log('[RIDE] Cancel reason:', reason);
     cancelRide();
   };
 
-  const handleCallCustomer = useCallback(async () => {
-    const phoneNumber = rideData?.phoneNumber;
+
+
+  const handleCall = useCallback(async () => {
+    // Determine who to call based on current step
+    const isPickupPhase = currentStep === RIDE_STEPS.GOING_TO_PICKUP || currentStep === RIDE_STEPS.ARRIVED_AT_PICKUP;
+
+    // Get current order based on current stop
+    const activeOrder = getCurrentOrder();
+
+    let phoneNumber;
+    let callTarget;
+
+    if (isPickupPhase) {
+      // Call restaurant during pickup
+      phoneNumber = activeOrder?.restaurant_contact_number;
+      callTarget = 'restaurant';
+    } else {
+      // Call customer during dropoff
+      phoneNumber = activeOrder?.order?.order_checkout_details?.contact_number;
+      callTarget = 'customer';
+    }
+
     if (!phoneNumber) {
-      Alert.alert('Error', 'Phone number not available');
+      Alert.alert('Error', `Phone number not available for ${callTarget}`);
       return;
     }
 
     try {
       await Linking.openURL(`tel:${phoneNumber}`);
-      console.log('[CALL] Calling customer:', phoneNumber);
+      console.log(`[CALL] Calling ${callTarget}:`, phoneNumber);
     } catch (error) {
-      console.error('[CALL] Error making phone call:', error);
+      console.error(`[CALL] Error calling ${callTarget}:`, error);
       Alert.alert('Error', 'Failed to make phone call');
     }
-  }, [rideData]);
+  }, [rideData, currentStep, getCurrentOrder]);
+
+
 
   const handleOpenChat = useCallback(() => {
     setShowChatModal(true);
@@ -635,6 +691,7 @@ export default function HomeScreen({ navigation }) {
         setCameraHeading={setCameraHeading}
         activeRide={rideData}
         deliveryStep={currentStep}
+        currentStopIndex={currentStopIndex}
         isOnline={isOnline}
         floatBtnOffset={floatBtnOffset}
         animatedPosition={animatedPosition}
@@ -660,10 +717,12 @@ export default function HomeScreen({ navigation }) {
         ride={rideData}
         driverLocation={location}
         rideStep={currentStep}
+        currentStopIndex={currentStopIndex}
+        totalStops={totalStops}
         isVisible={isActive && !showRatingModal && !showEarningsModal}
         onArrived={handleArrived}
         onNavigate={handleNavigate}
-        onCall={() => handleCallCustomer()}
+        onCall={handleCall}
         onChat={handleOpenChat}
         onCancel={handleCancelRide}
         onStartDropoff={startDropoff}

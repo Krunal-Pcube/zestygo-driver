@@ -6,12 +6,12 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
+import { getTripDetailsController } from '../MVC/controllers/driverAssignmentController';
 import {
-  getActiveRide,
-  saveActiveRide,
-  updateRideStep,
-  completeActiveRide
-} from '../utils/storage/rideStorage';
+  getActiveTripId,
+  saveActiveTripId,
+  clearActiveTripId,
+} from '../utils/storage/tripStorage';
 
 // ═══════════════════════════════════════════════════════════════
 // RIDE STEPS - Add new steps here as needed
@@ -86,60 +86,180 @@ export const STEP_CONFIG = {
 export function useRideState() {
   const [currentStep, setCurrentStep] = useState(RIDE_STEPS.IDLE);
   const [rideData, setRideData] = useState(null);
+  const [deliveryTripId, setDeliveryTripId] = useState(null);
+  const [currentStopIndex, setCurrentStopIndex] = useState(0); // Track current stop sequence
+
+  // Helper: Get sorted stops by sequence_number
+  const getSortedStops = useCallback(() => {
+    if (!rideData?.delivery_route_stops) return [];
+    return [...rideData.delivery_route_stops].sort((a, b) => a.sequence_number - b.sequence_number);
+  }, [rideData]);
+
+  // Helper: Get current stop based on currentStopIndex
+  const getCurrentStop = useCallback(() => {
+    const stops = getSortedStops();
+    return stops[currentStopIndex] || null;
+  }, [getSortedStops, currentStopIndex]);
+
+  // Helper: Get current order based on current stop
+  const getCurrentOrder = useCallback(() => {
+    const currentStop = getCurrentStop();
+    if (!currentStop || !rideData?.delivery_trip_orders) return null;
+    return rideData.delivery_trip_orders.find(
+      order => order.id === currentStop.delivery_trip_order_id
+    ) || rideData.delivery_trip_orders[0];
+  }, [getCurrentStop, rideData]);
+
+  // Helper: Check if there are more stops after current
+  const hasMoreStops = useCallback(() => {
+    const stops = getSortedStops();
+    return currentStopIndex < stops.length - 1;
+  }, [getSortedStops, currentStopIndex]);
+
+  // Helper: Advance to next stop
+  const advanceToNextStop = useCallback(async () => {
+    const stops = getSortedStops();
+    const nextIndex = currentStopIndex + 1;
+
+    if (nextIndex >= stops.length) {
+      // All stops completed
+      return false;
+    }
+
+    const nextStop = stops[nextIndex];
+    setCurrentStopIndex(nextIndex);
+
+    // Determine step based on next stop type
+    const nextStep = nextStop.stop_type === 'pickup'
+      ? RIDE_STEPS.GOING_TO_PICKUP
+      : RIDE_STEPS.GOING_TO_DROPOFF;
+
+    setCurrentStep(nextStep);
+
+    if (deliveryTripId) {
+      await saveActiveTripId(deliveryTripId, nextStep, nextIndex);
+    }
+
+    return true;
+  }, [currentStopIndex, deliveryTripId, getSortedStops]);
 
   useEffect(() => {
-    const loadSavedRide = async () => {
-      const saved = await getActiveRide();
-      if (saved?.data && saved?.step) {
-        setRideData(saved.data);
+    const loadSavedTrip = async () => {
+      const saved = await getActiveTripId();
+      console.log('[loadSavedTrip] Loaded from storage:', saved);
+
+      if (saved?.deliveryTripId && saved?.step) {
+        console.log('[loadSavedTrip] Restoring trip:', saved.deliveryTripId, 'step:', saved.step);
+        setDeliveryTripId(saved.deliveryTripId);
         setCurrentStep(saved.step);
+        setCurrentStopIndex(saved.currentStopIndex || 0);
+
+        // Fetch fresh trip details from API
+        console.log('[loadSavedTrip] Fetching trip details for ID:', saved.deliveryTripId);
+        await getTripDetailsController({
+          deliveryTripId: saved.deliveryTripId,
+          onSuccess: (data) => {
+            console.log('[loadSavedTrip] Trip details fetched:', data?.trip_number || data?.id);
+            setRideData(data);
+          },
+        });
+      } else {
+        console.log('[loadSavedTrip] No saved trip found');
       }
     };
-    loadSavedRide();
+    loadSavedTrip();
   }, []);
 
 
 
-  const startRide = useCallback(async (ride) => {
-    setRideData(ride);
-    setCurrentStep(RIDE_STEPS.GOING_TO_PICKUP);
-     await saveActiveRide(ride, RIDE_STEPS.GOING_TO_PICKUP);
-  }, []);
+  const startRide = useCallback(async (apiResponse) => {
+    console.log('[startRide] API response:', apiResponse);
 
-   const arriveAtPickup = useCallback(async () => {
-    setCurrentStep(RIDE_STEPS.ARRIVED_AT_PICKUP);
-    if (rideData) {
-      await updateRideStep(rideData.offer?.order_id, RIDE_STEPS.ARRIVED_AT_PICKUP);
+    // Try multiple possible paths for trip ID
+    const tripId = apiResponse?.delivery_trip_id
+    console.log('[startRide] Extracted tripId:', tripId);
+
+    if (!tripId) {
+      console.error('[startRide] No deliveryTripId found in API response');
+      console.error('[startRide] Response keys:', Object.keys(apiResponse || {}));
+      return;
     }
-  }, [rideData]);
+
+    setDeliveryTripId(tripId);
+    setCurrentStep(RIDE_STEPS.GOING_TO_PICKUP);
+
+    // Save only trip ID + step + stop index (minimal storage)
+    await saveActiveTripId(tripId, RIDE_STEPS.GOING_TO_PICKUP, 0);
+
+    // Fetch full trip details from API
+    console.log('[startRide] Fetching trip details for ID:', tripId);
+    await getTripDetailsController({
+      deliveryTripId: tripId,
+      onSuccess: (data) => {
+        console.log('[startRide] Trip details fetched successfully:', data?.trip_number || data?.id);
+        setRideData(data);
+      },
+    });
+  }, []);
+
+  const arriveAtPickup = useCallback(async () => {
+    setCurrentStep(RIDE_STEPS.ARRIVED_AT_PICKUP);
+    if (deliveryTripId) {
+      await saveActiveTripId(deliveryTripId, RIDE_STEPS.ARRIVED_AT_PICKUP, currentStopIndex);
+    }
+  }, [deliveryTripId, currentStopIndex]);
 
 
   const startDropoff = useCallback(async () => {
-    setCurrentStep(RIDE_STEPS.GOING_TO_DROPOFF);
-    if (rideData) {
-      await updateRideStep(rideData.offer?.order_id, RIDE_STEPS.GOING_TO_DROPOFF);
+    // Check if we need to go to next stop or start dropoff for current
+    const currentStop = getCurrentStop();
+
+    if (currentStop?.stop_type === 'pickup' && hasMoreStops()) {
+      // There are more stops - advance to next
+      const hasNext = await advanceToNextStop();
+      if (!hasNext) {
+        // No more stops, complete the ride
+        await completeRide();
+      }
+    } else {
+      // Start dropoff for current order
+      setCurrentStep(RIDE_STEPS.GOING_TO_DROPOFF);
+      if (deliveryTripId) {
+        await saveActiveTripId(deliveryTripId, RIDE_STEPS.GOING_TO_DROPOFF, currentStopIndex);
+      }
     }
-  }, [rideData]);
+  }, [deliveryTripId, currentStopIndex, getCurrentStop, hasMoreStops, advanceToNextStop]);
 
 
-   const arriveAtDropoff = useCallback(async () => {
+  const arriveAtDropoff = useCallback(async () => {
     setCurrentStep(RIDE_STEPS.ARRIVED_AT_DROPOFF);
-    if (rideData) {
-      await updateRideStep(rideData.offer?.order_id, RIDE_STEPS.ARRIVED_AT_DROPOFF);
+    if (deliveryTripId) {
+      await saveActiveTripId(deliveryTripId, RIDE_STEPS.ARRIVED_AT_DROPOFF, currentStopIndex);
     }
-  }, [rideData]);
+  }, [deliveryTripId, currentStopIndex]);
 
 
- const completeRide = useCallback(async () => {
+  const completeRide = useCallback(async () => {
+    // Check if there are more stops to complete
+    if (hasMoreStops()) {
+      const hasNext = await advanceToNextStop();
+      if (hasNext) return; // Continue to next stop
+    }
+
+    // All stops completed
     setCurrentStep(RIDE_STEPS.COMPLETED);
     setRideData(null);
-    await completeActiveRide(); // Clears storage
-  }, []);
- 
+    setDeliveryTripId(null);
+    setCurrentStopIndex(0);
+    await clearActiveTripId(); // Clears storage
+  }, [hasMoreStops, advanceToNextStop]);
+
   const cancelRide = useCallback(async () => {
     setCurrentStep(RIDE_STEPS.IDLE);
     setRideData(null);
-    await completeActiveRide(); // Clears storage
+    setDeliveryTripId(null);
+    setCurrentStopIndex(0);
+    await clearActiveTripId(); // Clears storage
   }, []);
 
 
@@ -151,7 +271,17 @@ export function useRideState() {
     currentStep,
     rideData,
     isActive,
+    deliveryTripId,
+    currentStopIndex,
     config: STEP_CONFIG[currentStep] || {},
+
+    // Multi-order helpers
+    getSortedStops,
+    getCurrentStop,
+    getCurrentOrder,
+    hasMoreStops,
+    advanceToNextStop,
+    totalStops: rideData?.delivery_route_stops?.length || 0,
 
     // Actions
     startRide,

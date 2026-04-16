@@ -1,5 +1,5 @@
 import Toast from 'react-native-toast-message';
-import { acceptOrder, rejectOrder, updateOrderStatus } from '../Model/driverAssignment';
+import { acceptOrder, getTripDetails, rejectOrder, updateOrderStatus } from '../Model/driverAssignment';
 
 
 
@@ -124,6 +124,62 @@ export const updateOrderStatusController = async ({
 
     return false;
   } catch (error) {
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: error?.response?.data?.message || 'Something went wrong',
+      position: 'top',
+      topOffset: 50,
+    });
+
+    throw error;
+  }
+};
+
+
+
+
+// ✅ Get Trip Details
+export const getTripDetailsController = async ({ deliveryTripId, onSuccess }) => {
+  try {
+    console.log('[getTripDetailsController] Fetching trip ID:', deliveryTripId);
+
+    if (!deliveryTripId) {
+      console.error('[getTripDetailsController] No deliveryTripId provided!');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Trip ID is missing',
+        position: 'top',
+        topOffset: 50,
+      });
+      return null;
+    }
+
+    const res = await getTripDetails(deliveryTripId);
+    console.log('[getTripDetailsController] API response:', res?.data);
+
+    if (res?.data?.status === 200) {
+      const data = res.data.data;
+      console.log('[getTripDetailsController] Success, trip:', data?.trip_number || data?.id);
+
+      onSuccess?.(data);
+
+      return data;
+    }
+
+    console.error('[getTripDetailsController] API error:', res?.data);
+    Toast.show({
+      type: 'error',
+      text1: 'Failed',
+      text2: res?.data?.message || 'Unable to fetch trip details',
+      position: 'top',
+      topOffset: 50,
+    });
+
+    return null;
+  } catch (error) {
+    console.error('[getTripDetailsController] Exception:', error?.response?.data || error?.message);
     Toast.show({
       type: 'error',
       text1: 'Error',

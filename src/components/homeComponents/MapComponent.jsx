@@ -6,7 +6,7 @@
  *  - Floating buttons that track bottom sheet position
  */
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { StyleSheet, View, Animated, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from 'react-native-maps';
 import ReAnimated, { useAnimatedStyle } from 'react-native-reanimated';
@@ -395,6 +395,7 @@ export default function MapComponent({
   setCameraHeading,
   activeRide,
   deliveryStep,
+  currentStopIndex = 0, // Multi-order: current stop index
   isOnline,
   floatBtnOffset,
   animatedPosition,
@@ -410,21 +411,46 @@ export default function MapComponent({
 
   // Get step config for map behavior
   const stepConfig = deliveryStep ? STEP_CONFIG[deliveryStep] : null;
-  
+
   // Determine what to show based on step
   const showRestaurant = stepConfig?.showRestaurantMarker ?? false;
   const showCustomer = stepConfig?.showCustomerMarker ?? false;
   const showRoute = stepConfig?.showRoute ?? 'none';
   const mapFocus = stepConfig?.mapFocus ?? 'driver';
 
-  // Get coordinates
- 
-const restaurantCoord = activeRide?.restaurant ? {
-  latitude: parseFloat(activeRide.restaurant.latitude),
-  longitude: parseFloat(activeRide.restaurant.longitude)
-} : null;
+  // Get sorted stops by sequence_number
+  const sortedStops = useMemo(() => {
+    if (!activeRide?.delivery_route_stops) return [];
+    return [...activeRide.delivery_route_stops].sort((a, b) => a.sequence_number - b.sequence_number);
+  }, [activeRide?.delivery_route_stops]);
 
-  const customerCoord = activeRide?.dropoff?.coordinate;
+  // Get current stop based on currentStopIndex
+  const currentStop = sortedStops[currentStopIndex] || sortedStops[0] || null;
+
+  // Get current order based on current stop
+  const activeOrder = useMemo(() => {
+    if (!currentStop || !activeRide?.delivery_trip_orders) return activeRide?.delivery_trip_orders?.[0] || null;
+    return activeRide.delivery_trip_orders.find(
+      order => order.id === currentStop.delivery_trip_order_id
+    ) || activeRide?.delivery_trip_orders?.[0];
+  }, [currentStop, activeRide?.delivery_trip_orders]);
+
+  // Get coordinates from current stop or order
+  const restaurantCoord = currentStop?.stop_type === 'pickup' && currentStop?.latitude ? {
+    latitude: parseFloat(currentStop.latitude),
+    longitude: parseFloat(currentStop.longitude)
+  } : activeOrder?.restaurant_latitude ? {
+    latitude: parseFloat(activeOrder.restaurant_latitude),
+    longitude: parseFloat(activeOrder.restaurant_longitude)
+  } : null;
+
+  const customerCoord = currentStop?.stop_type === 'drop' && currentStop?.latitude ? {
+    latitude: parseFloat(currentStop.latitude),
+    longitude: parseFloat(currentStop.longitude)
+  } : activeOrder?.order?.order_address ? {
+    latitude: parseFloat(activeOrder.order.order_address.latitude),
+    longitude: parseFloat(activeOrder.order.order_address.longitude)
+  } : null;
 
   // Camera focus effect - animate to different points based on step
   useEffect(() => {
@@ -569,7 +595,7 @@ if (!location || !location.latitude || !location.longitude) {
     <View style={styles.loadingContainer}>
       <View style={styles.loadingBox}>
         <LottieView
-          source={require('../../assets/loading_map.json')} // 👈 your lottie file
+          source={require('../../assets/loading_map.json')} // 
           autoPlay
           loop
           style={{ width: scale(250), height: scale(100) }}
@@ -620,7 +646,7 @@ if (!location || !location.latitude || !location.longitude) {
           {showRestaurant && restaurantCoord && (
             <RestaurantMarker 
               coordinate={restaurantCoord} 
-              name={activeRide?.pickup?.name || 'Restaurant'} 
+              name={activeOrder?.restaurant_name || 'Restaurant'} 
             />
           )}
 
@@ -628,7 +654,7 @@ if (!location || !location.latitude || !location.longitude) {
           {showCustomer && customerCoord && (
             <CustomerMarker 
               coordinate={customerCoord} 
-              name={activeRide?.dropoff?.address || 'Customer'} 
+              name={activeOrder?.customer_name || 'Customer'} 
             />
           )}
 

@@ -14,3 +14,11 @@ export const updateOrderStatus = (orderId, payload) => {
   return ApiHelper.put(`driver/assignment/order-status/${orderId}`, payload);
 };
 
+
+
+export const getTripDetails = (deliveryTripId) => {
+  return ApiHelper.get(`driver/assignment/trip/${deliveryTripId}`);
+};
+
+
+

@@ -84,7 +84,7 @@ export default function GoingToPickupView({
             <View style={styles.actionIconBg}>
               <CancelRideIcon width={moderateScale(18)} height={moderateScale(18)} />
             </View>
-            <Text style={styles.actionText}>Cancel Trip</Text>
+            <Text style={styles.actionText}>Cancel Order</Text>
           </TouchableOpacity>
         )}
       </View>

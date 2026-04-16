@@ -29,6 +29,8 @@ export default function ActiveRideBottomSheet({
   ride,
   driverLocation,
   rideStep,
+  currentStopIndex = 0, // Multi-order: current stop index
+  totalStops = 0,       // Multi-order: total number of stops
   onArrived,
   onNavigate,
   onCall,
@@ -36,7 +38,7 @@ export default function ActiveRideBottomSheet({
   onCancel,
   onStartDropoff,
   onCompleteRide,
-  onShowRating,  // New callback to show rating modal
+  onShowRating,
   isVisible,
 }) {
   const bottomSheetRef = useRef(null);
@@ -56,17 +58,55 @@ export default function ActiveRideBottomSheet({
   // Get config based on current step
   const stepConfig = STEP_CONFIG[rideStep] || STEP_CONFIG[RIDE_STEPS.GOING_TO_PICKUP];
   const snapPoints = useMemo(() => [stepConfig.bottomSheetHeight], [stepConfig.bottomSheetHeight]);
- 
-    // Get distance and ETA based on current step
+
+  // Get sorted stops by sequence_number
+  const sortedStops = useMemo(() => {
+    if (!ride?.delivery_route_stops) return [];
+    return [...ride.delivery_route_stops].sort((a, b) => a.sequence_number - b.sequence_number);
+  }, [ride?.delivery_route_stops]);
+
+  // Get current stop based on currentStopIndex prop
+  const currentStop = sortedStops[currentStopIndex] || sortedStops[0] || null;
+
+  // Get current order based on current stop
+  const activeOrder = useMemo(() => {
+    if (!currentStop || !ride?.delivery_trip_orders) return ride?.delivery_trip_orders?.[0] || null;
+    return ride.delivery_trip_orders.find(
+      order => order.id === currentStop.delivery_trip_order_id
+    ) || ride?.delivery_trip_orders?.[0];
+  }, [currentStop, ride?.delivery_trip_orders]);
+
+  // Find pickup and drop stops for current order
+  const pickupStop = useMemo(() => {
+    if (!activeOrder || !sortedStops.length) return null;
+    return sortedStops.find(stop =>
+      stop.stop_type === 'pickup' && stop.delivery_trip_order_id === activeOrder.id
+    );
+  }, [activeOrder, sortedStops]);
+
+  const dropStop = useMemo(() => {
+    if (!activeOrder || !sortedStops.length) return null;
+    return sortedStops.find(stop =>
+      stop.stop_type === 'drop' && stop.delivery_trip_order_id === activeOrder.id
+    );
+  }, [activeOrder, sortedStops]);
+
+  // Show stop progress for multi-order trips
+  const stopProgress = sortedStops.length > 0
+    ? `Stop ${currentStopIndex + 1} of ${sortedStops.length}`
+    : '';
+
+  // Get distance and ETA based on current step
   const isGoingToPickup = rideStep === RIDE_STEPS.GOING_TO_PICKUP || rideStep === RIDE_STEPS.ARRIVED_AT_PICKUP;
-  
-  const distance = isGoingToPickup 
-    ? ride?.route?.to_restaurant_km || '0.0'
-    : ride?.route?.to_customer_km || '0.0';
-    
+
+  // Use distance_from_prev_km and eta_from_prev_minutes from delivery_route_stops
+  const distance = isGoingToPickup
+    ? pickupStop?.distance_from_prev_km || activeOrder?.pickup_distance_km || '0.0'
+    : dropStop?.distance_from_prev_km || activeOrder?.delivery_distance_km || '0.0';
+
   const eta = isGoingToPickup
-    ? ride?.eta?.to_restaurant_minutes || '0'
-    : ride?.eta?.to_customer_minutes || '0';
+    ? pickupStop?.eta_from_prev_minutes || activeOrder?.pickup_eta_minutes || '0'
+    : dropStop?.eta_from_prev_minutes || activeOrder?.delivery_eta_minutes || '0';
 
   const handleSheetChange = useCallback((index) => {
     setSheetIndex(index);
