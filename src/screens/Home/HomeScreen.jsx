@@ -242,12 +242,10 @@ export default function HomeScreen({ navigation }) {
     const handleNewOrderOffer = (orderData) => {
       console.log('[Socket] New order offer received:', orderData);
 
-      if (rideData) {
-        console.log('[Socket] Ignoring offer - already on an active ride');
-        return;
-      }
+      // Note: Allow new orders even while on active ride (for multi-trip support)
 
-      // Use raw socket data directly
+      // Socket sometimes sends data as array [ {...} ], sometimes as object {...}
+      // [0] extracts the first element if it's an array
       const data = Array.isArray(orderData) ? orderData[0] : orderData;
       if (!data || !data.offer) {
         console.error('[Socket] Invalid order data format:', orderData);

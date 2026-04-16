@@ -24,7 +24,9 @@ import HomeIcon from '../../../assets/ridecardIcons/home_icon.svg';
 import ActionButton from '../../../components/common/ActionButton';
  
 export default function DropoffDetailsView({
-  ride, 
+  ride,
+  activeOrder,
+  dropStop,
   eta,
   distance,
   chevronAngle,
@@ -33,14 +35,22 @@ export default function DropoffDetailsView({
   onChat,
   onConfirmOrder,
 }) {
-  const customerName = ride?.passengerName || 'Kelsey Lavin';
-  const address = ride?.dropoff?.address || '825 Caledonia Rd, North York, ON M6B 3X8, Canada';
-  const dropoffType = 'Leave the door';
-  const note = "Please don't ring the bell and when you reach at location then you call me.";
-  const orderId = '308YY';
-  const restaurantName = ride?.pickup?.name || "Dave's Hot Chicken";
-  const items = '2 items';
-  const expectedTime = '10:32 AM';
+  // Use activeOrder and dropStop props for current order data
+  const order = activeOrder;
+  const currentDrop = dropStop;
+
+  // Customer info from current order
+  const customerName = order?.customer_name || 'Customer';
+  const address = currentDrop?.address || order?.order?.order_checkout_details?.delivery_address || 'Address not available';
+  const dropoffType = order?.order?.order_checkout_details?.delivery_handoff_type === 'meet_at_door' ? 'Meet at door' : 'Leave at door';
+  const note = order?.order?.order_checkout_details?.delivery_instructions || 'No special instructions';
+  const orderNumber = order?.order?.order_number || '';
+  const restaurantName = order?.restaurant_name || 'Restaurant';
+  const orderItems = order?.order?.order_items || [];
+  const items = orderItems.length > 0 ? `${orderItems.length} items` : '1 item';
+  const expectedTime = order?.estimated_delivery_at
+    ? new Date(order.estimated_delivery_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    : ''
 
   return (
     <View style={styles.container}>

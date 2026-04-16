@@ -24,6 +24,7 @@ import fonts from '../../../utils/fonts/fontsList';
 
 export default function ArrivedAtPickupView({
   ride,
+  activeOrder,
   eta,
   distance,
   isOrderVerified,
@@ -33,22 +34,23 @@ export default function ArrivedAtPickupView({
   onShowConfirmation,
   onVerifyOrder,
 }) {
-  // Get active order from delivery_trip_orders
-  const activeOrder = ride?.delivery_trip_orders?.[0];
+  // Use activeOrder prop (passed from parent based on current stop)
+  // Fallback only if prop not provided (shouldn't happen)
+  const order = activeOrder;
 
   // Restaurant info
-  const restaurantName = activeOrder?.restaurant_name || "Restaurant";
-  const restaurantAddress = activeOrder?.restaurant_address || '';
-  const restaurantPhone = activeOrder?.restaurant_contact_number;
+  const restaurantName = order?.restaurant_name || "Restaurant";
+  const restaurantAddress = order?.restaurant_address || '';
+  const restaurantPhone = order?.restaurant_contact_number;
 
   // Customer info
-  const customerName = activeOrder?.customer_name || 'Customer';
-  const orderNumber = activeOrder?.order?.order_number || '';
-  const orderItems = activeOrder?.order?.order_items || [];
+  const customerName = order?.customer_name || 'Customer';
+  const orderNumber = order?.order?.order_number || '';
+  const orderItems = order?.order?.order_items || [];
   const itemsText = orderItems.length > 0 ? `${orderItems.length} items` : '';
 
   // Note from restaurant
-  const note = activeOrder?.order?.restaurant_instructions || 'No special instructions';
+  const note = order?.order?.restaurant_instructions || 'No special instructions';
 
   // Order count
   const orderCount = ride?.delivery_trip_orders?.length || 1;

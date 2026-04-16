@@ -43,7 +43,7 @@ export const STEP_CONFIG = {
     showCustomerMarker: false,
   },
   [RIDE_STEPS.ARRIVED_AT_PICKUP]: {
-    bottomSheetHeight: '20%',
+    bottomSheetHeight: '20%', 
     primaryButtonText: 'Complete Pickup',
     primaryButtonAction: 'START_DROPOFF',
     showNavigationButton: false,
@@ -175,7 +175,7 @@ export function useRideState() {
   const startRide = useCallback(async (apiResponse) => {
     console.log('[startRide] API response:', apiResponse);
 
-    // Try multiple possible paths for trip ID
+  
     const tripId = apiResponse?.delivery_trip_id
     console.log('[startRide] Extracted tripId:', tripId);
 
@@ -185,11 +185,23 @@ export function useRideState() {
       return;
     }
 
-    setDeliveryTripId(tripId);
-    setCurrentStep(RIDE_STEPS.GOING_TO_PICKUP);
+    // Check if this is the same trip (accepting additional order)
+    const isSameTrip = tripId === deliveryTripId;
+    console.log('[startRide] isSameTrip:', isSameTrip, 'existing:', deliveryTripId, 'new:', tripId);
 
-    // Save only trip ID + step + stop index (minimal storage)
-    await saveActiveTripId(tripId, RIDE_STEPS.GOING_TO_PICKUP, 0);
+    setDeliveryTripId(tripId);
+
+    if (!isSameTrip) {
+      // New trip - reset to beginning
+      console.log('[startRide] New trip - resetting state');
+      setCurrentStep(RIDE_STEPS.GOING_TO_PICKUP);
+      setCurrentStopIndex(0);
+      await saveActiveTripId(tripId, RIDE_STEPS.GOING_TO_PICKUP, 0);
+    } else {
+      // Same trip - accepting additional order, keep current position
+      console.log('[startRide] Same trip - refreshing data only');
+      // Keep currentStep and currentStopIndex as-is
+    }
 
     // Fetch full trip details from API
     console.log('[startRide] Fetching trip details for ID:', tripId);
@@ -198,9 +210,16 @@ export function useRideState() {
       onSuccess: (data) => {
         console.log('[startRide] Trip details fetched successfully:', data?.trip_number || data?.id);
         setRideData(data);
+
+        // If same trip and new stops added, we may need to advance
+        if (isSameTrip) {
+          const stops = data?.delivery_route_stops || [];
+          const currentStop = stops[currentStopIndex];
+          console.log('[startRide] Current stop after refresh:', currentStop?.sequence_number, currentStop?.stop_type);
+        }
       },
     });
-  }, []);
+  }, [deliveryTripId, currentStopIndex]);
 
   const arriveAtPickup = useCallback(async () => {
     setCurrentStep(RIDE_STEPS.ARRIVED_AT_PICKUP);

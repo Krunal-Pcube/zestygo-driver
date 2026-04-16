@@ -293,6 +293,7 @@ export default function ActiveRideBottomSheet({
           <BottomSheetScrollView style={styles.arrivedScrollView} showsVerticalScrollIndicator={false}>
             <ArrivedAtPickupView
               ride={ride}
+              activeOrder={activeOrder}
               eta={eta}
               distance={distance}
               isOrderVerified={isOrderVerified}
@@ -307,6 +308,8 @@ export default function ActiveRideBottomSheet({
           <BottomSheetScrollView style={styles.arrivedScrollView} showsVerticalScrollIndicator={false}>
             <DropoffDetailsView
               ride={ride}
+              activeOrder={activeOrder}
+              dropStop={dropStop}
               eta={eta}
               distance={distance}
               chevronAngle={chevronAngle}
