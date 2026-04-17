@@ -95,6 +95,7 @@ export default function HomeScreen({ navigation }) {
   const [sheetIndex, setSheetIndex] = useState(0);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showEarningsModal, setShowEarningsModal] = useState(false);
+  const [currentOrderEarnings, setCurrentOrderEarnings] = useState(null);
   const [showChatModal, setShowChatModal] = useState(false);
   const [screenFlashAnim] = useState(new Animated.Value(0));
   const [location, setLocation] = useState(null);
@@ -729,6 +730,13 @@ export default function HomeScreen({ navigation }) {
     return;
   }
 
+  // Calculate earnings for this specific order (delivery_amount + tip_amount)
+  const deliveryAmount = parseFloat(currentOrder?.delivery_amount || 0);
+  const tipAmount = parseFloat(currentOrder?.tip_amount || 0);
+  const orderEarnings = (deliveryAmount + tipAmount).toFixed(2);
+  setCurrentOrderEarnings(orderEarnings);
+  console.log('[CompleteDelivery] Order earnings calculated:', orderEarnings);
+
   console.log('[CompleteDelivery] Using delivery trip order id:', deliveryTripOrderId);
 
   // Update order status to "delivered"
@@ -856,8 +864,8 @@ export default function HomeScreen({ navigation }) {
       {/* Earnings Modal */}
       <EarningsModal
         visible={showEarningsModal}
-        tripId="#0001"
-        amount="18.05"
+        tripId={rideData?.trip_number || '#0001'}
+        amount={currentOrderEarnings || '0.00'}
         customerName={rideData?.passengerName || 'Kelsey'}
         onDone={handleEarningsDone}
         onViewDetails={handleViewTripDetails}

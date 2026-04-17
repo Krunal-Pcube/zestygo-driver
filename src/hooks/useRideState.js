@@ -310,21 +310,37 @@ export function useRideState() {
   const startDropoff = useCallback(async () => {
     // Check if we need to go to next stop or start dropoff for current
     const currentStop = getCurrentStop();
+    const stops = getSortedStops();
 
     if (currentStop?.stop_type === 'pickup' && hasMoreStops()) {
-      // There are more stops - advance to next
-      const hasNext = await advanceToNextStop();
-      if (!hasNext) {
-        // No more stops, complete the ride
-        await completeRide();
+      // Look at what the next stop is BEFORE advancing
+      const nextStop = stops[currentStopIndex + 1];
+
+      if (nextStop?.stop_type === 'pickup') {
+        // Next stop is another pickup (same restaurant, different order)
+        // Stay in ARRIVED_AT_PICKUP state but advance to the next stop
+        const hasNext = await advanceToNextStop();
+        if (!hasNext) {
+          await completeRide();
+          return;
+        }
+        // Stay in ARRIVED_AT_PICKUP - don't go to dropoff yet
+        // The UI will refresh with the new order data
         return;
-      }
-      // After advancing, verify the next order is valid (not cancelled)
-      const nextOrder = getCurrentOrder();
-      if (!nextOrder) {
-        console.log('[startDropoff] Next order is cancelled/null, completing ride');
-        await completeRide();
-        return;
+      } else {
+        // Next stop is a drop - advance and then go to dropoff
+        const hasNext = await advanceToNextStop();
+        if (!hasNext) {
+          await completeRide();
+          return;
+        }
+        // After advancing to drop, verify the next order is valid
+        const nextOrder = getCurrentOrder();
+        if (!nextOrder) {
+          console.log('[startDropoff] Next order is cancelled/null, completing ride');
+          await completeRide();
+          return;
+        }
       }
     }
     // Start dropoff for current order
@@ -332,7 +348,7 @@ export function useRideState() {
     if (deliveryTripId) {
       await saveActiveTripId(deliveryTripId, RIDE_STEPS.GOING_TO_DROPOFF, currentStopIndex);
     }
-  }, [deliveryTripId, currentStopIndex, getCurrentStop, hasMoreStops, advanceToNextStop, getCurrentOrder, completeRide]);
+  }, [deliveryTripId, currentStopIndex, getCurrentStop, getSortedStops, hasMoreStops, advanceToNextStop, getCurrentOrder, completeRide]);
 
   const arriveAtDropoff = useCallback(async () => {
     setCurrentStep(RIDE_STEPS.ARRIVED_AT_DROPOFF);
