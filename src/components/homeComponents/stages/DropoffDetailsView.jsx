@@ -119,7 +119,6 @@ export default function DropoffDetailsView({
       {/* Order Card */}
       <TouchableOpacity style={styles.orderCard} activeOpacity={0.8}>
         <View style={styles.orderCardContent}>
-          <Text style={styles.orderId}>{orderId}</Text>
           <Text style={styles.orderRestaurant}>{restaurantName} - {items}</Text>
           <Text style={styles.orderExpectedTime}>Expected time {expectedTime}</Text>
           <Text style={styles.orderVerifyText}>Verify - Take photos</Text>

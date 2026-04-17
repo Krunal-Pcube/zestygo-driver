@@ -6,6 +6,7 @@ import { registerLogoutHandler } from '../../utils/authEvents'; // ✅ add this
 import { STORAGE_KEYS } from '../../utils/storage/asyncStorageKeys';
 import { connectSocket, disconnectSocket } from '../../services/socketIndex'; // ← add this
 import { changeStatusController } from '../controllers/driverStatusController'; // ← add this
+import { clearActiveTripId } from '../../utils/storage/tripStorage';
  
 
 export const AuthContext = createContext(null); 
@@ -55,26 +56,27 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(async () => {
   try {
     // Set user to offline before logout (best effort - don't block logout on failure)
-    try {
-      await changeStatusController({
-        payload: {
-          current_status: 'offline',
-          accepting_new_orders: '0',
-        },
-        onStatusChange: (updatedStatus) => {
-          console.log('[Logout] Set to offline:', updatedStatus);
-        },
-      });
-    } catch (statusError) {
-      console.log('[Logout] Failed to set offline status:', statusError);
-      // Continue with logout even if status update fails
-    }
+    // try {
+    //   await changeStatusController({
+    //     payload: {
+    //       current_status: 'offline',
+    //       accepting_new_orders: '0',
+    //     },
+    //     onStatusChange: (updatedStatus) => {
+    //       console.log('[Logout] Set to offline:', updatedStatus);
+    //     },
+    //   });
+    // } catch (statusError) {
+    //   console.log('[Logout] Failed to set offline status:', statusError);
+    //   // Continue with logout even if status update fails
+    // }
 
     // Clear online status from AsyncStorage
     await AsyncStorage.removeItem(STORAGE_KEYS.DRIVER_ONLINE_STATUS);
     console.log('[Logout] Cleared online status from AsyncStorage');
 
     await clearAuthData();
+    await clearActiveTripId(); 
     delete ApiHelper.defaults.headers.common.Authorization; 
     disconnectSocket(); // ← clean up socket
     setAuth(null); 
