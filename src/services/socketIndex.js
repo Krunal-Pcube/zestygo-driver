@@ -9,6 +9,7 @@ const eventCallbacks = {
   new_order_offer: [],
 };
 
+
 // Register a callback for a specific socket event
 export const onSocketEvent = (event, callback) => {
   if (eventCallbacks[event]) {

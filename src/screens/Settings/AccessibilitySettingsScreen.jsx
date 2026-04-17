@@ -7,9 +7,9 @@ import {
   ScrollView,
   Switch,
 } from 'react-native';
-import { Vibrate, Zap } from 'lucide-react-native';
+import { Vibrate } from 'lucide-react-native';
 import { useTheme } from '../../context/ThemeContext';
-import { getVibrationSetting, setVibrationSetting, getScreenFlashSetting, setScreenFlashSetting } from '../../utils/accessibilityStorage';
+import { getVibrationSetting, setVibrationSetting } from '../../utils/accessibilityStorage';
 import fonts from '../../utils/fonts/fontsList';
 import { scale, moderateScale, verticalScale } from 'react-native-size-matters';
 import Header from '../../components/Header';
@@ -17,17 +17,14 @@ import Header from '../../components/Header';
 const AccessibilitySettingsScreen = ({ navigation }) => {
   const { colors } = useTheme();
 
-  // 2 Simple Toggles
+  // Simple Toggle
   const [vibrationForRequest, setVibrationForRequest] = useState(true);
-  const [screenFlashForRequest, setScreenFlashForRequest] = useState(false);
 
   // Load settings on mount
   useEffect(() => {
     const loadSettings = async () => {
       const vibration = await getVibrationSetting();
-      const screenFlash = await getScreenFlashSetting();
       setVibrationForRequest(vibration);
-      setScreenFlashForRequest(screenFlash);
     };
     loadSettings();
   }, []);
@@ -36,12 +33,6 @@ const AccessibilitySettingsScreen = ({ navigation }) => {
   const handleVibrationChange = async (value) => {
     setVibrationForRequest(value);
     await setVibrationSetting(value);
-  };
-
-  // Save screen flash setting
-  const handleScreenFlashChange = async (value) => {
-    setScreenFlashForRequest(value);
-    await setScreenFlashSetting(value);
   };
 
   const renderToggle = (icon, label, value, onChange) => (
@@ -81,15 +72,6 @@ const AccessibilitySettingsScreen = ({ navigation }) => {
           )}
         </View>
 
-        {/* 2. Screen Flash for Request */}
-        <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
-          {renderToggle(
-            <Zap size={22} color={colors.textPrimary} />,
-            'Screen Flash',
-            screenFlashForRequest,
-            handleScreenFlashChange
-          )}
-        </View>
       </ScrollView>
     </View>
   );

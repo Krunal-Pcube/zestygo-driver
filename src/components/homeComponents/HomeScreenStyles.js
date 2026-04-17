@@ -6,16 +6,6 @@ import fonts from '../../utils/fonts/fontsList';
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 const styles = StyleSheet.create({
-  screenFlashOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#FFFFFF',
-    zIndex: 9999,
-  },
-
   rideCard: {
     width: Dimensions.get('window').width - scale(32),
     backgroundColor: colors.white, borderRadius: moderateScale(16),

@@ -194,18 +194,62 @@ export function useRideState() {
       if (saved?.deliveryTripId && saved?.step) {
         console.log('[loadSavedTrip] Restoring trip:', saved.deliveryTripId, 'step:', saved.step);
         setDeliveryTripId(saved.deliveryTripId);
-        setCurrentStep(saved.step);
-        setCurrentStopIndex(saved.currentStopIndex || 0);
 
-        // Fetch fresh trip details from API
+        // Fetch fresh trip details from API first
         console.log('[loadSavedTrip] Fetching trip details for ID:', saved.deliveryTripId);
+        let freshData = null;
         await getTripDetailsController({
           deliveryTripId: saved.deliveryTripId,
           onSuccess: (data) => {
             console.log('[loadSavedTrip] Trip details fetched:', data?.trip_number || data?.id);
+            freshData = data;
             setRideData(data);
           },
         });
+
+        // Recalculate currentStopIndex based on server stop statuses
+        // This handles the case where stops were completed while app was closed
+        const stops = freshData && freshData.delivery_route_stops
+          ? [...freshData.delivery_route_stops].sort((a, b) => a.sequence_number - b.sequence_number)
+          : [];
+
+        if (stops.length > 0) {
+          // Find the first stop that is not completed/skipped/cancelled
+          const activeStopIndex = stops.findIndex(stop =>
+            !['completed', 'skipped', 'cancelled'].includes(stop.status)
+          );
+
+          if (activeStopIndex !== -1) {
+            // Found an active stop - use its index
+            console.log('[loadSavedTrip] Recalculated currentStopIndex:', activeStopIndex,
+              'stop_type:', stops[activeStopIndex]?.stop_type, 'status:', stops[activeStopIndex]?.status);
+            setCurrentStopIndex(activeStopIndex);
+
+            // Also recalculate the correct step based on the active stop
+            const activeStop = stops[activeStopIndex];
+            const correctStep = activeStop.stop_type === 'pickup'
+              ? (activeStop.status === 'arrived' || activeStop.arrived_at
+                ? RIDE_STEPS.ARRIVED_AT_PICKUP
+                : RIDE_STEPS.GOING_TO_PICKUP)
+              : (activeStop.status === 'arrived' || activeStop.arrived_at
+                ? RIDE_STEPS.ARRIVED_AT_DROPOFF
+                : RIDE_STEPS.GOING_TO_DROPOFF);
+
+            console.log('[loadSavedTrip] Recalculated step:', correctStep, 'from saved:', saved.step);
+            setCurrentStep(correctStep);
+          } else {
+            // All stops completed - trip should be completed
+            console.log('[loadSavedTrip] All stops completed, clearing trip');
+            await clearActiveTripId();
+            setCurrentStep(RIDE_STEPS.IDLE);
+            setDeliveryTripId(null);
+            setCurrentStopIndex(0);
+          }
+        } else {
+          // No stops data, fallback to saved values
+          setCurrentStep(saved.step);
+          setCurrentStopIndex(saved.currentStopIndex || 0);
+        }
       } else {
         console.log('[loadSavedTrip] No saved trip found');
       }

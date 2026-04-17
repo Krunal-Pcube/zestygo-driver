@@ -10,7 +10,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import {
   View,
   Platform,
-  Animated, 
+  Animated,
   Easing,
   Dimensions,
   Alert,
@@ -25,7 +25,7 @@ import { useSharedValue } from 'react-native-reanimated';
 import { verticalScale } from 'react-native-size-matters';
 import { useIsFocused } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
-import { getVibrationSetting, getScreenFlashSetting } from '../../utils/accessibilityStorage';
+import { getVibrationSetting } from '../../utils/accessibilityStorage';
 import RideRequestCard from '../../components/homeComponents/Riderequestcard';
 import HomeHeader from '../../components/homeComponents/homeHeader';
 import MapComponent from '../../components/homeComponents/MapComponent';
@@ -64,8 +64,8 @@ export default function HomeScreen({ navigation }) {
     cancelRide,
     getCurrentStop,
     getCurrentOrder,
-    hasMoreStops,      
-    advanceToNextStop, 
+    hasMoreStops,
+    advanceToNextStop,
     refreshTripData,
   } = useRideState();
 
@@ -97,7 +97,6 @@ export default function HomeScreen({ navigation }) {
   const [showEarningsModal, setShowEarningsModal] = useState(false);
   const [currentOrderEarnings, setCurrentOrderEarnings] = useState(null);
   const [showChatModal, setShowChatModal] = useState(false);
-  const [screenFlashAnim] = useState(new Animated.Value(0));
   const [location, setLocation] = useState(null);
   const [heading, setHeading] = useState(0);
   const [locationReady, setLocationReady] = useState(false);
@@ -125,7 +124,6 @@ export default function HomeScreen({ navigation }) {
     };
     setRideRequests(prev => [...prev, testRide]);
     setShowRideRequests(true);
-    triggerNewRideNotifications();
     console.log('[TEST] Added test ride:', testRide.offer.order_id);
   }, []);
 
@@ -241,9 +239,9 @@ export default function HomeScreen({ navigation }) {
 
     console.log("isOnline :::", isOnline)
 
-    if (!isOnline) return;
-
     const handleNewOrderOffer = (orderData) => {
+
+      if (!isOnline) return;
       console.log('[Socket] New order offer received:', orderData);
 
       // Note: Allow new orders even while on active ride (for multi-trip support)
@@ -258,7 +256,7 @@ export default function HomeScreen({ navigation }) {
 
       setRideRequests(prev => [...prev, data]);
       setShowRideRequests(true);
-      triggerNewRideNotifications();
+      console.log('[Socket] New ride request:', data.offer.order_id);
     };
 
     onSocketEvent('new_order_offer', handleNewOrderOffer);
@@ -309,7 +307,7 @@ export default function HomeScreen({ navigation }) {
         clearInterval(interval);
       }
     };
-  }, [isOnline]); 
+  }, [isOnline]);
 
   /* ── Monitor battery level ──────────────────────────────────── */
   useEffect(() => {
@@ -361,32 +359,6 @@ export default function HomeScreen({ navigation }) {
       useNativeDriver: true,
     }).start();
   }, [sheetIndex]);
-
-  /* ── Trigger notifications for new ride ────────────────────────── */
-  const triggerNewRideNotifications = async () => {
-    // Vibrate if accessibility setting is enabled
-    const shouldVibrate = await getVibrationSetting();
-    if (shouldVibrate) {
-      Vibration.vibrate(500);
-    }
-
-    // Screen flash if accessibility setting is enabled
-    const shouldFlash = await getScreenFlashSetting();
-    if (shouldFlash) {
-      Animated.sequence([
-        Animated.timing(screenFlashAnim, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(screenFlashAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  };
 
   const acceptRide = async (ride) => {
     const assignmentId = ride?.offer?.assignment_id;
@@ -616,7 +588,7 @@ export default function HomeScreen({ navigation }) {
       const isStopActive = !['completed', 'skipped', 'cancelled'].includes(stop.status);
       return isOrderActive && isStopActive;
     });
-    
+
     const hasActiveStops = activeStops.length > 0;
     console.log('[CancelRide] Active stops found:', activeStops.length, 'hasActiveStops:', hasActiveStops);
 
@@ -707,48 +679,48 @@ export default function HomeScreen({ navigation }) {
 
 
   const handleCompleteDelivery = useCallback(async () => {
-  // Check if current order is cancelled/null
-  let currentOrder = getCurrentOrder();
-  
-  // If current order is cancelled, skip to next active stop
-  if (!currentOrder) {
-    console.log('[CompleteDelivery] Current order cancelled, skipping to next stop');
-    const hasNext = await advanceToNextStop();
-    if (!hasNext) {
-      console.log('[CompleteDelivery] No more stops');
-      cancelRide();
+    // Check if current order is cancelled/null
+    let currentOrder = getCurrentOrder();
+
+    // If current order is cancelled, skip to next active stop
+    if (!currentOrder) {
+      console.log('[CompleteDelivery] Current order cancelled, skipping to next stop');
+      const hasNext = await advanceToNextStop();
+      if (!hasNext) {
+        console.log('[CompleteDelivery] No more stops');
+        cancelRide();
+        return;
+      }
+      // Try again with new stop
+      currentOrder = getCurrentOrder();
+    }
+
+    const deliveryTripOrderId = currentOrder?.id;
+    if (!deliveryTripOrderId) {
+      console.error('[CompleteDelivery] No delivery trip order ID found');
+      Alert.alert('Error', 'Order ID not found');
       return;
     }
-    // Try again with new stop
-    currentOrder = getCurrentOrder();
-  }
-  
-  const deliveryTripOrderId = currentOrder?.id;
-  if (!deliveryTripOrderId) {
-    console.error('[CompleteDelivery] No delivery trip order ID found');
-    Alert.alert('Error', 'Order ID not found');
-    return;
-  }
 
-  // Calculate earnings for this specific order (delivery_amount + tip_amount)
-  const deliveryAmount = parseFloat(currentOrder?.delivery_amount || 0);
-  const tipAmount = parseFloat(currentOrder?.tip_amount || 0);
-  const orderEarnings = (deliveryAmount + tipAmount).toFixed(2);
-  setCurrentOrderEarnings(orderEarnings);
-  console.log('[CompleteDelivery] Order earnings calculated:', orderEarnings);
+    // Calculate earnings for this specific order (delivery_amount + tip_amount)
+    const deliveryAmount = parseFloat(currentOrder?.delivery_amount || 0);
+    const tipAmount = parseFloat(currentOrder?.tip_amount || 0);
+    const orderEarnings = (deliveryAmount + tipAmount).toFixed(2);
+    setCurrentOrderEarnings(orderEarnings);
+    console.log('[CompleteDelivery] Order earnings calculated:', orderEarnings);
 
-  console.log('[CompleteDelivery] Using delivery trip order id:', deliveryTripOrderId);
+    console.log('[CompleteDelivery] Using delivery trip order id:', deliveryTripOrderId);
 
-  // Update order status to "delivered"
-  await updateOrderStatusController({
-    deliveryTripOrderId,
-    payload: { status: 'delivered' },
-    onStatusUpdate: () => {
-      console.log('[CompleteDelivery] Status updated to delivered');
-      handleShowRating();
-    },
-  });
-}, [getCurrentOrder, advanceToNextStop, cancelRide, handleShowRating]);
+    // Update order status to "delivered"
+    await updateOrderStatusController({
+      deliveryTripOrderId,
+      payload: { status: 'delivered' },
+      onStatusUpdate: () => {
+        console.log('[CompleteDelivery] Status updated to delivered');
+        handleShowRating();
+      },
+    });
+  }, [getCurrentOrder, advanceToNextStop, cancelRide, handleShowRating]);
 
   const handleRatingSubmit = useCallback(() => {
     setShowRatingModal(false);
@@ -795,15 +767,6 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Screen flash overlay for accessibility */}
-      <Animated.View
-        style={[
-          styles.screenFlashOverlay,
-          { opacity: screenFlashAnim }
-        ]}
-        pointerEvents="none"
-      />
-
       <HomeHeader navigation={navigation} earnings={earnings} notificationCount={notificationCount} />
 
       <MapComponent

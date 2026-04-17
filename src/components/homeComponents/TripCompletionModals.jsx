@@ -1405,13 +1405,25 @@ export function VerifyOrderModal({ visible, ride, onVerify, onClose }) {
    Drop Off Order Modal - Shows order details for drop-off
    ════════════════════════════════════════════════════════════════ */
 export function DropOffOrderModal({ visible, ride, onTakePhoto, onClose }) {
-  const customerName = ride?.passengerName || 'Kelsey Lavin';
-  const orderId = ride?.id ? `#${ride.id}` : '#230203';
-  const restaurantName = ride?.pickup?.name || "Dave's Hot Chicken";
-  const items = ride?.items || [
-    { name: 'Garlic Stick', quantity: 2 },
-    { name: 'Quarter Butter Chicken', quantity: 2 },
-  ];
+  // Get the first active order from delivery_trip_orders array
+  const activeOrder = ride?.delivery_trip_orders?.[0];
+
+  // Extract customer name from the active order
+  const customerName = activeOrder?.customer_name || ride?.customer_name || '';
+
+  // Extract order number from nested order object
+  const orderId = activeOrder?.order?.order_number
+    ? `#${activeOrder.order.order_number}`
+    : (activeOrder?.order_id ? `#${activeOrder.order_id}` : '');
+
+  // Extract restaurant name from the active order
+  const restaurantName = activeOrder?.restaurant_name || '';
+
+  // Extract items from nested order_items array
+  const items = activeOrder?.order?.order_items?.map(item => ({
+    name: item?.product_name || '',
+    quantity: item?.quantity || 0,
+  })) || [];
 
   return (
     <Modal
@@ -1437,6 +1449,7 @@ export function DropOffOrderModal({ visible, ride, onTakePhoto, onClose }) {
           <View style={styles.orderCardBox}>
             <Text style={styles.orderCardName}>{customerName}</Text>
             <Text style={styles.orderCardId}>{orderId}</Text>
+            {restaurantName ? <Text style={styles.orderCardItems}>{restaurantName}</Text> : null}
             <Text style={styles.orderCardItems}>{items.length} items</Text>
           </View>
 
