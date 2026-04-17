@@ -3,7 +3,7 @@
  * Centered modal dialogs for rating and earnings (not bottom sheet style)
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -1307,9 +1307,23 @@ export function PickupConfirmationModal({ visible, onContinue, onGoBack }) {
 /* ════════════════════════════════════════════════════════════════
    Verify Order Modal - Shows order details for verification
    ════════════════════════════════════════════════════════════════ */
-export function VerifyOrderModal({ visible, ride, onVerify, onClose }) {
-  // Get the first order from delivery_trip_orders (matches API structure)
-  const activeOrder = ride?.delivery_trip_orders?.[0];
+export function VerifyOrderModal({ visible, ride, currentStopIndex, onVerify, onClose }) {
+  // Get sorted stops by sequence_number
+  const sortedStops = useMemo(() => {
+    if (!ride?.delivery_route_stops) return [];
+    return [...ride.delivery_route_stops].sort((a, b) => a.sequence_number - b.sequence_number);
+  }, [ride?.delivery_route_stops]);
+
+  // Get current stop based on currentStopIndex
+  const currentStop = sortedStops[currentStopIndex] || sortedStops[0] || null;
+
+  // Get current order based on current stop (for multi-order support)
+  const activeOrder = useMemo(() => {
+    if (!currentStop || !ride?.delivery_trip_orders) return ride?.delivery_trip_orders?.[0] || null;
+    return ride.delivery_trip_orders.find(
+      order => order.id === currentStop.delivery_trip_order_id
+    ) || ride?.delivery_trip_orders?.[0];
+  }, [currentStop, ride?.delivery_trip_orders]);
   const orderDetails = activeOrder?.order;
 
   const restaurantName = activeOrder?.restaurant_name || "Restaurant";
@@ -1404,9 +1418,23 @@ export function VerifyOrderModal({ visible, ride, onVerify, onClose }) {
 /* ════════════════════════════════════════════════════════════════
    Drop Off Order Modal - Shows order details for drop-off
    ════════════════════════════════════════════════════════════════ */
-export function DropOffOrderModal({ visible, ride, onTakePhoto, onClose }) {
-  // Get the first active order from delivery_trip_orders array
-  const activeOrder = ride?.delivery_trip_orders?.[0];
+export function DropOffOrderModal({ visible, ride, currentStopIndex, onTakePhoto, onClose }) {
+  // Get sorted stops by sequence_number
+  const sortedStops = useMemo(() => {
+    if (!ride?.delivery_route_stops) return [];
+    return [...ride.delivery_route_stops].sort((a, b) => a.sequence_number - b.sequence_number);
+  }, [ride?.delivery_route_stops]);
+
+  // Get current stop based on currentStopIndex
+  const currentStop = sortedStops[currentStopIndex] || sortedStops[0] || null;
+
+  // Get current order based on current stop (for multi-order support)
+  const activeOrder = useMemo(() => {
+    if (!currentStop || !ride?.delivery_trip_orders) return ride?.delivery_trip_orders?.[0] || null;
+    return ride.delivery_trip_orders.find(
+      order => order.id === currentStop.delivery_trip_order_id
+    ) || ride?.delivery_trip_orders?.[0];
+  }, [currentStop, ride?.delivery_trip_orders]);
 
   // Extract customer name from the active order
   const customerName = activeOrder?.customer_name || ride?.customer_name || '';

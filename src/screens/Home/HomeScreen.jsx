@@ -105,6 +105,10 @@ export default function HomeScreen({ navigation }) {
   const [showLowBatteryAlert, setShowLowBatteryAlert] = useState(false);
   const hasShownBatteryAlertRef = useRef(false);
 
+  // Map follow mode: auto-follow driver during active ride
+  const [isFollowingDriver, setIsFollowingDriver] = useState(true);
+  const userInteractedRef = useRef(false);
+
   const mapRef = useRef(null);
   const bottomSheetRef = useRef(null);
   const chevronRot = useRef(new Animated.Value(0)).current;
@@ -209,11 +213,13 @@ export default function HomeScreen({ navigation }) {
             setHeading(h);
           }
 
-          // Follow driver; camera stays north-up (marker rotates instead)
-          mapRef.current?.animateCamera(
-            { center: { latitude, longitude }, heading: 0, zoom: 16 },
-            { duration: 600 },
-          );
+          // Follow driver only during active ride and when user hasn't manually moved map
+          if (isActive && isFollowingDriver && !userInteractedRef.current) {
+            mapRef.current?.animateCamera(
+              { center: { latitude, longitude }, heading: 0, zoom: 16 },
+              { duration: 600 },
+            );
+          }
         },
         err => console.warn('[GPS] watchPosition error:', err),
         {
@@ -647,6 +653,10 @@ export default function HomeScreen({ navigation }) {
   }, []);
 
   const handleLocate = useCallback(() => {
+    // Re-enable auto-follow when user clicks locate button
+    userInteractedRef.current = false;
+    setIsFollowingDriver(true);
+
     Geolocation.getCurrentPosition(
       pos => {
         const { latitude, longitude } = pos.coords;
@@ -666,6 +676,15 @@ export default function HomeScreen({ navigation }) {
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 3000 },
     );
   }, [location]);
+
+  // When user interacts with map, stop auto-following
+  const handleUserMapInteraction = useCallback(() => {
+    if (isActive && isFollowingDriver) {
+      userInteractedRef.current = true;
+      setIsFollowingDriver(false);
+      console.log('[Map] User interaction - stopped auto-follow');
+    }
+  }, [isActive, isFollowingDriver]);
 
   const handleMapClick = useCallback(() => {
   }, [navigation, rideData, location]);
@@ -784,6 +803,7 @@ export default function HomeScreen({ navigation }) {
         mapRef={mapRef}
         handleLocate={handleLocate}
         onMapClick={handleMapClick}
+        onPanDrag={handleUserMapInteraction}
       />
 
       {/* <TouchableOpacity style={{ position: 'absolute', top: 80, left: 10, backgroundColor: 'red', padding: 10 }} onPress={addTestRide}>

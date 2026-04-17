@@ -402,6 +402,7 @@ export default function MapComponent({
   mapRef,
   handleLocate,
   onMapClick,
+  onPanDrag,
 }) {
   const { isDarkMode } = useTheme();
 
@@ -639,6 +640,7 @@ if (!location || !location.latitude || !location.longitude) {
           showsMyLocationButton={false}
           showsCompass={false}
           rotateEnabled={true}
+          onPanDrag={onPanDrag}
           onRegionChangeComplete={(region) => {
             if (region.heading !== undefined) {
               setCameraHeading(region.heading);

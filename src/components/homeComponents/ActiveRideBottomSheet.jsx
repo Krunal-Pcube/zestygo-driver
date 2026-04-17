@@ -362,6 +362,7 @@ export default function ActiveRideBottomSheet({
       <VerifyOrderModal
         visible={showVerifyOrder}
         ride={ride}
+        currentStopIndex={currentStopIndex}
         onVerify={handleOrderVerified}
         onClose={handleCloseVerify}
       />
@@ -370,6 +371,7 @@ export default function ActiveRideBottomSheet({
       <DropOffOrderModal
         visible={showDropOffOrder}
         ride={ride}
+        currentStopIndex={currentStopIndex}
         onTakePhoto={handleTakePhoto}
         onClose={handleCloseDropOff}
       />
