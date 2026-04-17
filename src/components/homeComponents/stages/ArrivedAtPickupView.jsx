@@ -130,10 +130,10 @@ export default function ArrivedAtPickupView({
       </View>
 
       {/* Help & Support */}
-      <TouchableOpacity style={styles.helpRow} activeOpacity={0.7}>
+      {/* <TouchableOpacity style={styles.helpRow} activeOpacity={0.7}>
         <Text style={styles.helpText}>Help & Support</Text>
         <ChevronRight size={moderateScale(24)} color={colors.grey} />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* Complete Pickup Button */}
       <ActionButton

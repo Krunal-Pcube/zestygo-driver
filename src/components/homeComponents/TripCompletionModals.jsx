@@ -1308,12 +1308,16 @@ export function PickupConfirmationModal({ visible, onContinue, onGoBack }) {
    Verify Order Modal - Shows order details for verification
    ════════════════════════════════════════════════════════════════ */
 export function VerifyOrderModal({ visible, ride, onVerify, onClose }) {
-  const restaurantName = ride?.pickup?.name || "Dave's Hot Chicken";
-  const orderId = ride?.id ? `#${ride.id}` : '#230203';
-  const items = ride?.items || [
-    { name: 'Garlic Stick', quantity: 2 },
-    { name: 'Quarter Butter Chicken', quantity: 2 },
-  ];
+  // Get the first order from delivery_trip_orders (matches API structure)
+  const activeOrder = ride?.delivery_trip_orders?.[0];
+  const orderDetails = activeOrder?.order;
+
+  const restaurantName = activeOrder?.restaurant_name || "Restaurant";
+  const orderId = orderDetails?.order_number ? `#${orderDetails.order_number}` : `#${activeOrder?.id || 'N/A'}`;
+  const items = orderDetails?.order_items?.map(item => ({
+    name: item.product_name,
+    quantity: item.quantity
+  })) || [];
 
   return (
     <Modal

@@ -10,7 +10,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import {
   View,
   Platform,
-  Animated,
+  Animated, 
   Easing,
   Dimensions,
   Alert,
@@ -64,6 +64,9 @@ export default function HomeScreen({ navigation }) {
     cancelRide,
     getCurrentStop,
     getCurrentOrder,
+    hasMoreStops,      
+    advanceToNextStop, 
+    refreshTripData,
   } = useRideState();
 
   const [isOnline, setIsOnline] = useState(false);
@@ -234,9 +237,9 @@ export default function HomeScreen({ navigation }) {
 
   /* ── Real socket ride requests while online ───────────────────── */
   useEffect(() => {
-  
+
     console.log("isOnline :::", isOnline)
-  
+
     if (!isOnline) return;
 
     const handleNewOrderOffer = (orderData) => {
@@ -262,55 +265,55 @@ export default function HomeScreen({ navigation }) {
     return () => {
       offSocketEvent('new_order_offer', handleNewOrderOffer);
     };
-  }, [isOnline, rideData, location]);
+  }, [isOnline]);
 
 
   /* ── Update location to backend every minute when online ──── */
-  // const locationRef = useRef(location);
-  // useEffect(() => {
-  //   locationRef.current = location;
-  // }, [location]);
+  const locationRef = useRef(location);
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
 
-  // useEffect(() => {
-  //   let interval;
+  useEffect(() => {
+    let interval;
 
-  //   const updateLocation = async () => {
-  //     if (!isOnline || !locationRef.current?.latitude || !locationRef.current?.longitude) {
-  //       return;
-  //     }
+    const updateLocation = async () => {
+      if (!isOnline || !locationRef.current?.latitude || !locationRef.current?.longitude) {
+        return;
+      }
 
-  //     const payload = {
-  //       current_latitude: locationRef.current.latitude.toString(),
-  //       current_longitude: locationRef.current.longitude.toString(),
-  //     };
+      const payload = {
+        current_latitude: locationRef.current.latitude.toString(),
+        current_longitude: locationRef.current.longitude.toString(),
+      };
 
-  //     try {
-  //       await changeLocationController({
-  //         payload,
-  //         onLocationUpdate: (updatedData) => {
-  //           console.log('[Location] Updated on server:', updatedData);
-  //         },
-  //       });
-  //     } catch (error) {
-  //       console.log('[Location] Update failed:', error);
-  //     }
-  //   };
+      try {
+        await changeLocationController({
+          payload,
+          onLocationUpdate: (updatedData) => {
+            console.log('[Location] Updated on server:', updatedData);
+          },
+        });
+      } catch (error) {
+        console.log('[Location] Update failed:', error);
+      }
+    };
 
-  //   if (isOnline) {
-  //     interval = setInterval(updateLocation, 60000);
-  //   }
+    if (isOnline) {
+      interval = setInterval(updateLocation, 60000);
+    }
 
-  //   return () => {
-  //     if (interval) {
-  //       clearInterval(interval);
-  //     }
-  //   };
-  // }, [isOnline]);
- 
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isOnline]); 
+
   /* ── Monitor battery level ──────────────────────────────────── */
   useEffect(() => {
     let interval;
-    
+
     const checkBattery = async () => {
       try {
         const level = await DeviceInfo.getBatteryLevel();
@@ -537,13 +540,14 @@ export default function HomeScreen({ navigation }) {
       } : null;
 
     } else if (currentStep === 'going_to_dropoff' || currentStep === 'arrived_at_dropoff') {
-      // Use current stop coordinates if available, otherwise fallback to order
+      // Use current stop coordinates if available, otherwise find drop stop from route
+      const dropStop = rideData?.delivery_route_stops?.find(s => s.stop_type === 'drop');
       destination = currentStop?.latitude ? {
         latitude: parseFloat(currentStop.latitude),
         longitude: parseFloat(currentStop.longitude)
-      } : activeOrder?.order?.order_address?.latitude ? {
-        latitude: parseFloat(activeOrder.order.order_address.latitude),
-        longitude: parseFloat(activeOrder.order.order_address.longitude)
+      } : dropStop?.latitude ? {
+        latitude: parseFloat(dropStop.latitude),
+        longitude: parseFloat(dropStop.longitude)
       } : null;
 
     }
@@ -576,11 +580,53 @@ export default function HomeScreen({ navigation }) {
     }
   }, [rideData, location, currentStep, getCurrentOrder, getCurrentStop]);
 
-  const handleCancelRide = (reason) => {
-    console.log('[RIDE] Cancel reason:', reason);
-    cancelRide();
-  };
 
+
+  const handleCancelRide = useCallback(async (reason) => {
+    console.log('[CancelRide] Reason:', reason);
+
+    const currentOrder = getCurrentOrder();
+    const deliveryTripOrderId = currentOrder?.id;
+
+    // 1. Cancel current order
+    if (deliveryTripOrderId) {
+      await updateOrderStatusController({
+        deliveryTripOrderId,
+        payload: {
+          status: 'cancelled',
+          reason: reason
+        },
+        onStatusUpdate: () => {
+          console.log('[CancelRide] Order cancelled');
+        },
+      });
+    }
+
+    // 2. Refresh trip data to get latest state after cancellation
+    console.log('[CancelRide] Refreshing trip data after cancel...');
+    const freshData = await refreshTripData();
+
+    // 3. Check for active stops using FRESH data (not stale state)
+    const orders = freshData?.delivery_trip_orders || [];
+    const stops = freshData?.delivery_route_stops || [];
+    const activeStops = stops.filter(stop => {
+      const order = orders.find(o => o.id === stop.delivery_trip_order_id);
+      const isOrderActive = order && order.status !== 'cancelled';
+      const isStopActive = !['completed', 'skipped', 'cancelled'].includes(stop.status);
+      return isOrderActive && isStopActive;
+    });
+    
+    const hasActiveStops = activeStops.length > 0;
+    console.log('[CancelRide] Active stops found:', activeStops.length, 'hasActiveStops:', hasActiveStops);
+
+    if (hasActiveStops) {
+      console.log('[CancelRide] More orders remain, advancing to next stop');
+      await advanceToNextStop();  // Skip to next order
+    } else {
+      console.log('[CancelRide] No more orders, clearing trip and returning to online');
+      cancelRide();  // Only clear if no more orders
+    }
+  }, [getCurrentOrder, advanceToNextStop, cancelRide, refreshTripData]);
 
 
   const handleCall = useCallback(async () => {
@@ -658,35 +704,43 @@ export default function HomeScreen({ navigation }) {
     setShowRatingModal(true);
   }, []);
 
-  const handleCompleteDelivery = useCallback(async () => {
-    // Get current order based on current stop index
-    const currentOrder = getCurrentOrder();
-    // Use delivery_trip_order_id (e.g., 2) instead of order_id (e.g., 44)
-    const deliveryTripOrderId = currentOrder?.id;
 
-    if (!deliveryTripOrderId) {
-      console.error('[CompleteDelivery] No delivery trip order ID found');
-      Alert.alert('Error', 'Order ID not found');
+  const handleCompleteDelivery = useCallback(async () => {
+  // Check if current order is cancelled/null
+  let currentOrder = getCurrentOrder();
+  
+  // If current order is cancelled, skip to next active stop
+  if (!currentOrder) {
+    console.log('[CompleteDelivery] Current order cancelled, skipping to next stop');
+    const hasNext = await advanceToNextStop();
+    if (!hasNext) {
+      console.log('[CompleteDelivery] No more stops');
+      cancelRide();
       return;
     }
+    // Try again with new stop
+    currentOrder = getCurrentOrder();
+  }
+  
+  const deliveryTripOrderId = currentOrder?.id;
+  if (!deliveryTripOrderId) {
+    console.error('[CompleteDelivery] No delivery trip order ID found');
+    Alert.alert('Error', 'Order ID not found');
+    return;
+  }
 
-    console.log('[CompleteDelivery] Using delivery_trip_order_id:', deliveryTripOrderId);
+  console.log('[CompleteDelivery] Using delivery trip order id:', deliveryTripOrderId);
 
-    // Update order status to "delivered"
-    const success = await updateOrderStatusController({
-      deliveryTripOrderId,
-      payload: { status: 'delivered' },
-      onStatusUpdate: (data) => {
-        console.log('[CompleteDelivery] Status updated to delivered:', data);
-        // Then show rating modal
-        handleShowRating();
-      },
-    });
-
-    if (!success) {
-      console.log('[CompleteDelivery] Failed to update status');
-    }
-  }, [getCurrentOrder, handleShowRating]);
+  // Update order status to "delivered"
+  await updateOrderStatusController({
+    deliveryTripOrderId,
+    payload: { status: 'delivered' },
+    onStatusUpdate: () => {
+      console.log('[CompleteDelivery] Status updated to delivered');
+      handleShowRating();
+    },
+  });
+}, [getCurrentOrder, advanceToNextStop, cancelRide, handleShowRating]);
 
   const handleRatingSubmit = useCallback(() => {
     setShowRatingModal(false);
@@ -761,9 +815,9 @@ export default function HomeScreen({ navigation }) {
         onMapClick={handleMapClick}
       />
 
-      <TouchableOpacity style={{ position: 'absolute', top: 80, left: 10, backgroundColor: 'red', padding: 10 }} onPress={addTestRide}>
+      {/* <TouchableOpacity style={{ position: 'absolute', top: 80, left: 10, backgroundColor: 'red', padding: 10 }} onPress={addTestRide}>
         <Text style={{ color: 'white' }}>Add Test Ride</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <RideRequestCard
         rides={rideRequests}

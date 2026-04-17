@@ -5,7 +5,6 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-
 import { getTripDetailsController } from '../MVC/controllers/driverAssignmentController';
 import {
   getActiveTripId,
@@ -101,28 +100,71 @@ export function useRideState() {
     return stops[currentStopIndex] || null;
   }, [getSortedStops, currentStopIndex]);
 
-  // Helper: Get current order based on current stop
+  // Helper: Get current order based on current stop (skip cancelled)
   const getCurrentOrder = useCallback(() => {
     const currentStop = getCurrentStop();
     if (!currentStop || !rideData?.delivery_trip_orders) return null;
-    return rideData.delivery_trip_orders.find(
-      order => order.id === currentStop.delivery_trip_order_id
-    ) || rideData.delivery_trip_orders[0];
+    
+    // Find order for current stop
+    const order = rideData.delivery_trip_orders.find(
+      o => o.id === currentStop.delivery_trip_order_id
+    );
+    
+    // Skip cancelled orders - return null if cancelled
+    if (!order || order.status === 'cancelled') {
+      console.log('[getCurrentOrder] Order cancelled or not found, id:', currentStop.delivery_trip_order_id);
+      return null;
+    }
+    
+    // Also skip if stop itself is completed/skipped/cancelled
+    if (['completed', 'skipped', 'cancelled'].includes(currentStop.status)) {
+      console.log('[getCurrentOrder] Stop already processed, id:', currentStop.id, 'status:', currentStop.status);
+      return null;
+    }
+    
+    return order;
   }, [getCurrentStop, rideData]);
 
-  // Helper: Check if there are more stops after current
+  // Helper: Check if there are more active stops after current (skip cancelled)
   const hasMoreStops = useCallback(() => {
     const stops = getSortedStops();
-    return currentStopIndex < stops.length - 1;
-  }, [getSortedStops, currentStopIndex]);
+    const orders = rideData?.delivery_trip_orders || [];
+    
+    // Look for next active stop
+    for (let i = currentStopIndex + 1; i < stops.length; i++) {
+      const stop = stops[i];
+      const order = orders.find(o => o.id === stop.delivery_trip_order_id);
+      if (order && order.status !== 'cancelled' && !['completed', 'skipped', 'cancelled'].includes(stop.status)) {
+        return true; // Found active order
+      }
+    }
+    return false; // No more active stops
+  }, [getSortedStops, currentStopIndex, rideData]);
 
-  // Helper: Advance to next stop
+  // Helper: Advance to next stop (skip cancelled orders)
   const advanceToNextStop = useCallback(async () => {
     const stops = getSortedStops();
-    const nextIndex = currentStopIndex + 1;
+    const orders = rideData?.delivery_trip_orders || [];
+    
+    // Find next stop with active (non-cancelled) order
+    let nextIndex = currentStopIndex + 1;
+    while (nextIndex < stops.length) {
+      const stop = stops[nextIndex];
+      const order = orders.find(o => o.id === stop.delivery_trip_order_id);
+      
+      if (order && order.status !== 'cancelled' && !['completed', 'skipped', 'cancelled'].includes(stop.status)) {
+        // Found active order, use this stop
+        break;
+      }
+      
+      // Skip cancelled order stop
+      console.log('[advanceToNextStop] Skipping cancelled order stop:', stop.id);
+      nextIndex++;
+    }
 
     if (nextIndex >= stops.length) {
-      // All stops completed
+      // No more active stops
+      console.log('[advanceToNextStop] No more active stops');
       return false;
     }
 
@@ -140,8 +182,9 @@ export function useRideState() {
       await saveActiveTripId(deliveryTripId, nextStep, nextIndex);
     }
 
+    console.log('[advanceToNextStop] Advanced to stop:', nextIndex, 'order:', nextStop.delivery_trip_order_id);
     return true;
-  }, [currentStopIndex, deliveryTripId, getSortedStops]);
+  }, [currentStopIndex, deliveryTripId, getSortedStops, rideData]);
 
   useEffect(() => {
     const loadSavedTrip = async () => {
@@ -221,42 +264,33 @@ export function useRideState() {
     });
   }, [deliveryTripId, currentStopIndex]);
 
+  // Refresh trip data without changing state
+  // Returns fresh data for immediate use (avoids race condition with setState)
+  const refreshTripData = useCallback(async () => {
+    if (!deliveryTripId) {
+      console.error('[refreshTripData] No active trip ID');
+      return null;
+    }
+
+    console.log('[refreshTripData] Fetching fresh data for trip:', deliveryTripId);
+    let freshData = null;
+    await getTripDetailsController({
+      deliveryTripId,
+      onSuccess: (data) => {
+        console.log('[refreshTripData] Data refreshed:', data?.trip_number || data?.id);
+        freshData = data;
+        setRideData(data);
+      },
+    });
+    return freshData;
+  }, [deliveryTripId]);
+
   const arriveAtPickup = useCallback(async () => {
     setCurrentStep(RIDE_STEPS.ARRIVED_AT_PICKUP);
     if (deliveryTripId) {
       await saveActiveTripId(deliveryTripId, RIDE_STEPS.ARRIVED_AT_PICKUP, currentStopIndex);
     }
   }, [deliveryTripId, currentStopIndex]);
-
-
-  const startDropoff = useCallback(async () => {
-    // Check if we need to go to next stop or start dropoff for current
-    const currentStop = getCurrentStop();
-
-    if (currentStop?.stop_type === 'pickup' && hasMoreStops()) {
-      // There are more stops - advance to next
-      const hasNext = await advanceToNextStop();
-      if (!hasNext) {
-        // No more stops, complete the ride
-        await completeRide();
-      }
-    } else {
-      // Start dropoff for current order
-      setCurrentStep(RIDE_STEPS.GOING_TO_DROPOFF);
-      if (deliveryTripId) {
-        await saveActiveTripId(deliveryTripId, RIDE_STEPS.GOING_TO_DROPOFF, currentStopIndex);
-      }
-    }
-  }, [deliveryTripId, currentStopIndex, getCurrentStop, hasMoreStops, advanceToNextStop]);
-
-
-  const arriveAtDropoff = useCallback(async () => {
-    setCurrentStep(RIDE_STEPS.ARRIVED_AT_DROPOFF);
-    if (deliveryTripId) {
-      await saveActiveTripId(deliveryTripId, RIDE_STEPS.ARRIVED_AT_DROPOFF, currentStopIndex);
-    }
-  }, [deliveryTripId, currentStopIndex]);
-
 
   const completeRide = useCallback(async () => {
     // Check if there are more stops to complete
@@ -272,6 +306,40 @@ export function useRideState() {
     setCurrentStopIndex(0);
     await clearActiveTripId(); // Clears storage
   }, [hasMoreStops, advanceToNextStop]);
+
+  const startDropoff = useCallback(async () => {
+    // Check if we need to go to next stop or start dropoff for current
+    const currentStop = getCurrentStop();
+
+    if (currentStop?.stop_type === 'pickup' && hasMoreStops()) {
+      // There are more stops - advance to next
+      const hasNext = await advanceToNextStop();
+      if (!hasNext) {
+        // No more stops, complete the ride
+        await completeRide();
+        return;
+      }
+      // After advancing, verify the next order is valid (not cancelled)
+      const nextOrder = getCurrentOrder();
+      if (!nextOrder) {
+        console.log('[startDropoff] Next order is cancelled/null, completing ride');
+        await completeRide();
+        return;
+      }
+    }
+    // Start dropoff for current order
+    setCurrentStep(RIDE_STEPS.GOING_TO_DROPOFF);
+    if (deliveryTripId) {
+      await saveActiveTripId(deliveryTripId, RIDE_STEPS.GOING_TO_DROPOFF, currentStopIndex);
+    }
+  }, [deliveryTripId, currentStopIndex, getCurrentStop, hasMoreStops, advanceToNextStop, getCurrentOrder, completeRide]);
+
+  const arriveAtDropoff = useCallback(async () => {
+    setCurrentStep(RIDE_STEPS.ARRIVED_AT_DROPOFF);
+    if (deliveryTripId) {
+      await saveActiveTripId(deliveryTripId, RIDE_STEPS.ARRIVED_AT_DROPOFF, currentStopIndex);
+    }
+  }, [deliveryTripId, currentStopIndex]);
 
   const cancelRide = useCallback(async () => {
     setCurrentStep(RIDE_STEPS.IDLE);
@@ -309,6 +377,7 @@ export function useRideState() {
     arriveAtDropoff,
     completeRide,
     cancelRide,
+    refreshTripData,
     // Helpers
     RIDE_STEPS,
   };

@@ -1,8 +1,8 @@
-
 import { io } from "socket.io-client";
 import { BASE_URL } from "../MVC/Model/apiHelper"
- 
+
 let socket = null;
+let currentToken = null;
 
 // Callback registry for socket events
 const eventCallbacks = {
@@ -39,7 +39,7 @@ const emitEvent = (event, data) => {
   }
 };
 
-// ✅ Helper to log all socket events
+// Helper to log all socket events
 const logSocketEvent = (event, data) => {
   if (__DEV__) {
     console.log(`\n🔌 SOCKET EVENT: ${event}`);
@@ -48,19 +48,33 @@ const logSocketEvent = (event, data) => {
   }
 };
 
-export const connectSocket = (token) => { 
-  if (socket) {
-    console.log('⚠️ Disconnecting existing socket'); 
-    socket.disconnect();
+export const connectSocket = (token) => {
+  // Skip if already connected with the same token
+  if (socket?.connected && currentToken === token) {
+    console.log('⚠️ Socket already connected with same token, skipping reconnect');
+    return socket;
   }
+
+  // Disconnect existing socket if different token or reconnect needed
+  if (socket) {
+    console.log('⚠️ Disconnecting existing socket');
+    socket.disconnect();
+    socket = null;
+  }
+
+  currentToken = token;
 
   socket = io(BASE_URL, {
     transports: ["websocket"],
+    reconnection: true,
+    reconnectionAttempts: Infinity,  // never give up
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,      // cap backoff at 5s
     auth: {
       token: token,
       type: "driver"
     },
-  }); 
+  });
 
   // ── Connection events ──────────────────────────────
   socket.on("connect", () => {
@@ -93,7 +107,7 @@ export const connectSocket = (token) => {
   });
 
   return socket;
-}; 
+};
 
 export const getSocket = () => socket;
 

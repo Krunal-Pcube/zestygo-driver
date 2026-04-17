@@ -41,8 +41,8 @@ export default function DropoffDetailsView({
 
   // Customer info from current order
   const customerName = order?.customer_name || 'Customer';
-  const address = currentDrop?.address || order?.order?.order_checkout_details?.delivery_address || 'Address not available';
-  const dropoffType = order?.order?.order_checkout_details?.delivery_handoff_type === 'meet_at_door' ? 'Meet at door' : 'Leave at door';
+  const address = currentDrop?.address || 'Address not available';
+  const dropoffType = order?.order?.order_checkout_details?.delivery_handoff_type;
   const note = order?.order?.order_checkout_details?.delivery_instructions || 'No special instructions';
   const orderNumber = order?.order?.order_number || '';
   const restaurantName = order?.restaurant_name || 'Restaurant';
