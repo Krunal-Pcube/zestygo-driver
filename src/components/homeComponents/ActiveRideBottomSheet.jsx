@@ -315,7 +315,6 @@ export default function ActiveRideBottomSheet({
               chevronAngle={chevronAngle}
               onChevronPress={handleChevron}
               onCall={onCall}
-              onChat={onChat}
               onConfirmOrder={handleConfirmOrder}
             />
           </BottomSheetScrollView>

@@ -70,7 +70,7 @@ export default function HomeScreen({ navigation }) {
   } = useRideState();
 
   const [isOnline, setIsOnline] = useState(false);
-
+  const isOnlineRef = useRef(false);
   /* ── Load saved online status from AsyncStorage ──────────────── */
   useEffect(() => {
     const loadOnlineStatus = async () => {
@@ -240,20 +240,21 @@ export default function HomeScreen({ navigation }) {
     };
   }, [isFocused]);
 
+
+  useEffect(() => {
+    isOnlineRef.current = isOnline;
+  }, [isOnline]);
+
   /* ── Real socket ride requests while online ───────────────────── */
   useEffect(() => {
-
-    console.log("isOnline :::", isOnline)
-
     const handleNewOrderOffer = (orderData) => {
 
-      if (!isOnline) return;
+      if (!isOnlineRef.current) {  // ← Always fresh value!
+        console.log('[Socket] Ignoring - driver offline');
+        return;
+      }
       console.log('[Socket] New order offer received:', orderData);
 
-      // Note: Allow new orders even while on active ride (for multi-trip support)
-
-      // Socket sometimes sends data as array [ {...} ], sometimes as object {...}
-      // [0] extracts the first element if it's an array
       const data = Array.isArray(orderData) ? orderData[0] : orderData;
       if (!data || !data.offer) {
         console.error('[Socket] Invalid order data format:', orderData);
@@ -269,8 +270,8 @@ export default function HomeScreen({ navigation }) {
 
     return () => {
       offSocketEvent('new_order_offer', handleNewOrderOffer);
-    };
-  }, [isOnline]);
+    }; 
+  }, []);
 
 
   /* ── Update location to backend every minute when online ──── */

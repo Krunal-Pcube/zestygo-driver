@@ -742,6 +742,7 @@ const styles = StyleSheet.create({
   },
   verifyOrderBtn: {
     backgroundColor: '#1A1A1A',
+    marginTop: scale(10),
     borderRadius: moderateScale(12),
     paddingVertical: verticalScale(16),
     alignItems: 'center',
@@ -1376,30 +1377,21 @@ export function VerifyOrderModal({ visible, ride, currentStopIndex, onVerify, on
 
           <View style={styles.verifyDivider} />
 
-          {/* Not Ready Option */}
-          <TouchableOpacity style={styles.optionRow} activeOpacity={0.7}>
+          {/* <TouchableOpacity style={styles.optionRow} activeOpacity={0.7}>
             <View style={styles.optionIconBg}>
               <NotReadyIcon width={moderateScale(20)} height={moderateScale(20)} />
             </View>
             <Text style={styles.optionText}>Not ready</Text>
           </TouchableOpacity>
 
-          {/* Report Issue Option */}
           <TouchableOpacity style={styles.optionRow} activeOpacity={0.7}>
             <View style={styles.optionIconBg}>
               <ReportIssueIcon width={moderateScale(20)} height={moderateScale(20)} />
             </View>
             <Text style={styles.optionText}>Report issue</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
-          {/* Issue with Order Button */}
-          <TouchableOpacity 
-            style={styles.issueBtn}
-            onPress={onClose}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.issueBtnText}>Issue with order</Text>
-          </TouchableOpacity>
+      
 
           {/* Verify Order Button */}
           <TouchableOpacity

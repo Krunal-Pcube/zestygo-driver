@@ -19,7 +19,6 @@ import ChevronIcon from '../../../assets/homeIcons/chevron.svg';
 import VectorIcon from '../../../assets/homeIcons/Vector.svg';
 import LocationFilledIcon from '../../../assets/ridecardIcons/location_filled.svg';
 import CallIcon from '../../../assets/ridecardIcons/call_icon.svg';
-import ChatRestaurantIcon from '../../../assets/ridecardIcons/chat_restaurant.svg';
 import HomeIcon from '../../../assets/ridecardIcons/home_icon.svg';
 import ActionButton from '../../../components/common/ActionButton';
  
@@ -32,7 +31,6 @@ export default function DropoffDetailsView({
   chevronAngle,
   onChevronPress,
   onCall,
-  onChat,
   onConfirmOrder,
 }) {
   // Use activeOrder and dropStop props for current order data
@@ -88,11 +86,6 @@ export default function DropoffDetailsView({
           </View>
         </View>
         <View style={styles.actionButtonsRow}>
-          <TouchableOpacity style={styles.actionIconBtn} onPress={onChat} activeOpacity={0.7}>
-            <View style={[styles.actionIconBgSmall, { backgroundColor: '#C8FF00' }]}>
-              <ChatRestaurantIcon width={moderateScale(16)} height={moderateScale(16)} />
-            </View>
-          </TouchableOpacity>
           <TouchableOpacity style={styles.actionIconBtn} onPress={onCall} activeOpacity={0.7}>
             <View style={styles.actionIconBgSmall}>
               <CallIcon width={moderateScale(16)} height={moderateScale(16)} />
