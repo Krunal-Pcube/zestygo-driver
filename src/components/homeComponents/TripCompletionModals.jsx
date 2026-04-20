@@ -95,10 +95,10 @@ export function EarningsModal({ visible, tripId, amount, customerName, onDone, o
               <Text style={styles.tripIdText}>Trip {tripId}</Text>
 
               {/* Success Badge */}
-                <View style={{marginBottom: scale(20)}}>
+              <View style={{ marginBottom: scale(20) }}>
                 <TripFareCheckedIcon width={moderateScale(60)} height={moderateScale(60)} />
-                </View>
-            
+              </View>
+
 
               {/* Amount */}
               <Text style={styles.earningsAmount}>${amount}</Text>
@@ -292,62 +292,62 @@ export function ChatModal({ visible, customerName, onClose }) {
         <View style={styles.chatBackdrop}>
           <TouchableWithoutFeedback>
             <View style={styles.chatContainer}>
-          {/* Header */}
-          <View style={styles.chatHeader}>
-            <View style={styles.chatHeaderInfo}>
-              <Text style={styles.chatHeaderName}>{customerName || 'Customer'}</Text>
-              <Text style={styles.chatHeaderStatus}>Online</Text>
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.chatCloseBtn} activeOpacity={0.7}>
-              <Text style={styles.chatCloseText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Messages */}
-          <View style={styles.chatMessages}>
-            {messages.map((msg) => (
-              <View
-                key={msg.id}
-                style={[
-                  styles.chatMessageRow,
-                  msg.sender === 'driver' ? styles.chatMessageRowRight : styles.chatMessageRowLeft,
-                ]}
-              >
-                <View
-                  style={[
-                    styles.chatBubble,
-                    msg.sender === 'driver' ? styles.chatBubbleDriver : styles.chatBubbleCustomer,
-                  ]}
-                >
-                  <Text style={msg.sender === 'driver' ? styles.chatTextDriver : styles.chatTextCustomer}>
-                    {msg.text}
-                  </Text>
-                  <Text style={styles.chatTime}>{msg.time}</Text>
+              {/* Header */}
+              <View style={styles.chatHeader}>
+                <View style={styles.chatHeaderInfo}>
+                  <Text style={styles.chatHeaderName}>{customerName || 'Customer'}</Text>
+                  <Text style={styles.chatHeaderStatus}>Online</Text>
                 </View>
+                <TouchableOpacity onPress={onClose} style={styles.chatCloseBtn} activeOpacity={0.7}>
+                  <Text style={styles.chatCloseText}>✕</Text>
+                </TouchableOpacity>
               </View>
-            ))}
-          </View>
 
-          {/* Input */}
-          <View style={styles.chatInputArea}>
-            <TextInput
-              style={styles.chatInput}
-              value={message}
-              onChangeText={setMessage}
-              placeholder="Type a message..."
-              placeholderTextColor={colors.grey}
-              multiline
-              maxLength={200}
-            />
-            <TouchableOpacity
-              style={[styles.chatSendBtn, !message.trim() && styles.chatSendBtnDisabled]}
-              onPress={handleSend}
-              activeOpacity={0.7}
-              disabled={!message.trim()}
-            >
-              <Text style={styles.chatSendText}>Send</Text>
-            </TouchableOpacity>
-          </View>
+              {/* Messages */}
+              <View style={styles.chatMessages}>
+                {messages.map((msg) => (
+                  <View
+                    key={msg.id}
+                    style={[
+                      styles.chatMessageRow,
+                      msg.sender === 'driver' ? styles.chatMessageRowRight : styles.chatMessageRowLeft,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.chatBubble,
+                        msg.sender === 'driver' ? styles.chatBubbleDriver : styles.chatBubbleCustomer,
+                      ]}
+                    >
+                      <Text style={msg.sender === 'driver' ? styles.chatTextDriver : styles.chatTextCustomer}>
+                        {msg.text}
+                      </Text>
+                      <Text style={styles.chatTime}>{msg.time}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              {/* Input */}
+              <View style={styles.chatInputArea}>
+                <TextInput
+                  style={styles.chatInput}
+                  value={message}
+                  onChangeText={setMessage}
+                  placeholder="Type a message..."
+                  placeholderTextColor={colors.grey}
+                  multiline
+                  maxLength={200}
+                />
+                <TouchableOpacity
+                  style={[styles.chatSendBtn, !message.trim() && styles.chatSendBtnDisabled]}
+                  onPress={handleSend}
+                  activeOpacity={0.7}
+                  disabled={!message.trim()}
+                >
+                  <Text style={styles.chatSendText}>Send</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </TouchableWithoutFeedback>
         </View>
@@ -1391,7 +1391,7 @@ export function VerifyOrderModal({ visible, ride, currentStopIndex, onVerify, on
             <Text style={styles.optionText}>Report issue</Text>
           </TouchableOpacity> */}
 
-      
+
 
           {/* Verify Order Button */}
           <TouchableOpacity
@@ -1506,7 +1506,7 @@ const useVisionCamera = () => {
   const [state, setState] = React.useState({
     device: null,
     hasPermission: false,
-    requestPermission: () => {},
+    requestPermission: () => { },
     Camera: null,
     available: false,
   });
@@ -1517,7 +1517,7 @@ const useVisionCamera = () => {
       setState({
         device: null, // Will be set by hook below
         hasPermission: false, // Will be set by hook below
-        requestPermission: () => {},
+        requestPermission: () => { },
         Camera: VisionCamera.Camera,
         available: true,
       });
@@ -1533,12 +1533,12 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [cameraError, setCameraError] = useState(null);
   const cameraRef = useRef(null);
-  
+
   // Always call hooks at top level - never conditionally
   let cameraDevice = null;
   let hasPermission = false;
-  let requestPermissionFn = () => {};
-  
+  let requestPermissionFn = () => { };
+
   try {
     const VisionCamera = require('react-native-vision-camera');
     cameraDevice = VisionCamera.useCameraDevice('back');
@@ -1580,7 +1580,10 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
   // Confirm and send photo back
   const handleConfirmPhoto = () => {
     if (capturedPhoto) {
-      onPhotoTaken?.(capturedPhoto);
+      const photoUriWithPrefix = capturedPhoto === 'mock_photo'
+        ? capturedPhoto
+        : 'file://' + capturedPhoto;
+      onPhotoTaken?.(photoUriWithPrefix);
     }
   };
 
@@ -1669,8 +1672,8 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
                   <Text style={styles.photoPlaceholderSubtext}>Mock Photo Captured</Text>
                 </View>
               ) : (
-                <Image 
-                  source={{ uri: 'file://' + capturedPhoto }} 
+                <Image
+                  source={{ uri: 'file://' + capturedPhoto }}
                   style={styles.capturedPhoto}
                   resizeMode="cover"
                 />
@@ -1775,8 +1778,8 @@ export function DeliveryInfoModal({ visible, onCompleteDelivery, onClose, photoU
                 photoUri === 'mock_photo' ? (
                   <ImageIcon size={moderateScale(24)} color={colors.grey} />
                 ) : (
-                  <Image 
-                    source={{ uri: photoUri }} 
+                  <Image
+                    source={{ uri: photoUri?.startsWith('file://') ? photoUri : 'file://' + photoUri }} 
                     style={styles.capturedPhotoThumb}
                     resizeMode="cover"
                   />
@@ -1788,11 +1791,7 @@ export function DeliveryInfoModal({ visible, onCompleteDelivery, onClose, photoU
             <Text style={styles.uploadedText}>
               {photoUri ? 'Photo attached' : 'No photo attached'}
             </Text>
-            {photoUri && (
-              <TouchableOpacity style={styles.deletePhotoBtn} activeOpacity={0.7}>
-                <Trash2 size={moderateScale(20)} color={colors.grey} />
-              </TouchableOpacity>
-            )}
+            
           </View>
 
           {/* Notes Section */}

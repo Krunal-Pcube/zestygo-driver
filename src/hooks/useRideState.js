@@ -104,24 +104,24 @@ export function useRideState() {
   const getCurrentOrder = useCallback(() => {
     const currentStop = getCurrentStop();
     if (!currentStop || !rideData?.delivery_trip_orders) return null;
-    
+
     // Find order for current stop
     const order = rideData.delivery_trip_orders.find(
       o => o.id === currentStop.delivery_trip_order_id
     );
-    
+
     // Skip cancelled orders - return null if cancelled
     if (!order || order.status === 'cancelled') {
       console.log('[getCurrentOrder] Order cancelled or not found, id:', currentStop.delivery_trip_order_id);
       return null;
     }
-    
+
     // Also skip if stop itself is completed/skipped/cancelled
     if (['completed', 'skipped', 'cancelled'].includes(currentStop.status)) {
       console.log('[getCurrentOrder] Stop already processed, id:', currentStop.id, 'status:', currentStop.status);
       return null;
     }
-    
+
     return order;
   }, [getCurrentStop, rideData]);
 
@@ -129,7 +129,7 @@ export function useRideState() {
   const hasMoreStops = useCallback(() => {
     const stops = getSortedStops();
     const orders = rideData?.delivery_trip_orders || [];
-    
+
     // Look for next active stop
     for (let i = currentStopIndex + 1; i < stops.length; i++) {
       const stop = stops[i];
@@ -145,18 +145,18 @@ export function useRideState() {
   const advanceToNextStop = useCallback(async () => {
     const stops = getSortedStops();
     const orders = rideData?.delivery_trip_orders || [];
-    
+
     // Find next stop with active (non-cancelled) order
     let nextIndex = currentStopIndex + 1;
     while (nextIndex < stops.length) {
       const stop = stops[nextIndex];
       const order = orders.find(o => o.id === stop.delivery_trip_order_id);
-      
+
       if (order && order.status !== 'cancelled' && !['completed', 'skipped', 'cancelled'].includes(stop.status)) {
         // Found active order, use this stop
         break;
       }
-      
+
       // Skip cancelled order stop
       console.log('[advanceToNextStop] Skipping cancelled order stop:', stop.id);
       nextIndex++;
@@ -262,7 +262,7 @@ export function useRideState() {
   const startRide = useCallback(async (apiResponse) => {
     console.log('[startRide] API response:', apiResponse);
 
-  
+
     const tripId = apiResponse?.delivery_trip_id
     console.log('[startRide] Extracted tripId:', tripId);
 
@@ -288,6 +288,7 @@ export function useRideState() {
       // Same trip - accepting additional order, keep current position
       console.log('[startRide] Same trip - refreshing data only');
       // Keep currentStep and currentStopIndex as-is
+
     }
 
     // Fetch full trip details from API
@@ -299,10 +300,20 @@ export function useRideState() {
         setRideData(data);
 
         // If same trip and new stops added, we may need to advance
+
         if (isSameTrip) {
-          const stops = data?.delivery_route_stops || [];
-          const currentStop = stops[currentStopIndex];
-          console.log('[startRide] Current stop after refresh:', currentStop?.sequence_number, currentStop?.stop_type);
+          const newStops = data?.delivery_route_stops || [];
+
+          // Find the stop that matches our current stop ID
+          const currentStopId = getCurrentStop()?.id;
+          if (currentStopId) {
+            const correctIndex = newStops.findIndex(s => s.id === currentStopId);
+            if (correctIndex !== -1 && correctIndex !== currentStopIndex) {
+              console.log('[startRide] Index changed due to re-optimization:', currentStopIndex, '->', correctIndex);
+              setCurrentStopIndex(correctIndex);
+              saveActiveTripId(tripId, currentStep, correctIndex);
+            }
+          }
         }
       },
     });
@@ -361,7 +372,6 @@ export function useRideState() {
       const nextStop = stops[currentStopIndex + 1];
 
       if (nextStop?.stop_type === 'pickup') {
-        // Next stop is another pickup (same restaurant, different order)
         // Stay in ARRIVED_AT_PICKUP state but advance to the next stop
         const hasNext = await advanceToNextStop();
         if (!hasNext) {
