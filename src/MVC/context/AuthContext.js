@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, createContext } from 'react';
+import React, { useEffect, useState, useCallback, createContext, useContext } from 'react';
 import { getAuthData, clearAuthData } from '../../utils/authStorage';
 import ApiHelper from '../Model/apiHelper'; // 🔹 make sure this is imported
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -128,3 +128,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export const useAuth = () => useContext(AuthContext);

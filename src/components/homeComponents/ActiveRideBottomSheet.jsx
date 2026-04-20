@@ -23,6 +23,7 @@ import {
   ArrivedAtPickupView,
   DropoffDetailsView,
 } from './stages';
+import ReCenterFAB from './stages/ReCenterFAB';
 
 
 export default function ActiveRideBottomSheet({
@@ -33,6 +34,7 @@ export default function ActiveRideBottomSheet({
   totalStops = 0,       // Multi-order: total number of stops
   onArrived,
   onNavigate,
+  onReCenter,
   onCall,
   onChat,
   onCancel,
@@ -267,6 +269,13 @@ export default function ActiveRideBottomSheet({
 
   return (
     <>
+
+      {/* Re-center FAB - left side */}
+      {stepConfig.showNavigationButton && (
+        <ReCenterFAB onPress={onReCenter} />
+      )} 
+
+
       {/* Navigation FAB - only show when configured */}
       {stepConfig.showNavigationButton && (
         <NavigationFAB onPress={onNavigate} />

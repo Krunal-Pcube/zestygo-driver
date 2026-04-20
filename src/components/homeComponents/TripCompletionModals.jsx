@@ -15,8 +15,10 @@ import {
   Image,
   Alert,
   PanResponder,
+  ActivityIndicator,
 } from 'react-native';
 import { Camera as CameraIcon, Trash2, Check, Image as ImageIcon, Star } from 'lucide-react-native';
+import { addReviewController } from '../../MVC/controllers/driverReviewController';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
@@ -29,16 +31,55 @@ import TripFareCheckedIcon from '../../assets/ridecardIcons/trip_fare_checked.sv
 /* ════════════════════════════════════════════════════════════════
    Rating Modal - Centered modal with backdrop
    ════════════════════════════════════════════════════════════════ */
-export function RatingModal({ visible, customerName, onSubmit, onClose }) {
+export function RatingModal({
+  visible,
+  customerName,
+  onSubmit,
+  onClose,
+  deliveryTripId,
+  deliveryTripOrderId,
+  deliveryPartnerId,
+}) {
   const [rating, setRating] = useState(4);
+  const [feedback, setFeedback] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = () => {
-    onSubmit?.(rating);
+  const handleSubmit = async () => {
+    // if (!deliveryTripId || !deliveryTripOrderId || !deliveryPartnerId) {
+    //   Alert.alert('Error', 'Missing required trip information');
+    //   return;
+    // }
+
+    // const payload = {
+    //   delivery_trip_id: deliveryTripId,
+    //   delivery_trip_order_id: deliveryTripOrderId,
+    //   delivery_partner_id: deliveryPartnerId,
+    //   rating: rating,
+    //   feedback: feedback.trim(),
+    // };
+
+    // setIsLoading(true);
+
+    // const success = await addReviewController({
+    //   payload,
+    //   onReviewAdded: (data) => {
+    //     console.log('[RatingModal] Review added successfully:', data);
+    //   },
+    // });
+
+    // setIsLoading(false);
+
+   
+      // Reset state
+      setRating(4);
+      setFeedback('');
+      onSubmit?.(rating);
+    
   };
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
+      <TouchableWithoutFeedback onPress={!isLoading ? onClose : null}>
         <View style={styles.backdrop}>
           <TouchableWithoutFeedback>
             <View style={styles.modalContainer}>
@@ -50,9 +91,10 @@ export function RatingModal({ visible, customerName, onSubmit, onClose }) {
                 {[1, 2, 3, 4, 5].map((star) => (
                   <TouchableOpacity
                     key={star}
-                    onPress={() => setRating(star)}
+                    onPress={() => !isLoading && setRating(star)}
                     activeOpacity={0.7}
                     style={styles.starTouchArea}
+                    disabled={isLoading}
                   >
                     <Star
                       size={moderateScale(36)}
@@ -64,10 +106,35 @@ export function RatingModal({ visible, customerName, onSubmit, onClose }) {
                 ))}
               </View>
 
+              {/* Feedback Input */}
+              <View style={styles.feedbackContainer}>
+                <Text style={styles.feedbackLabel}>Additional Feedback (Optional)</Text>
+                <TextInput
+                  style={styles.feedbackInput}
+                  placeholder="Share your experience..."
+                  placeholderTextColor={colors.grey}
+                  value={feedback}
+                  onChangeText={setFeedback}
+                  multiline
+                  maxLength={200}
+                  editable={!isLoading}
+                />
+                <Text style={styles.feedbackCharCount}>{feedback.length}/200</Text>
+              </View>
+
               <View style={styles.ratingDivider} />
 
-              <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} activeOpacity={0.8}>
-                <Text style={styles.submitBtnText}>Submit</Text>
+              <TouchableOpacity
+                style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
+                onPress={handleSubmit}
+                activeOpacity={0.8}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#C8FF00" />
+                ) : (
+                  <Text style={styles.submitBtnText}>Submit</Text>
+                )}
               </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>
@@ -423,6 +490,37 @@ const styles = StyleSheet.create({
     color: '#C8FF00',
     fontSize: moderateScale(16),
     fontFamily: fonts.bold,
+  },
+  submitBtnDisabled: {
+    opacity: 0.6,
+  },
+  feedbackContainer: {
+    width: '100%',
+    marginBottom: verticalScale(16),
+  },
+  feedbackLabel: {
+    fontSize: moderateScale(14),
+    fontFamily: fonts.medium,
+    color: colors.grey,
+    marginBottom: verticalScale(8),
+  },
+  feedbackInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: moderateScale(12),
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(12),
+    fontSize: moderateScale(14),
+    color: colors.secondary,
+    textAlignVertical: 'top',
+    minHeight: verticalScale(80),
+    backgroundColor: '#F8F8F8',
+  },
+  feedbackCharCount: {
+    fontSize: moderateScale(12),
+    color: colors.grey,
+    textAlign: 'right',
+    marginTop: verticalScale(4),
   },
 
   /* Earnings View */

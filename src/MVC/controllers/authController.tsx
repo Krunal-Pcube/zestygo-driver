@@ -20,13 +20,13 @@ export const passwordLoginController = async ({
     console.log('Login Payload + Response ::::', payload, res);
 
     if (res.data.status === 200) {
-      const { token, user_id, customer_id } = res.data.data;
+      const { token, user_id,  delivery_partner_id } = res.data.data;
 
       // Save to storage
-      await saveAuthData({ token, user_id, customer_id });
+      await saveAuthData({ token, user_id, delivery_partner_id });
 
-      // Update context (passed from screen)
-      onLoginSuccess({ token, user_id, customer_id });
+      // Update context (passed from screen) 
+      onLoginSuccess({ token, user_id, delivery_partner_id });
 
       Toast.show({
         type: 'success',
@@ -127,14 +127,14 @@ export const LoginverifyOTPController = async ({
     console.log('Verify OTP Response :::', res);
 
     if (res.data.status === 200) {
-      const { token, user_id, customer_id } = res.data.data;
+      const { token, user_id, delivery_partner_id } = res.data.data;
 
       // Save to AsyncStorage
-      await saveAuthData({ token, user_id, customer_id });
+      await saveAuthData({ token, user_id, delivery_partner_id });
 
       // Update AuthContext
       if (onLoginSuccess) {
-        onLoginSuccess({ token, user_id, customer_id });
+        onLoginSuccess({ token, user_id, delivery_partner_id });
       }
 
       Toast.show({

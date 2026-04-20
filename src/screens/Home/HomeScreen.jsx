@@ -54,6 +54,7 @@ export default function HomeScreen({ navigation }) {
     currentStep,
     rideData,
     isActive,
+    deliveryTripId,
     currentStopIndex,
     totalStops,
     startRide,
@@ -270,7 +271,7 @@ export default function HomeScreen({ navigation }) {
 
     return () => {
       offSocketEvent('new_order_offer', handleNewOrderOffer);
-    }; 
+    };
   }, []);
 
 
@@ -653,6 +654,11 @@ export default function HomeScreen({ navigation }) {
     setShowChatModal(false);
   }, []);
 
+
+
+
+
+
   const handleLocate = useCallback(() => {
     // Re-enable auto-follow when user clicks locate button
     userInteractedRef.current = false;
@@ -677,6 +683,15 @@ export default function HomeScreen({ navigation }) {
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 3000 },
     );
   }, [location]);
+
+
+  const handleReCenter = useCallback(() => {
+    // 1. Center map on driver
+    handleLocate();
+    // 2. Clear route to force re-fetch
+    // MapComponent will re-fetch automatically when location updates
+  }, [handleLocate]);
+
 
   // When user interacts with map, stop auto-following
   const handleUserMapInteraction = useCallback(() => {
@@ -829,6 +844,7 @@ export default function HomeScreen({ navigation }) {
         isVisible={isActive && !showRatingModal && !showEarningsModal}
         onArrived={handleArrived}
         onNavigate={handleNavigate}
+        onReCenter={handleReCenter}
         onCall={handleCall}
         onChat={handleOpenChat}
         onCancel={handleCancelRide}
@@ -843,6 +859,9 @@ export default function HomeScreen({ navigation }) {
         customerName={rideData?.passengerName || 'Kelsey Lavin'}
         onSubmit={handleRatingSubmit}
         onClose={handleCloseRatingModal}
+        deliveryTripId={deliveryTripId}
+        deliveryTripOrderId={getCurrentOrder()?.id}
+        deliveryPartnerId={rideData?.delivery_partners?.id}
       />
 
       {/* Earnings Modal */}
