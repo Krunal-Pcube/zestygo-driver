@@ -1844,6 +1844,23 @@ export function TakePhotoModal({ visible, onPhotoTaken, onClose }) {
    ════════════════════════════════════════════════════════════════ */
 export function DeliveryInfoModal({ visible, onCompleteDelivery, onClose, photoUri }) {
   const [notes, setNotes] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleCompletePress = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    
+    try {
+      const success = await onCompleteDelivery?.(notes);
+      if (!success) {
+        // API failed, keep modal open
+        setIsLoading(false);
+      }
+      // If success, parent will handle closing (modal stays open until API returns)
+    } catch (error) {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Modal
@@ -1918,11 +1935,19 @@ export function DeliveryInfoModal({ visible, onCompleteDelivery, onClose, photoU
 
           {/* Complete Delivery Button */}
           <TouchableOpacity
-            style={styles.completeDeliveryBtn}
-            onPress={onCompleteDelivery}
+            style={[
+              styles.completeDeliveryBtn,
+              isLoading && { opacity: 0.7 }
+            ]}
+            onPress={handleCompletePress}
             activeOpacity={0.8}
+            disabled={isLoading}
           >
-            <Text style={styles.completeDeliveryBtnText}>Complete Delivery</Text>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.completeDeliveryBtnText}>Complete Delivery</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

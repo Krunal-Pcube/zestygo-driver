@@ -1,5 +1,5 @@
 import Toast from 'react-native-toast-message';
-import { acceptOrder, getTripDetails, rejectOrder, updateOrderStatus } from '../Model/driverAssignment';
+import { acceptOrder, getTripDetails, rejectOrder, updateOrderStatus, uploadOrderProof } from '../Model/driverAssignment';
 
 
 
@@ -57,12 +57,12 @@ export const rejectOrderController = async ({ payload, onSuccess }) => {
 
       onSuccess?.(data);
 
-      Toast.show({
-        type: 'success',
-        text1: res.data.message || 'Order rejected',
-        position: 'top',
-        topOffset: 50,
-      });
+      // Toast.show({
+      //   type: 'success',
+      //   text1: res.data.message || 'Order rejected',
+      //   position: 'top',
+      //   topOffset: 50,
+      // });
 
       return true;
     }
@@ -178,5 +178,49 @@ export const getTripDetailsController = async ({ deliveryTripId, onSuccess }) =>
     });
 
     throw error;
+  }
+};
+
+
+
+
+export const uploadOrderProofController = async ({
+  deliveryTripOrderId,
+  payload, // FormData
+  onSuccess,
+}) => {
+  try {
+    const res = await uploadOrderProof(deliveryTripOrderId, payload);
+
+    // console.log('Upload Proof Response ::::', res); 
+
+    if (res?.data?.status === 200) {
+      const proofData = res.data.data;
+
+      // callback with data + full response
+      onSuccess?.(proofData, res);
+
+      return proofData;
+    }
+
+    Toast.show({
+      type: 'error',
+      text1: 'Failed to upload proof',
+      text2: res?.data?.message || 'Something went wrong',
+      position: 'top',
+      topOffset: 50,
+    });
+
+    return null;
+  } catch (error) {
+    Toast.show({
+      type: 'error',
+      text1: 'Upload Error',
+      text2: error?.response?.data?.message || error?.message || 'Something went wrong',
+      position: 'top',
+      topOffset: 50,
+    });
+
+    return null;
   }
 };

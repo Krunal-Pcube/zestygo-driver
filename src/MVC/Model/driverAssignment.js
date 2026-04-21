@@ -22,3 +22,14 @@ export const getTripDetails = (deliveryTripId) => {
 
 
 
+export const uploadOrderProof = (deliveryTripOrderId, payload) => {
+  return ApiHelper.put(
+    `driver/assignment/order-proof/${deliveryTripOrderId}`,
+    payload,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+};

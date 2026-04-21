@@ -35,7 +35,7 @@ import { RatingModal, EarningsModal, ChatModal } from '../../components/homeComp
 import StatsContent from '../../components/homeComponents/StatsContent';
 import useRideState, { RIDE_STEPS } from '../../hooks/useRideState';
 import { changeLocationController } from '../../MVC/controllers/driverStatusController';
-import { acceptOrderController, rejectOrderController, updateOrderStatusController } from '../../MVC/controllers/driverAssignmentController';
+import { acceptOrderController, rejectOrderController, updateOrderStatusController, uploadOrderProofController } from '../../MVC/controllers/driverAssignmentController';
 import { requestLocationPermission, checkAndPromptGPSEnabled } from '../../utils/gpsHelpers';
 import { onSocketEvent, offSocketEvent } from '../../services/socketIndex';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -711,8 +711,7 @@ export default function HomeScreen({ navigation }) {
     setShowRatingModal(true);
   }, []);
 
-
-  const handleCompleteDelivery = useCallback(async () => {
+  const handleCompleteDelivery = useCallback(async (photoUri, notes) => {
     // Check if current order is cancelled/null
     let currentOrder = getCurrentOrder();
 
@@ -723,7 +722,7 @@ export default function HomeScreen({ navigation }) {
       if (!hasNext) {
         console.log('[CompleteDelivery] No more stops');
         cancelRide();
-        return;
+        return true; // Return true as flow is handled
       }
       // Try again with new stop
       currentOrder = getCurrentOrder();
@@ -733,8 +732,9 @@ export default function HomeScreen({ navigation }) {
     if (!deliveryTripOrderId) {
       console.error('[CompleteDelivery] No delivery trip order ID found');
       Alert.alert('Error', 'Order ID not found');
-      return;
+      return false; // Return false to keep modal open
     }
+
 
     // Calculate earnings for this specific order (delivery_amount + tip_amount)
     const deliveryAmount = parseFloat(currentOrder?.delivery_amount || 0);
@@ -745,15 +745,33 @@ export default function HomeScreen({ navigation }) {
 
     console.log('[CompleteDelivery] Using delivery trip order id:', deliveryTripOrderId);
 
-    // Update order status to "delivered"
-    await updateOrderStatusController({
-      deliveryTripOrderId,
-      payload: { status: 'delivered' },
-      onStatusUpdate: () => {
-        console.log('[CompleteDelivery] Status updated to delivered');
-        handleShowRating();
-      },
+    // Upload delivery proof with image and note
+    const formData = new FormData();
+    formData.append('delivery_proof_image', {
+      uri: photoUri, // photo from DeliveryInfoModal
+      type: 'image/jpeg',
+      name: 'delivery_proof.jpg',
     });
+    formData.append('note', notes);
+
+    console.log('[CompleteDelivery] Proof ', formData, deliveryTripOrderId);
+
+    try {
+      const result = await uploadOrderProofController({
+        deliveryTripOrderId,
+        payload: formData,
+        onSuccess: () => {
+          console.log('[CompleteDelivery] Proof uploaded successfully');
+          handleShowRating();
+        },
+      });
+
+      // Return true if upload was successful, false otherwise
+      return result !== null;
+    } catch (error) {
+      console.error('[CompleteDelivery] Upload failed:', error);
+      return false;
+    }
   }, [getCurrentOrder, advanceToNextStop, cancelRide, handleShowRating]);
 
   const handleRatingSubmit = useCallback(() => {
@@ -804,7 +822,7 @@ export default function HomeScreen({ navigation }) {
       <HomeHeader navigation={navigation}  notificationCount={notificationCount} />
 
       <MapComponent
-        // key={`map-${isFocused ? 'focused' : 'blurred'}`}
+        key={`map-${isFocused ? 'focused' : 'blurred'}`}
         location={location}
         heading={heading}
         cameraHeading={cameraHeading}

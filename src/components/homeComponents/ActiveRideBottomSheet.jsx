@@ -204,10 +204,14 @@ export default function ActiveRideBottomSheet({
     setShowDeliveryInfo(false);
   };
 
-  // Handle final complete delivery - trigger rating modal
-  const handleFinalCompleteDelivery = () => {
-    setShowDeliveryInfo(false);
-    onShowRating?.();
+  // Handle final complete delivery - pass photo and notes to parent
+  // Returns true if successful, false if failed (to control modal close)
+  const handleFinalCompleteDelivery = async (notes) => {
+    const success = await onShowRating?.(capturedPhotoUri, notes);
+    if (success) {
+      setShowDeliveryInfo(false);
+    }
+    return success;
   };
 
   // Handle cancel button press - show confirmation first

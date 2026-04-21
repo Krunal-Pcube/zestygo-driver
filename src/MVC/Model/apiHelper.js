@@ -32,7 +32,7 @@ ApiHelper.interceptors.request.use(
  
     // Optional but good practice 
     config.headers['x-platform'] = Platform.OS;
-    config.headers['x-app-type'] = 'customer';
+    config.headers['x-app-type'] = 'driver';
 
     return config;
   }, 
