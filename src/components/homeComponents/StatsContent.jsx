@@ -40,6 +40,7 @@ const StatsContent = ({ colors }) => {
     };
 
     fetchPerformanceData();
+    console.log("performanceData :::", performanceData)
   }, [auth]);
 
   const formatPercentage = (value) => {

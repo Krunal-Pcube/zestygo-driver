@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,33 @@ import {
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import NotificationIcon from '../../assets/homeIcons/zondicons_notification.svg';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../MVC/context/AuthContext';
+import { driverActiveSessionStatsController } from '../../MVC/controllers/driverEarningController';
 import fonts from '../../utils/fonts/fontsList';
 
-export default function HomeHeader({ navigation, earnings = 0, notificationCount = 0 }) {
+export default function HomeHeader({ navigation, notificationCount = 0 }) {
   const { colors } = useTheme();
+  const { auth } = useAuth();
+  const [totalEarnings, setTotalEarnings] = useState(0);
+ 
+  useEffect(() => {
+    const fetchSessionStats = async () => {
+      const deliveryPartnerID = auth?.delivery_partner_id;
+
+      if (!deliveryPartnerID) {
+        return;
+      }
+
+      await driverActiveSessionStatsController({
+        deliveryPartnerID,
+        onSuccess: (data) => {
+          setTotalEarnings(data?.total_earnings);
+        },
+      });
+    };
+
+    fetchSessionStats();
+  }, [auth]);
 
   return (
     <View style={[styles.header, { backgroundColor: colors.white }]}>
@@ -27,7 +50,7 @@ export default function HomeHeader({ navigation, earnings = 0, notificationCount
         activeOpacity={0.8}
         onPress={() => navigation?.navigate('Earnings')}
       >
-        <Text style={[styles.earVal, { color: colors.white }]}>$ {earnings.toFixed(2)}</Text>
+        <Text style={[styles.earVal, { color: colors.white }]}>$ {totalEarnings.toFixed(2)}</Text>
       </TouchableOpacity>
 
       {/* Right: Notification */}

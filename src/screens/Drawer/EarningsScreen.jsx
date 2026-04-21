@@ -157,14 +157,14 @@ const EarningsScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.actionButtons}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.actionButton}
               activeOpacity={0.7}
               onPress={() => navigation.navigate('Withdraw')}
             >
               <Banknote size={moderateScale(18)} color={colors.darkText} strokeWidth={2} />
               <Text style={styles.actionButtonText}>Withdraw</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
        
           </View>
 

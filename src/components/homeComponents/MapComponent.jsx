@@ -502,6 +502,8 @@ export default function MapComponent({
   }, [mapFocus, activeRide, location,]);
 
   const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const lastFetchRef = useRef({ origin: null, destination: null, timestamp: 0 });
+  const fetchTimeoutRef = useRef(null);
 
   // Decode Google Maps polyline into array of coordinates
   const decodePolyline = useCallback((encoded) => {
@@ -541,16 +543,50 @@ export default function MapComponent({
     return poly;
   }, []);
 
-  // Fetch route from Google Directions API
+  // Calculate distance between two coordinates in meters
+  const getDistance = useCallback((coord1, coord2) => {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = coord1.latitude * Math.PI / 180;
+    const φ2 = coord2.latitude * Math.PI / 180;
+    const Δφ = (coord2.latitude - coord1.latitude) * Math.PI / 180;
+    const Δλ = (coord2.longitude - coord1.longitude) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  }, []);
+
+  // Check if coordinates are significantly different (min 50 meters)
+  const hasSignificantChange = useCallback((origin, destination) => {
+    const { origin: lastOrigin, destination: lastDest } = lastFetchRef.current;
+
+    if (!lastOrigin || !lastDest) return true;
+
+    const originDiff = getDistance(origin, lastOrigin);
+    const destDiff = getDistance(destination, lastDest);
+
+    return originDiff > 50 || destDiff > 50; // 50m threshold
+  }, [getDistance]);
+
+  // Fetch route from Google Directions API with debounce and caching
   const fetchRoute = useCallback(async (origin, destination) => {
     if (!origin || !destination) return;
 
+    // Skip if recently fetched with similar coordinates
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchRef.current.timestamp;
+    if (timeSinceLastFetch < 30000 && !hasSignificantChange(origin, destination)) {
+      return; // Skip if < 30s and no significant change
+    }
+
     const originStr = `${origin.latitude},${origin.longitude}`;
     const destStr = `${destination.latitude},${destination.longitude}`;
-    
-    // Replace with your Google Maps API key
+
     const GOOGLE_MAPS_API_KEY = 'AIzaSyAN2cTEOnOBmPIXmNtBWen5db7Xl0aEOPk';
-    
+
     const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${originStr}&destination=${destStr}&mode=driving&key=${GOOGLE_MAPS_API_KEY}`;
 
     try {
@@ -561,30 +597,29 @@ export default function MapComponent({
         const points = data.routes[0].overview_polyline.points;
         const decodedPoints = decodePolyline(points);
         setRouteCoordinates(decodedPoints);
+        // Cache this fetch
+        lastFetchRef.current = { origin, destination, timestamp: Date.now() };
       } else {
-        // Fallback to straight line if no route found
         setRouteCoordinates([origin, destination]);
       }
     } catch (error) {
       console.error('[DIRECTIONS] Error fetching route:', error);
-      // Fallback to straight line
       setRouteCoordinates([origin, destination]);
     }
-  }, [decodePolyline]);
+  }, [decodePolyline, hasSignificantChange]);
 
   // Clear route when step changes to prevent showing old path
   useEffect(() => {
     setRouteCoordinates([]);
   }, [showRoute]);
 
-  // Fetch route when locations change
+  // Fetch route when locations change (debounced)
   useEffect(() => {
     if (!activeRide || !location) {
       setRouteCoordinates([]);
       return;
     }
 
-    let origin = location;
     let destination;
 
     switch (showRoute) {
@@ -599,10 +634,26 @@ export default function MapComponent({
         return;
     }
 
-    if (destination) {
-      fetchRoute(origin, destination);
+    if (!destination) return;
+
+    // Clear existing timeout
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
     }
+
+    // Debounce fetch by 2 seconds to batch rapid location updates
+    fetchTimeoutRef.current = setTimeout(() => {
+      fetchRoute(location, destination);
+    }, 2000);
+
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+    };
   }, [activeRide, location, restaurantCoord, customerCoord, showRoute, fetchRoute]);
+
+
 
   const hasActiveRide = deliveryStep && deliveryStep !== RIDE_STEPS.IDLE && deliveryStep !== RIDE_STEPS.COMPLETED;
 

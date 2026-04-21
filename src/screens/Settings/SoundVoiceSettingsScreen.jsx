@@ -49,7 +49,7 @@ const SoundVoiceSettingsScreen = ({ navigation }) => {
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
         {/* 1. All Sounds (Master Toggle) */}
-        <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+        {/* <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
           {renderToggle(
             allSounds ? (
               <Volume2 size={22} color={colors.textPrimary} />
@@ -61,7 +61,7 @@ const SoundVoiceSettingsScreen = ({ navigation }) => {
             setAllSounds,
             'Turn off to mute everything'
           )}
-        </View>
+        </View> */}
 
         {/* 2. New Order Alerts */}
         <View style={[styles.card, { backgroundColor: colors.cardBackground }, !allSounds && styles.disabled]}>

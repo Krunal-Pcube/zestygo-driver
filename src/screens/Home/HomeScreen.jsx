@@ -89,7 +89,6 @@ export default function HomeScreen({ navigation }) {
 
     loadOnlineStatus();
   }, []);
-  const [earnings] = useState(154.75);
   const [notificationCount, setNotificationCount] = useState(2); // TODO: Fetch from API
   const [rideRequests, setRideRequests] = useState([]);
   const [showRideRequests, setShowRideRequests] = useState(false);
@@ -802,7 +801,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={{ flex: 1 }}>
-      <HomeHeader navigation={navigation} earnings={earnings} notificationCount={notificationCount} />
+      <HomeHeader navigation={navigation}  notificationCount={notificationCount} />
 
       <MapComponent
         // key={`map-${isFocused ? 'focused' : 'blurred'}`}
