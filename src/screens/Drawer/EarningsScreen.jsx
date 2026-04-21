@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { ChevronRight, Banknote, PlusCircle } from 'lucide-react-native';
@@ -13,9 +15,19 @@ import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
 import { scale, moderateScale } from 'react-native-size-matters';
 import Header from '../../components/Header';
+import { getDriverEarningsController } from '../../MVC/controllers/driverEarningController';
+import { useAuth } from '../../MVC/context/AuthContext';
 
 const INDICATOR_WIDTH = scale(80);
 const TABS = ['earnings', 'wallet'];
+
+// Helper: Format date as YYYY-MM-DD
+const toISODate = (d) => {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+const TODAY = toISODate(new Date());
 
 const transactions = [
   { id: 1, title: 'Added to Wallet',    date: 'Mon, 26 March', reference: '#123467', amount: 40,  type: 'credit' },
@@ -27,13 +39,51 @@ const transactions = [
 ];
 
 const EarningsScreen = ({ navigation }) => {
+  const { auth } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
   const [tabWidth, setTabWidth] = useState(0);
   const pagerRef = useRef(null);
   const indicatorAnim = useRef(new Animated.Value(0)).current;
 
+  // Today's earnings state
+  const [todayEarnings, setTodayEarnings] = useState(0);
+  const [todayOrders, setTodayOrders] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch today's earnings from API
+  const fetchTodayEarnings = useCallback(async (isRefresh = false) => {
+    isRefresh ? setRefreshing(true) : setLoading(true);
+
+    const params = {
+      date_type: 'day',
+      date: TODAY,
+      'search[order_status]': 'delivered',
+      delivery_partner_id: auth?.delivery_partner_id,
+    };
+
+    await getDriverEarningsController({
+      params,
+      onSuccess: (data, fullResponse) => {
+        // Use total_earnings from root level of API response
+        const totalEarnings = fullResponse?.data?.total_earnings ?? 0;
+        const totalOrders = fullResponse?.data?.total_orders_delivered ?? 0;
+        setTodayEarnings(totalEarnings);
+        console.log("Full response ;", fullResponse.data)
+        setTodayOrders(totalOrders);
+      },
+    });
+
+    isRefresh ? setRefreshing(false) : setLoading(false);
+  }, [auth?.delivery_partner_id]);
+
+  useEffect(() => {
+    fetchTodayEarnings();
+  }, [fetchTodayEarnings]);
+
   const earningsData = {
-    today: 172.81,
+    today: todayEarnings,
+    todayOrders: todayOrders,
     lastOrder: { amount: 18.05, type: 'Parcel Delivery', date: 'Mar 26 2026' },
   };
 
@@ -111,10 +161,24 @@ const EarningsScreen = ({ navigation }) => {
           key="earnings"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.pageContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchTodayEarnings(true)}
+              tintColor={colors.primary}
+            />
+          }
         >
           <View style={styles.earningsCard}>
             <Text style={styles.earningsLabel}>Today's Earnings</Text>
-            <Text style={styles.earningsAmount}>${earningsData.today.toFixed(2)}</Text>
+            {loading && !refreshing ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : (
+              <Text style={styles.earningsAmount}>${earningsData.today.toFixed(2)}</Text>
+            )}
+            {earningsData.todayOrders > 0 && (
+              <Text style={styles.ordersCount}>{earningsData.todayOrders} orders delivered</Text>
+            )}
           </View>
 
           <TouchableOpacity
@@ -257,6 +321,12 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(32),
     fontFamily: fonts.bold,
     color: colors.primary,
+  },
+  ordersCount: {
+    fontSize: moderateScale(12),
+    fontFamily: fonts.medium,
+    color: colors.mediumGrey,
+    marginTop: scale(8),
   },
   sectionItem: {
     flexDirection: 'row',

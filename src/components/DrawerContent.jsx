@@ -31,7 +31,7 @@ import BackArrow from '../assets/drawerIcons/back_arrow.svg';
 
 const menuItems = [
   { name: 'Earnings', icon: EarningsIcon, label: 'Earnings' },
-  { name: 'TripHistory', icon: HistoryIcon, label: 'History' },
+  // { name: 'TripHistory', icon: HistoryIcon, label: 'History' },
   { name: 'Notifications', icon: NotificationsIcon, label: 'Notifications' },
   { name: 'Documents', icon: DocumentsIcon, label: 'Documents' },
   { name: 'Help', icon: HelpIcon, label: 'Help' },
@@ -207,16 +207,7 @@ const DrawerContent = (props) => {
 
         <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
-        {/* On-Ride Booking Toggle */}
-        <View style={styles.toggleContainer}>
-          <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>On-Ride Booking</Text>
-          <Switch
-            value={onRideBooking}
-            onValueChange={setOnRideBooking}
-            trackColor={{ false: '#767577', true: colors.primary }}
-            thumbColor={onRideBooking ? colors.white : '#f4f3f4'}
-          />
-        </View>
+      
       </ScrollView>
 
       {/* Full-screen Loader Modal */}
