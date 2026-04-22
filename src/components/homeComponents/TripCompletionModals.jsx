@@ -174,9 +174,9 @@ export function EarningsModal({ visible, tripId, amount, customerName, onDone, o
               <Text style={styles.collectText}>Your Earnings</Text>
 
               {/* View More Details Link */}
-              <TouchableOpacity onPress={onViewDetails} activeOpacity={0.7}>
+              {/* <TouchableOpacity onPress={onViewDetails} activeOpacity={0.7}>
                 <Text style={styles.viewDetailsText}>VIEW MORE DETAILS</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
               <View style={styles.earningsDivider} />
 

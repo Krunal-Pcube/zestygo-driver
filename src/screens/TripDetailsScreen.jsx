@@ -242,39 +242,7 @@ export default function TripDetailsScreen({ navigation, route: navRoute }) {
           </View>
         </View>
 
-        {/* Order-wise Earnings Breakdown */}
-        {orderCount > 1 && (
-          <View style={styles.orderBreakdownSection}>
-            <Text style={styles.sectionTitle}>Order-wise Earnings</Text>
-            <View style={styles.orderBreakdownCard}>
-              {Object.entries(orderAmounts).map(([orderId, amounts], index) => (
-                <View key={orderId}>
-                  <View style={styles.orderBreakdownRow}>
-                    <View style={styles.orderBreakdownLeft}>
-                      <View style={styles.orderNumberBadge}>
-                        <Text style={styles.orderNumberText}>#{orderId}</Text>
-                      </View>
-                      <View>
-                        <Text style={styles.orderBreakdownLabel}>Order #{orderId}</Text>
-                        {amounts.tipAmount > 0 && (
-                          <Text style={styles.orderBreakdownTip}>
-                            Includes ${amounts.tipAmount.toFixed(2)} tip
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                    <Text style={styles.orderBreakdownAmount}>
-                      ${amounts.total.toFixed(2)}
-                    </Text>
-                  </View>
-                  {index < Object.entries(orderAmounts).length - 1 && (
-                    <View style={styles.orderBreakdownDivider} />
-                  )}
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
+    
 
         {/* Payment Summary */}
         <View style={styles.paymentSummarySection}>
@@ -298,17 +266,6 @@ export default function TripDetailsScreen({ navigation, route: navRoute }) {
           </View>
         </View>
 
-        {/* Footer Note */}
-        <View style={styles.footerNote}>
-          <Text style={styles.footerText}>
-            {isCompleted 
-              ? `Trip completed successfully on ${displayDate}. Great job!` 
-              : isCancelled 
-              ? `Trip was cancelled on ${displayDate}.`
-              : `Trip in progress...`
-            }
-          </Text>
-        </View>
 
         <View style={styles.bottomSpace} />
       </ScrollView>
