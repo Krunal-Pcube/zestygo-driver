@@ -31,7 +31,7 @@ import HomeHeader from '../../components/homeComponents/homeHeader';
 import MapComponent from '../../components/homeComponents/MapComponent';
 import BottomSheetComponent from '../../components/homeComponents/bottomsheetComponent';
 import ActiveRideBottomSheet from '../../components/homeComponents/ActiveRideBottomSheet';
-import { RatingModal, EarningsModal, ChatModal } from '../../components/homeComponents/TripCompletionModals';
+import { EarningsModal, ChatModal } from '../../components/homeComponents/TripCompletionModals';
 import StatsContent from '../../components/homeComponents/StatsContent';
 import useRideState, { RIDE_STEPS } from '../../hooks/useRideState';
 import { changeLocationController } from '../../MVC/controllers/driverStatusController';
@@ -93,8 +93,8 @@ export default function HomeScreen({ navigation }) {
   const [rideRequests, setRideRequests] = useState([]);
   const [showRideRequests, setShowRideRequests] = useState(false);
   const [sheetIndex, setSheetIndex] = useState(0);
-  const [showRatingModal, setShowRatingModal] = useState(false);
   const [showEarningsModal, setShowEarningsModal] = useState(false);
+  const [refreshEarningsTrigger, setRefreshEarningsTrigger] = useState(0);
   const [currentOrderEarnings, setCurrentOrderEarnings] = useState(null);
   const [showChatModal, setShowChatModal] = useState(false);
   const [location, setLocation] = useState(null);
@@ -216,7 +216,7 @@ export default function HomeScreen({ navigation }) {
           // Follow driver only during active ride and when user hasn't manually moved map
           if (isActive && isFollowingDriver && !userInteractedRef.current) {
             mapRef.current?.animateCamera(
-              { center: { latitude, longitude }, heading: 0, zoom: 16 },
+              { center: { latitude, longitude }, heading: h, zoom: 16 },
               { duration: 600 },
             );
           }
@@ -426,16 +426,17 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  const autoDeclineRide = (ride) => {
-    console.log('[AutoDecline] Timer expired, removing from UI without API call');
+
+  const autoDeclineRide = useCallback((ride) => {
+    console.log('[AutoDecline] Timer expired, removing:', ride?.offer?.order_id);
     setRideRequests(prev => {
-      const remaining = prev.filter(r => r.offer?.order_id !== ride.offer?.order_id);
+      const remaining = prev.filter(r => r.offer?.order_id !== ride?.offer?.order_id);
       if (remaining.length === 0) {
         setShowRideRequests(false);
       }
       return remaining;
     });
-  };
+  }, []);  // ← Add this
 
 
   const handleArrived = async () => {
@@ -668,9 +669,9 @@ export default function HomeScreen({ navigation }) {
         const { latitude, longitude } = pos.coords;
         setLocation({ latitude, longitude });
         mapRef.current?.animateCamera(
-          { center: { latitude, longitude }, heading: 0, pitch: 0, zoom: 17 },
+          { center: { latitude, longitude }, heading: heading, pitch: 0, zoom: 17 },
           { duration: 700 },
-        );
+        ); 
       },
       err => {
         console.warn('[GPS] handleLocate error:', err);
@@ -707,8 +708,8 @@ export default function HomeScreen({ navigation }) {
   const animateChevron = useCallback((toIndex) => setSheetIndex(toIndex), []);
   const handleSheetChange = useCallback((index) => setSheetIndex(index), []);
 
-  const handleShowRating = useCallback(() => {
-    setShowRatingModal(true);
+  const handleShowEarningsModal = useCallback(() => {
+    setShowEarningsModal(true);
   }, []);
 
   const handleCompleteDelivery = useCallback(async (photoUri, notes) => {
@@ -762,7 +763,7 @@ export default function HomeScreen({ navigation }) {
         payload: formData,
         onSuccess: () => {
           console.log('[CompleteDelivery] Proof uploaded successfully');
-          handleShowRating();
+          handleShowEarningsModal();
         },
       });
 
@@ -772,54 +773,22 @@ export default function HomeScreen({ navigation }) {
       console.error('[CompleteDelivery] Upload failed:', error);
       return false;
     }
-  }, [getCurrentOrder, advanceToNextStop, cancelRide, handleShowRating]);
+  }, [getCurrentOrder, advanceToNextStop, cancelRide, handleShowEarningsModal]);
 
-  const handleRatingSubmit = useCallback(() => {
-    setShowRatingModal(false);
-    setShowEarningsModal(true);
-  }, []);
 
-  const handleCloseRatingModal = useCallback(() => {
-    setShowRatingModal(false);
-    setShowEarningsModal(true);
-  }, []);
+
+
 
   const handleEarningsDone = useCallback(() => {
     setShowEarningsModal(false);
+    setRefreshEarningsTrigger(prev => prev + 1);
     completeRide();
   }, [completeRide]);
 
-  const handleViewTripDetails = useCallback(() => {
-    setShowEarningsModal(false);
-    completeRide();
-    navigation.navigate('TripDetails', {
-      tripId: '#0001',
-      amount: '18.05',
-      customerName: rideData?.passengerName || 'Kelsey',
-      date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      duration: '40 min 25 sec',
-      distance: '11 km',
-      vehicleType: 'Bike',
-      paymentMethod: 'Cash',
-      pickup: {
-        address: rideData?.pickup?.address?.split(',')[0] || '1582 Queen St W',
-        city: rideData?.pickup?.address?.split(',')[1] || 'Toronto, ON M6R 1A6, Canada',
-      },
-      dropoff: {
-        address: rideData?.dropoff?.address?.split(',')[0] || '825 Caledonia Rd',
-        city: rideData?.dropoff?.address?.split(',')[1] || 'North York, ON M6B 3X8, Canada',
-      },
-      fare: '18.06',
-      taxes: '0.1',
-      totalEarning: '18.05',
-      payouts: '18.05',
-    });
-  }, [navigation, rideData, completeRide]);
 
   return (
     <View style={{ flex: 1 }}>
-      <HomeHeader navigation={navigation}  notificationCount={notificationCount} />
+      <HomeHeader navigation={navigation} notificationCount={notificationCount} refreshTrigger={refreshEarningsTrigger} />
 
       <MapComponent
         key={`map-${isFocused ? 'focused' : 'blurred'}`}
@@ -858,7 +827,7 @@ export default function HomeScreen({ navigation }) {
         rideStep={currentStep}
         currentStopIndex={currentStopIndex}
         totalStops={totalStops}
-        isVisible={isActive && !showRatingModal && !showEarningsModal}
+        isVisible={isActive && !showEarningsModal}
         onArrived={handleArrived}
         onNavigate={handleNavigate}
         onReCenter={handleReCenter}
@@ -870,16 +839,7 @@ export default function HomeScreen({ navigation }) {
         onShowRating={handleCompleteDelivery}
       />
 
-      {/* Rating Modal */}
-      <RatingModal
-        visible={showRatingModal}
-        customerName={rideData?.passengerName || 'Kelsey Lavin'}
-        onSubmit={handleRatingSubmit}
-        onClose={handleCloseRatingModal}
-        deliveryTripId={deliveryTripId}
-        deliveryTripOrderId={getCurrentOrder()?.id}
-        deliveryPartnerId={rideData?.delivery_partners?.id}
-      />
+
 
       {/* Earnings Modal */}
       <EarningsModal
@@ -888,7 +848,6 @@ export default function HomeScreen({ navigation }) {
         amount={currentOrderEarnings || '0.00'}
         customerName={rideData?.passengerName || 'Kelsey'}
         onDone={handleEarningsDone}
-        onViewDetails={handleViewTripDetails}
       />
 
       {/* Chat Modal */}

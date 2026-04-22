@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
       const socket = getSocket();
 
       if (nextState === "active" && auth?.token) {
-        if (!socket || !socket.connected) {
+        if (!socket || (!socket.connected && !socket.connecting)) {
           console.log("[AppState] Reconnecting socket...");
           connectSocket(auth.token);
         } else {

@@ -403,6 +403,7 @@ export default function MapComponent({
   handleLocate,
   onMapClick,
   onPanDrag,
+  isNavigatingExternally = false, // Skip API calls when external nav is active
 }) {
   const { isDarkMode } = useTheme();
 
@@ -493,7 +494,7 @@ export default function MapComponent({
     mapRef.current.animateCamera(
       {
         center: targetCoord,
-        heading: 0,
+        heading: mapFocus === 'driver' ? heading : 0,
         pitch: 0,
       
       },
@@ -568,7 +569,7 @@ export default function MapComponent({
     const originDiff = getDistance(origin, lastOrigin);
     const destDiff = getDistance(destination, lastDest);
 
-    return originDiff > 50 || destDiff > 50; // 50m threshold
+    return originDiff > 200 || destDiff > 200; // 200m threshold - reduced API calls
   }, [getDistance]);
 
   // Fetch route from Google Directions API with debounce and caching
@@ -578,8 +579,8 @@ export default function MapComponent({
     // Skip if recently fetched with similar coordinates
     const now = Date.now();
     const timeSinceLastFetch = now - lastFetchRef.current.timestamp;
-    if (timeSinceLastFetch < 30000 && !hasSignificantChange(origin, destination)) {
-      return; // Skip if < 30s and no significant change
+    if (timeSinceLastFetch < 180000 && !hasSignificantChange(origin, destination)) {
+      return; // Skip if < 3 min and no significant change
     }
 
     const originStr = `${origin.latitude},${origin.longitude}`;
@@ -641,10 +642,10 @@ export default function MapComponent({
       clearTimeout(fetchTimeoutRef.current);
     }
 
-    // Debounce fetch by 2 seconds to batch rapid location updates
+    // Debounce fetch by 5 seconds to batch rapid location updates
     fetchTimeoutRef.current = setTimeout(() => {
       fetchRoute(location, destination);
-    }, 2000);
+    }, 5000);
 
     return () => {
       if (fetchTimeoutRef.current) {

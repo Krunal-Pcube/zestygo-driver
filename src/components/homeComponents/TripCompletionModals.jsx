@@ -22,132 +22,15 @@ import { addReviewController } from '../../MVC/controllers/driverReviewControlle
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { colors } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
-import NotReadyIcon from '../../assets/ridecardIcons/not_ready.svg';
-import ReportIssueIcon from '../../assets/ridecardIcons/report_issue.svg';
 import PersonIcon from '../../assets/ridecardIcons/person_icon.svg';
 import ConfirmCollectedIcon from '../../assets/ridecardIcons/confirm_collected.svg';
 import TripFareCheckedIcon from '../../assets/ridecardIcons/trip_fare_checked.svg';
 
-/* ════════════════════════════════════════════════════════════════
-   Rating Modal - Centered modal with backdrop
-   ════════════════════════════════════════════════════════════════ */
-export function RatingModal({
-  visible,
-  customerName,
-  onSubmit,
-  onClose,
-  deliveryTripId,
-  deliveryTripOrderId,
-  deliveryPartnerId,
-}) {
-  const [rating, setRating] = useState(4);
-  const [feedback, setFeedback] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = async () => {
-    // if (!deliveryTripId || !deliveryTripOrderId || !deliveryPartnerId) {
-    //   Alert.alert('Error', 'Missing required trip information');
-    //   return;
-    // }
-
-    // const payload = {
-    //   delivery_trip_id: deliveryTripId,
-    //   delivery_trip_order_id: deliveryTripOrderId,
-    //   delivery_partner_id: deliveryPartnerId,
-    //   rating: rating,
-    //   feedback: feedback.trim(),
-    // };
-
-    // setIsLoading(true);
-
-    // const success = await addReviewController({
-    //   payload,
-    //   onReviewAdded: (data) => {
-    //     console.log('[RatingModal] Review added successfully:', data);
-    //   },
-    // });
-
-    // setIsLoading(false);
-
-   
-      // Reset state
-      setRating(4);
-      setFeedback('');
-      onSubmit?.(rating);
-    
-  };
-
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={!isLoading ? onClose : null}>
-        <View style={styles.backdrop}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalContainer}>
-              <Text style={styles.ratingTitle}>How was your trip?</Text>
-              <Text style={styles.ratingCustomerName}>{customerName}</Text>
-
-              {/* Star Rating - Simple tap only for reliability */}
-              <View style={styles.starsRow}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <TouchableOpacity
-                    key={star}
-                    onPress={() => !isLoading && setRating(star)}
-                    activeOpacity={0.7}
-                    style={styles.starTouchArea}
-                    disabled={isLoading}
-                  >
-                    <Star
-                      size={moderateScale(36)}
-                      color="#FFD700"
-                      fill={star <= rating ? "#FFD700" : "transparent"}
-                      strokeWidth={star <= rating ? 0 : 2}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Feedback Input */}
-              <View style={styles.feedbackContainer}>
-                <Text style={styles.feedbackLabel}>Additional Feedback (Optional)</Text>
-                <TextInput
-                  style={styles.feedbackInput}
-                  placeholder="Share your experience..."
-                  placeholderTextColor={colors.grey}
-                  value={feedback}
-                  onChangeText={setFeedback}
-                  multiline
-                  maxLength={200}
-                  editable={!isLoading}
-                />
-                <Text style={styles.feedbackCharCount}>{feedback.length}/200</Text>
-              </View>
-
-              <View style={styles.ratingDivider} />
-
-              <TouchableOpacity
-                style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
-                onPress={handleSubmit}
-                activeOpacity={0.8}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#C8FF00" />
-                ) : (
-                  <Text style={styles.submitBtnText}>Submit</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
-  );
-}
 
 /* ════════════════════════════════════════════════════════════════
    Earnings Modal - Centered modal with backdrop
    ════════════════════════════════════════════════════════════════ */
-export function EarningsModal({ visible, tripId, amount, customerName, onDone, onViewDetails }) {
+export function EarningsModal({ visible, tripId, amount, customerName, onDone, }) {
   return (
     <Modal
       visible={visible}

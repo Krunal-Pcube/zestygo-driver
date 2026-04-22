@@ -358,7 +358,7 @@ export default function ActiveRideBottomSheet({
       {/* Cancel Confirmation Modal */}
       <CancelConfirmationModal
         visible={showCancelConfirm}
-        customerName={ride?.passengerName || 'Kelsey'}
+       customerName={activeOrder?.customer_name}
         onYesCancel={handleYesCancel}
         onNo={handleCancelClose}
       />

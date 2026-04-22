@@ -66,7 +66,7 @@ export const connectSocket = (token) => {
   currentToken = token;
 
   socket = io(BASE_URL, {
-    transports: ["polling", "websocket"],  // ✅ changed
+    transports: ["websocket", "polling"],  // ✅ changed
     reconnection: true,
     reconnectionAttempts: Infinity,  // never give up
     reconnectionDelay: 1000,
@@ -85,8 +85,8 @@ export const connectSocket = (token) => {
  
   socket.on("reconnect", (attemptNumber) => {
   console.log(`🔄 Reconnected after ${attemptNumber} attempts`);
-  socket.emit("authenticate", { token: currentToken, type: "driver" });
 });
+ 
 
   socket.on("disconnect", (reason) => {
     console.log('\n❌ Socket Disconnected');
@@ -114,7 +114,7 @@ export const connectSocket = (token) => {
 
   return socket;
 };
-
+ 
 export const getSocket = () => socket;
 
 export const disconnectSocket = () => {
@@ -122,6 +122,7 @@ export const disconnectSocket = () => {
     console.log('\n🔌 Socket manually disconnected');
     socket.disconnect();
     socket = null;
+    currentToken = null; // ✅ ADD THIS
   }
 };
 

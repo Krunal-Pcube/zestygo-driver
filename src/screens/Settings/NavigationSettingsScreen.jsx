@@ -61,10 +61,10 @@ const NavigationSettingsScreen = ({ navigation }) => {
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
         {/* Map Preferences */}
-        <Text style={[styles.sectionTitle, { color: colors.grey }]}>Map Preferences</Text>
+        {/* <Text style={[styles.sectionTitle, { color: colors.grey }]}>Map Preferences</Text> */}
 
         {/* 1. Auto-Navigate */}
-        <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+        {/* <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
           {renderToggle(
             <Navigation2 size={22} color={colors.textPrimary} />,
             'Auto-Navigate',
@@ -72,7 +72,7 @@ const NavigationSettingsScreen = ({ navigation }) => {
             setAutoNavigate,
             'Start navigation automatically on new trip'
           )}
-        </View>
+        </View> */}
 
         {/* Navigation Provider */}
         <Text style={[styles.sectionTitle, { marginTop: verticalScale(24), color: colors.grey }]}>
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingTop: verticalScale(20),
+    // paddingTop: verticalScale(20),
   },
   sectionTitle: {
     fontSize: moderateScale(13),

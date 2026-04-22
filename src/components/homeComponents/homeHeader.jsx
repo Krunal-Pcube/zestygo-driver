@@ -13,7 +13,7 @@ import { useAuth } from '../../MVC/context/AuthContext';
 import { driverActiveSessionStatsController } from '../../MVC/controllers/driverEarningController';
 import fonts from '../../utils/fonts/fontsList';
 
-export default function HomeHeader({ navigation, notificationCount = 0 }) {
+export default function HomeHeader({ navigation, notificationCount = 0, refreshTrigger }) {
   const { colors } = useTheme();
   const { auth } = useAuth();
   const [totalEarnings, setTotalEarnings] = useState(0);
@@ -35,7 +35,7 @@ export default function HomeHeader({ navigation, notificationCount = 0 }) {
     };
 
     fetchSessionStats();
-  }, [auth]);
+  }, [auth, refreshTrigger]);
 
   return (
     <View style={[styles.header, { backgroundColor: colors.white }]}>
