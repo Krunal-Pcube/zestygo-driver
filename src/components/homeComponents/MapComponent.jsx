@@ -7,7 +7,7 @@
  */
 
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { StyleSheet, View, Animated, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Animated, TouchableOpacity, Text, ActivityIndicator, AppState } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from 'react-native-maps';
 import ReAnimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
@@ -16,7 +16,7 @@ import Svg, { Polygon, Circle, G } from 'react-native-svg';
 import { RIDE_STEPS, STEP_CONFIG } from '../../hooks/useRideState';
 import { colors, useTheme } from '../../utils/colors';
 import fonts from '../../utils/fonts/fontsList';
-import LottieView from 'lottie-react-native'; 
+import LottieView from 'lottie-react-native';
 
 /* ════════════════════════════════════════════════════════════════
    Map Styles for Light/Dark Themes
@@ -109,7 +109,7 @@ const lightMapStyle = []; // Empty for default light theme
    ─ Dark filled outer circle with a clean white inner ring
    ─ Bold arrow inside pointing in heading direction
    ─ Subtle transparent halo ring around the whole thing
-   ════════════════════════════════════════════════════════════════ */  
+   ════════════════════════════════════════════════════════════════ */
 const DriverMarker = ({ coordinate, heading, cameraHeading }) => {
 
   /* ── Smooth coordinate interpolation (600 ms glide) ─────────── */
@@ -245,8 +245,8 @@ const CustomerMarker = ({ coordinate, name }) => {
    Marker Styles
    ════════════════════════════════════════════════════════════════ */
 const OUTER = scale(46);
-const INNER  = scale(34);
-const HALO   = scale(62);
+const INNER = scale(34);
+const HALO = scale(62);
 
 const markerStyles = StyleSheet.create({
   wrapper: {
@@ -403,7 +403,6 @@ export default function MapComponent({
   handleLocate,
   onMapClick,
   onPanDrag,
-  isNavigatingExternally = false, // Skip API calls when external nav is active
 }) {
   const { isDarkMode } = useTheme();
 
@@ -489,22 +488,20 @@ export default function MapComponent({
     }
 
     if (!targetCoord) return;
-    
+
     // Animate camera to target
     mapRef.current.animateCamera(
       {
         center: targetCoord,
         heading: mapFocus === 'driver' ? heading : 0,
         pitch: 0,
-      
+
       },
       { duration: 300 }
     );
   }, [mapFocus, activeRide, location,]);
 
   const [routeCoordinates, setRouteCoordinates] = useState([]);
-  const lastFetchRef = useRef({ origin: null, destination: null, timestamp: 0 });
-  const fetchTimeoutRef = useRef(null);
 
   // Decode Google Maps polyline into array of coordinates
   const decodePolyline = useCallback((encoded) => {
@@ -544,85 +541,71 @@ export default function MapComponent({
     return poly;
   }, []);
 
-  // Calculate distance between two coordinates in meters
-  const getDistance = useCallback((coord1, coord2) => {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = coord1.latitude * Math.PI / 180;
-    const φ2 = coord2.latitude * Math.PI / 180;
-    const Δφ = (coord2.latitude - coord1.latitude) * Math.PI / 180;
-    const Δλ = (coord2.longitude - coord1.longitude) * Math.PI / 180;
 
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return R * c;
-  }, []);
+  const routeCacheRef = useRef({});
+  const currentDestKeyRef = useRef(null);
+  const GOOGLE_MAPS_API_KEY = 'AIzaSyAN2cTEOnOBmPIXmNtBWen5db7Xl0aEOPk';
 
-  // Check if coordinates are significantly different (min 50 meters)
-  const hasSignificantChange = useCallback((origin, destination) => {
-    const { origin: lastOrigin, destination: lastDest } = lastFetchRef.current;
-
-    if (!lastOrigin || !lastDest) return true;
-
-    const originDiff = getDistance(origin, lastOrigin);
-    const destDiff = getDistance(destination, lastDest);
-
-    return originDiff > 200 || destDiff > 200; // 200m threshold - reduced API calls
-  }, [getDistance]);
-
-  // Fetch route from Google Directions API with debounce and caching
   const fetchRoute = useCallback(async (origin, destination) => {
     if (!origin || !destination) return;
+    
 
-    // Skip if recently fetched with similar coordinates
-    const now = Date.now();
-    const timeSinceLastFetch = now - lastFetchRef.current.timestamp;
-    if (timeSinceLastFetch < 180000 && !hasSignificantChange(origin, destination)) {
-      return; // Skip if < 3 min and no significant change
+    const destKey = `${destination.latitude.toFixed(4)},${destination.longitude.toFixed(4)}`;
+
+    // Already cached in memory? Use instantly, no API call
+    if (routeCacheRef.current[destKey]) {
+      setRouteCoordinates(routeCacheRef.current[destKey]);
+      return;
     }
+
+    // Same destination already fetching/fetched? Skip
+    if (currentDestKeyRef.current === destKey) return;
+    currentDestKeyRef.current = destKey;
 
     const originStr = `${origin.latitude},${origin.longitude}`;
     const destStr = `${destination.latitude},${destination.longitude}`;
-
-    const GOOGLE_MAPS_API_KEY = 'AIzaSyAN2cTEOnOBmPIXmNtBWen5db7Xl0aEOPk';
-
     const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${originStr}&destination=${destStr}&mode=driving&key=${GOOGLE_MAPS_API_KEY}`;
 
     try {
       const response = await fetch(url);
       const data = await response.json();
 
-      if (data.routes && data.routes.length > 0) {
-        const points = data.routes[0].overview_polyline.points;
-        const decodedPoints = decodePolyline(points);
-        setRouteCoordinates(decodedPoints);
-        // Cache this fetch
-        lastFetchRef.current = { origin, destination, timestamp: Date.now() };
+      if (data.routes?.length > 0) {
+        const decoded = decodePolyline(data.routes[0].overview_polyline.points);
+        routeCacheRef.current[destKey] = decoded; // cache it
+        setRouteCoordinates(decoded);
+        console.log('[DIRECTIONS] Fetched & cached route for:', destKey);
       } else {
         setRouteCoordinates([origin, destination]);
       }
     } catch (error) {
-      console.error('[DIRECTIONS] Error fetching route:', error);
+      console.error('[DIRECTIONS] Error:', error);
       setRouteCoordinates([origin, destination]);
     }
-  }, [decodePolyline, hasSignificantChange]);
+  }, [decodePolyline]);
+
+ 
 
   // Clear route when step changes to prevent showing old path
-  useEffect(() => {
-    setRouteCoordinates([]);
-  }, [showRoute]);
+ useEffect(() => {
+  setRouteCoordinates([]);
+  currentDestKeyRef.current = null;
 
-  // Fetch route when locations change (debounced)
+    if (!activeRide) {
+    routeCacheRef.current = {};
+  }
+
+}, [showRoute, activeRide]);
+
+  // Fetch route ONCE when destination changes — NOT on every location update
   useEffect(() => {
     if (!activeRide || !location) {
       setRouteCoordinates([]);
       return;
     }
-
+ 
     let destination;
-
     switch (showRoute) {
       case 'driver_to_restaurant':
         destination = restaurantCoord;
@@ -632,53 +615,41 @@ export default function MapComponent({
         break;
       default:
         setRouteCoordinates([]);
+        currentDestKeyRef.current = null; // reset so next step fetches fresh
         return;
     }
 
     if (!destination) return;
 
-    // Clear existing timeout
-    if (fetchTimeoutRef.current) {
-      clearTimeout(fetchTimeoutRef.current);
-    }
+    fetchRoute(location, destination);
 
-    // Debounce fetch by 5 seconds to batch rapid location updates
-    fetchTimeoutRef.current = setTimeout(() => {
-      fetchRoute(location, destination);
-    }, 5000);
-
-    return () => {
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-      }
-    };
-  }, [activeRide, location, restaurantCoord, customerCoord, showRoute, fetchRoute]);
-
+  }, [showRoute, restaurantCoord, customerCoord, activeRide, location]);
+  // ✅ location in deps — needed to fetch when app reopens and location becomes available
 
 
   const hasActiveRide = deliveryStep && deliveryStep !== RIDE_STEPS.IDLE && deliveryStep !== RIDE_STEPS.COMPLETED;
 
- 
-if (!location || !location.latitude || !location.longitude) {
-  return (
-    <View style={styles.loadingContainer}>
-      <View style={styles.loadingBox}>
-        <LottieView
-          source={require('../../assets/loading_map.json')} // 
-          autoPlay
-          loop
-          style={{ width: scale(250), height: scale(100) }}
-        />
-        <Text style={styles.loadingText}>Getting your location...</Text>
+
+  if (!location || !location.latitude || !location.longitude) {
+    return (
+      <View style={styles.loadingContainer}>
+        <View style={styles.loadingBox}>
+          <LottieView
+            source={require('../../assets/loading_map.json')} // 
+            autoPlay
+            loop
+            style={{ width: scale(250), height: scale(100) }}
+          />
+          <Text style={styles.loadingText}>Getting your location...</Text>
+        </View>
       </View>
-    </View>
-  );
-}
+    );
+  }
 
   return (
     <>
-      <TouchableOpacity 
-        style={styles.mapContainer} 
+      <TouchableOpacity
+        style={styles.mapContainer}
         onPress={onMapClick}
         activeOpacity={1}
       >
@@ -714,17 +685,17 @@ if (!location || !location.latitude || !location.longitude) {
 
           {/* Restaurant Marker - shown during pickup phase */}
           {showRestaurant && restaurantCoord && (
-            <RestaurantMarker 
-              coordinate={restaurantCoord} 
-              name={activeOrder?.restaurant_name || 'Restaurant'} 
+            <RestaurantMarker
+              coordinate={restaurantCoord}
+              name={activeOrder?.restaurant_name || 'Restaurant'}
             />
           )}
 
           {/* Customer Marker - shown during delivery phase */}
           {showCustomer && customerCoord && (
-            <CustomerMarker 
-              coordinate={customerCoord} 
-              name={activeOrder?.customer_name || 'Customer'} 
+            <CustomerMarker
+              coordinate={customerCoord}
+              name={activeOrder?.customer_name || 'Customer'}
             />
           )}
 
@@ -739,18 +710,18 @@ if (!location || !location.latitude || !location.longitude) {
         </MapView>
       </TouchableOpacity>
 
-   
+
       {/* ── Floating Action Buttons ── */}
-      <ReAnimated.View 
+      <ReAnimated.View
         style={[
-          styles.floatRow, 
-          floatBtnStyle, 
+          styles.floatRow,
+          floatBtnStyle,
           { zIndex: hasActiveRide ? 1 : 9 }
-        ]} 
+        ]}
         pointerEvents="box-none"
       >
         <View style={styles.floatLeft}>
-       
+
         </View>
         <View style={styles.floatRight}>
           {!hasActiveRide && (

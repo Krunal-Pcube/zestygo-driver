@@ -19,10 +19,10 @@ const AppContent = () => {
   const { isDarkMode, colors } = useTheme();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.white }}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
       <NavigationContainer ref={navigationRef}>
-        <AuthProvider>
+        <AuthProvider> 
           <RootNavigator />
         </AuthProvider>
       </NavigationContainer>

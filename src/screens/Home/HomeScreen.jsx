@@ -105,6 +105,7 @@ export default function HomeScreen({ navigation }) {
   const [showLowBatteryAlert, setShowLowBatteryAlert] = useState(false);
   const hasShownBatteryAlertRef = useRef(false);
 
+  
   // Map follow mode: auto-follow driver during active ride
   const [isFollowingDriver, setIsFollowingDriver] = useState(true);
   const userInteractedRef = useRef(false);
@@ -219,6 +220,8 @@ export default function HomeScreen({ navigation }) {
               { center: { latitude, longitude }, heading: h, zoom: 16 },
               { duration: 600 },
             );
+
+            
           }
         },
         err => console.warn('[GPS] watchPosition error:', err),
@@ -226,7 +229,7 @@ export default function HomeScreen({ navigation }) {
           enableHighAccuracy: false,
           timeout: 20000,
           maximumAge: 1000,
-          distanceFilter: 3, // metres
+          distanceFilter: 20, // metres
         },
       );
     })();
@@ -668,16 +671,28 @@ export default function HomeScreen({ navigation }) {
       pos => {
         const { latitude, longitude } = pos.coords;
         setLocation({ latitude, longitude });
-        mapRef.current?.animateCamera(
-          { center: { latitude, longitude }, heading: heading, pitch: 0, zoom: 17 },
-          { duration: 700 },
+        mapRef.current?.animateToRegion(
+          {
+            latitude,
+            longitude,
+            latitudeDelta: 0.001,
+            longitudeDelta: 0.001,
+          },
+          700
         ); 
+
+        
       },
       err => {
         console.warn('[GPS] handleLocate error:', err);
-        mapRef.current?.animateCamera(
-          { center: location, heading: 0, zoom: 17 },
-          { duration: 500 },
+        mapRef.current?.animateToRegion(
+          {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.001,
+            longitudeDelta: 0.001,
+          },
+          500
         );
       },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 3000 },

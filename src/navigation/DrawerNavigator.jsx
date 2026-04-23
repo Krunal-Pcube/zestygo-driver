@@ -21,7 +21,7 @@ const DrawerNavigator = () => {
         headerShown: false,
         drawerStyle: {
           width: '82%',
-          marginTop: scale(14),
+          marginTop: scale(12),
           
         },
       }}>
