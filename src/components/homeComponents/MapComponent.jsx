@@ -664,6 +664,7 @@ export default function MapComponent({
           showsCompass={false}
           rotateEnabled={true}
           onPanDrag={onPanDrag}
+          minZoomLevel={13} 
           onRegionChangeComplete={(region) => {
             if (region.heading !== undefined) {
               setCameraHeading(region.heading);

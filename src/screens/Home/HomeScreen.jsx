@@ -19,7 +19,6 @@ import {
   Vibration,
   TouchableOpacity,
 } from 'react-native';
-import DeviceInfo from 'react-native-device-info';
 import Geolocation from '@react-native-community/geolocation';
 import { useSharedValue } from 'react-native-reanimated';
 import { verticalScale } from 'react-native-size-matters';
@@ -34,16 +33,17 @@ import ActiveRideBottomSheet from '../../components/homeComponents/ActiveRideBot
 import { EarningsModal, ChatModal } from '../../components/homeComponents/TripCompletionModals';
 import StatsContent from '../../components/homeComponents/StatsContent';
 import useRideState, { RIDE_STEPS } from '../../hooks/useRideState';
-import { changeLocationController } from '../../MVC/controllers/driverStatusController';
 import { acceptOrderController, rejectOrderController, updateOrderStatusController, uploadOrderProofController } from '../../MVC/controllers/driverAssignmentController';
 import { requestLocationPermission, checkAndPromptGPSEnabled } from '../../utils/gpsHelpers';
 import { onSocketEvent, offSocketEvent } from '../../services/socketIndex';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../../utils/storage/asyncStorageKeys';
 import styles from '../../components/homeComponents/HomeScreenStyles';
+import useBackgroundLocation from '../../hooks/useBackgroundLocation';
+import useBatteryMonitor from '../../hooks/useBatteryMonitor';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
-
+ 
 /* ─────────────────────────────────────────────────────────────────
    MAIN HOME SCREEN
 ───────────────────────────────────────────────────────────────── */
@@ -102,8 +102,6 @@ export default function HomeScreen({ navigation }) {
   const [locationReady, setLocationReady] = useState(false);
   const [gpsReady, setGpsReady] = useState(false);
   const [cameraHeading, setCameraHeading] = useState(0);
-  const [showLowBatteryAlert, setShowLowBatteryAlert] = useState(false);
-  const hasShownBatteryAlertRef = useRef(false);
   const [swipeResetKey, setSwipeResetKey] = useState(0);  // ← Reset SwipeToConfirm on API failure
 
   // Map follow mode: auto-follow driver during active ride
@@ -275,90 +273,13 @@ export default function HomeScreen({ navigation }) {
       offSocketEvent('new_order_offer', handleNewOrderOffer);
     };
   }, []);
-
+ 
 
   /* ── Update location to backend every minute when online ──── */
-  const locationRef = useRef(location);
-  useEffect(() => {
-    locationRef.current = location;
-  }, [location]);
-
-  useEffect(() => {
-    let interval;
-
-    const updateLocation = async () => {
-      if (!isOnline || !locationRef.current?.latitude || !locationRef.current?.longitude) {
-        return;
-      }
-
-      const payload = {
-        current_latitude: locationRef.current.latitude.toString(),
-        current_longitude: locationRef.current.longitude.toString(),
-      };
-
-      try {
-        await changeLocationController({
-          payload,
-          onLocationUpdate: (updatedData) => {
-            console.log('[Location] Updated on server:', updatedData);
-          },
-        });
-      } catch (error) {
-        console.log('[Location] Update failed:', error);
-      }
-    };
-
-    if (isOnline) {
-      interval = setInterval(updateLocation, 60000);
-    }
-
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [isOnline]);
+   useBackgroundLocation(location, isOnline);
 
   /* ── Monitor battery level ──────────────────────────────────── */
-  useEffect(() => {
-    let interval;
-
-    const checkBattery = async () => {
-      try {
-        const level = await DeviceInfo.getBatteryLevel();
-        const batteryPercent = level * 100;
-
-        // Show alert if battery is below 20% and not already shown
-        if (batteryPercent <= 20 && batteryPercent > 0 && !hasShownBatteryAlertRef.current) {
-          hasShownBatteryAlertRef.current = true;
-          setShowLowBatteryAlert(true);
-          Alert.alert(
-            'Low Battery Warning',
-            `Your battery is at ${Math.round(batteryPercent)}%. Please charge your device to continue using the app.`,
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  setShowLowBatteryAlert(false);
-                  hasShownBatteryAlertRef.current = false;
-                }
-              }
-            ]
-          );
-        }
-      } catch (error) {
-        console.log('[Battery] Error checking battery level:', error);
-      }
-    };
-
-    // Check immediately
-    checkBattery();
-
-    // Check every 60 seconds
-    interval = setInterval(checkBattery, 60000);
-
-    return () => clearInterval(interval);
-  }, []);
+   useBatteryMonitor({ threshold: 20, intervalMs: 60000 });
 
   /* ── Chevron follows sheet index ─────────────────────────────── */
   useEffect(() => {
