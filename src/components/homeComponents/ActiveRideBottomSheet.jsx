@@ -42,6 +42,7 @@ export default function ActiveRideBottomSheet({
   onCompleteRide,
   onShowRating,
   isVisible,
+  swipeResetKey = 0,    // ← Reset SwipeToConfirm on API failure
 }) {
   const bottomSheetRef = useRef(null);
   const chevronRot = useRef(new RNAnimated.Value(0)).current;
@@ -343,6 +344,7 @@ export default function ActiveRideBottomSheet({
               onChat={onChat}
               onCancel={handleCancelPress}
               onArrived={handlePrimaryAction}
+              swipeResetKey={swipeResetKey}
             />
           </BottomSheetScrollView>
         )}

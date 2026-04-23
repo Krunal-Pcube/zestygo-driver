@@ -104,8 +104,8 @@ export default function HomeScreen({ navigation }) {
   const [cameraHeading, setCameraHeading] = useState(0);
   const [showLowBatteryAlert, setShowLowBatteryAlert] = useState(false);
   const hasShownBatteryAlertRef = useRef(false);
+  const [swipeResetKey, setSwipeResetKey] = useState(0);  // ← Reset SwipeToConfirm on API failure
 
-  
   // Map follow mode: auto-follow driver during active ride
   const [isFollowingDriver, setIsFollowingDriver] = useState(true);
   const userInteractedRef = useRef(false);
@@ -469,6 +469,7 @@ export default function HomeScreen({ navigation }) {
 
     if (!success) {
       console.log('[Arrived] Failed to update status');
+      setSwipeResetKey(prev => prev + 1);  // ← Reset the swipe button
     }
   };
 
@@ -852,6 +853,7 @@ export default function HomeScreen({ navigation }) {
         onStartDropoff={handleCompletePickup}
         onCompleteRide={completeRide}
         onShowRating={handleCompleteDelivery}
+        swipeResetKey={swipeResetKey}
       />
 
 

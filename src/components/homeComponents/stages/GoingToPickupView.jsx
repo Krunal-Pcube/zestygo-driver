@@ -32,6 +32,7 @@ export default function GoingToPickupView({
   onChat,
   onCancel,
   onArrived,
+  swipeResetKey = 0,
 }) {
   return (
     <View style={styles.container}>
@@ -94,7 +95,7 @@ export default function GoingToPickupView({
         <SwipeToConfirm
           title={`Swipe to ${stepConfig.primaryButtonText}`}
           onConfirm={onArrived}
-          resetKey={stepConfig.primaryButtonText}
+          resetKey={swipeResetKey}
         />
       </View>
     </View>
