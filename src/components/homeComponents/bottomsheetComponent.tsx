@@ -9,6 +9,7 @@ import {
   Animated as RNAnimated,
   Image,
   Easing,
+  Alert,
 } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
@@ -704,6 +705,11 @@ export default function BottomSheetComponent({
 
   const toggleOnlineStatus = async () => {
     if (isLoading) return; // prevent double-tap while loading
+
+    if (!location || !gpsReady) {
+      Alert.alert('GPS Required', 'Please enable GPS to go online');
+      return;
+    }
 
     const newStatus = !isOnline;
 

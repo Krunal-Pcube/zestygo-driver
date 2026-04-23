@@ -24,7 +24,6 @@ import { useSharedValue } from 'react-native-reanimated';
 import { verticalScale } from 'react-native-size-matters';
 import { useIsFocused } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
-import { getVibrationSetting } from '../../utils/accessibilityStorage';
 import RideRequestCard from '../../components/homeComponents/Riderequestcard';
 import HomeHeader from '../../components/homeComponents/homeHeader';
 import MapComponent from '../../components/homeComponents/MapComponent';
@@ -38,12 +37,11 @@ import { requestLocationPermission, checkAndPromptGPSEnabled } from '../../utils
 import { onSocketEvent, offSocketEvent } from '../../services/socketIndex';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../../utils/storage/asyncStorageKeys';
-import styles from '../../components/homeComponents/HomeScreenStyles';
 import useBackgroundLocation from '../../hooks/useBackgroundLocation';
 import useBatteryMonitor from '../../hooks/useBatteryMonitor';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
- 
+
 /* ─────────────────────────────────────────────────────────────────
    MAIN HOME SCREEN
 ───────────────────────────────────────────────────────────────── */
@@ -219,7 +217,7 @@ export default function HomeScreen({ navigation }) {
               { duration: 600 },
             );
 
-            
+
           }
         },
         err => console.warn('[GPS] watchPosition error:', err),
@@ -273,13 +271,13 @@ export default function HomeScreen({ navigation }) {
       offSocketEvent('new_order_offer', handleNewOrderOffer);
     };
   }, []);
- 
+
 
   /* ── Update location to backend every minute when online ──── */
-   useBackgroundLocation(location, isOnline);
+  useBackgroundLocation(location, isOnline);
 
   /* ── Monitor battery level ──────────────────────────────────── */
-   useBatteryMonitor({ threshold: 20, intervalMs: 60000 });
+  useBatteryMonitor({ threshold: 20, intervalMs: 60000 });
 
   /* ── Chevron follows sheet index ─────────────────────────────── */
   useEffect(() => {
@@ -306,16 +304,16 @@ export default function HomeScreen({ navigation }) {
 
         // Pass API response - startRide extracts delivery_trip_id and fetches details
         startRide(data);
-
-        // Remove from requests UI
-        setRideRequests(prev => {
-          const remaining = prev.filter(r => r.offer?.order_id !== ride.offer?.order_id);
-          if (remaining.length === 0) {
-            setShowRideRequests(false);
-          }
-          return remaining;
-        });
       },
+    });
+
+    // Remove from queue ALWAYS (success or fail)
+    setRideRequests(prev => {
+      const remaining = prev.filter(r => r.offer?.order_id !== ride.offer?.order_id);
+      if (remaining.length === 0) {
+        setShowRideRequests(false);
+      }
+      return remaining;
     });
 
     if (!success) {
@@ -601,9 +599,9 @@ export default function HomeScreen({ navigation }) {
             longitudeDelta: 0.001,
           },
           700
-        ); 
+        );
 
-        
+
       },
       err => {
         console.warn('[GPS] handleLocate error:', err);
@@ -714,8 +712,6 @@ export default function HomeScreen({ navigation }) {
 
 
 
-
-
   const handleEarningsDone = useCallback(() => {
     setShowEarningsModal(false);
     setRefreshEarningsTrigger(prev => prev + 1);
@@ -817,8 +813,6 @@ export default function HomeScreen({ navigation }) {
           <StatsContent colors={colors} />
         </BottomSheetComponent>
       )}
-
     </View>
   );
-
 } 

@@ -21,7 +21,7 @@ import LocationFilledIcon from '../../../assets/ridecardIcons/location_filled.sv
 import CallIcon from '../../../assets/ridecardIcons/call_icon.svg';
 import HomeIcon from '../../../assets/ridecardIcons/home_icon.svg';
 import ActionButton from '../../../components/common/ActionButton';
- 
+
 export default function DropoffDetailsView({
   ride,
   activeOrder,
@@ -49,7 +49,7 @@ export default function DropoffDetailsView({
   const expectedTime = order?.estimated_delivery_at
     ? new Date(order.estimated_delivery_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     : ''
-
+ 
   return (
     <View style={styles.container}>
       {/* Header Row: Chevron + ETA + Distance + Menu */}
@@ -62,7 +62,7 @@ export default function DropoffDetailsView({
 
         <View style={styles.etaRowCentered}>
           <Text style={styles.etaText}>{eta} min</Text>
-         
+
           <LocationFilledIcon width={moderateScale(14)} height={moderateScale(14)} />
           <Text style={styles.distanceText}>{distance} km</Text>
         </View>
@@ -116,7 +116,7 @@ export default function DropoffDetailsView({
           <Text style={styles.orderExpectedTime}>Expected time {expectedTime}</Text>
           <Text style={styles.orderVerifyText}>Verify - Take photos</Text>
         </View>
-        <ChevronRight size={moderateScale(24)} color={colors.grey} />
+        {/* <ChevronRight size={moderateScale(24)} color={colors.grey} /> */}
       </TouchableOpacity>
 
       {/* Confirm Order Button */}

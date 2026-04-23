@@ -463,7 +463,7 @@ const AllOrdersScreen = ({ navigation }) => {
   const renderOrderList = () => {
     if (loading) {
       return (
-        <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
+        <ActivityIndicator size="large" color={colors.secondary} style={styles.loader} />
       );
     }
 
