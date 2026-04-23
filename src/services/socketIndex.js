@@ -51,7 +51,7 @@ const logSocketEvent = (event, data) => {
 
 export const connectSocket = (token) => {
   // Skip if already connected with the same token
-  if (socket?.connected && currentToken === token) {
+ if (socket?.connected && currentToken === token && socket['_listenersAttached']) {
     console.log('⚠️ Socket already connected with same token, skipping reconnect');
     return socket;
   }
@@ -93,7 +93,7 @@ export const connectSocket = (token) => {
     console.log('📌 Reason:', reason);
   });
 
-  socket.on("connect_error", (err) => {
+  socket.on("connect_error", (err) => { 
     console.log('\n🚨 Socket Connection Error');
     console.log('📌 Message:', err.message);
     console.log('📌 Description:', err.description);
@@ -111,6 +111,8 @@ export const connectSocket = (token) => {
     logSocketEvent('new_order_offer', data);
     emitEvent('new_order_offer', data);
   });
+
+   socket['_listenersAttached'] = true;
 
   return socket;
 };
